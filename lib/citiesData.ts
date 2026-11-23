@@ -672,6 +672,8 @@ export function findNearestCatalogCity(lat: number, lon: number): CityLocation {
  * Fast remote reverse geocoder with instant offline catalog fallback.
  */
 export async function reverseGeocodeLocation(lat: number, lon: number): Promise<CityLocation> {
+  const nearest = findNearestCatalogCity(lat, lon);
+
   // 1. Try public reverse geocoder with a 2-second timeout
   try {
     const ctrl = new AbortController();
@@ -684,32 +686,39 @@ export async function reverseGeocodeLocation(lat: number, lon: number): Promise<
 
     if (res.ok) {
       const data = await res.json();
-      const city = data.city || data.locality || data.principalSubdivision;
-      const admin = data.principalSubdivision || '';
-      const country = data.countryName || 'India';
+      const rawCity = data.city || '';
+      const rawAdmin = data.principalSubdivision || nearest.admin || '';
+      const country = data.countryName || nearest.country || 'India';
 
-      if (city) {
-        const displayName = admin && !city.toLowerCase().includes(admin.toLowerCase())
-          ? `${city}, ${admin}`
-          : city;
+      // If a specific, recognized city name is returned, use it
+      if (
+        rawCity &&
+        !rawCity.toLowerCase().includes('unnamed') &&
+        !rawCity.toLowerCase().includes('location') &&
+        !rawCity.toLowerCase().includes('unknown')
+      ) {
+        const displayName =
+          rawAdmin && !rawCity.toLowerCase().includes(rawAdmin.toLowerCase())
+            ? `${rawCity}, ${rawAdmin}`
+            : rawCity;
         return {
           name: displayName,
           lat,
           lon,
-          admin,
+          admin: rawAdmin,
           country,
         };
       }
     }
   } catch (err) {
-    // Fall back to offline nearest catalog city
+    // Fall through to offline catalog fallback
   }
 
-  // 2. Offline fallback: nearest catalog city
-  const nearest = findNearestCatalogCity(lat, lon);
-  const displayName = nearest.admin && !nearest.name.toLowerCase().includes(nearest.admin.toLowerCase())
-    ? `${nearest.name}, ${nearest.admin}`
-    : nearest.name;
+  // 2. Offline fallback: nearest catalog city with exact coordinates preserved
+  const displayName =
+    nearest.admin && !nearest.name.toLowerCase().includes(nearest.admin.toLowerCase())
+      ? `${nearest.name}, ${nearest.admin}`
+      : nearest.name;
 
   return {
     name: displayName,

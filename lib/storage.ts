@@ -1,5 +1,6 @@
 import { UserProfile, VoiceSettings } from '@/types';
 import { DEMO_PROFILE } from './demoData';
+import { findNearestCatalogCity } from './citiesData';
 
 const PROFILE_KEY = 'clearhale_user_profile';
 const LEGACY_PROFILE_KEY = 'vayu_user_profile';
@@ -43,6 +44,27 @@ export function loadStoredProfile(): UserProfile {
   try {
     const raw = localStorage.getItem(PROFILE_KEY) || localStorage.getItem(LEGACY_PROFILE_KEY);
     const parsed: UserProfile = raw ? { ...DEFAULT_INITIAL_PROFILE, ...JSON.parse(raw) } : { ...DEFAULT_INITIAL_PROFILE };
+    // Auto-heal any stale placeholder or generic "Current Location" names to real detected city
+    if (
+      parsed.city &&
+      (parsed.city.name.toLowerCase().includes('current location') ||
+        parsed.city.name.toLowerCase().includes('my current location') ||
+        parsed.city.admin === 'Local GPS')
+    ) {
+      const resolved = findNearestCatalogCity(parsed.city.lat ?? 28.6139, parsed.city.lon ?? 77.2090);
+      const fixedName =
+        resolved.admin && !resolved.name.toLowerCase().includes(resolved.admin.toLowerCase())
+          ? `${resolved.name}, ${resolved.admin}`
+          : resolved.name;
+      parsed.city = {
+        name: fixedName,
+        lat: parsed.city.lat,
+        lon: parsed.city.lon,
+        admin: resolved.admin,
+        country: resolved.country || 'India',
+      };
+    }
+
     parsed.household = { ...DEFAULT_INITIAL_PROFILE.household, ...(parsed.household || {}) };
     parsed.checkedActions = parsed.checkedActions || [];
     const storedFamily = localStorage.getItem('clearhale_family_view');

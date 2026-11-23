@@ -6,6 +6,7 @@ import { getTop3Actions, getFilteredAndRankedActions } from '@/lib/rulesEngine';
 import { calculateAQIFromPM25, getAQIBand } from '@/lib/aqi';
 import { outdoorGuidance } from '@/lib/outdoorGuidance';
 import { isIndianCity } from '@/lib/languages';
+import { findNearestCatalogCity } from '@/lib/citiesData';
 
 export type ShareFormat = '4:5';
 export type ShareCardStyle = 'alert';
@@ -769,11 +770,36 @@ export function AirQualityCard({
   });
 
   // Extract short city name (e.g. "Delhi" from "Delhi, India") for a bold, clean headline matching the mock
-  const cityName = profile.city.name.split(',')[0].trim();
-  const countryName = profile.city.country || (profile.city.name.includes(',') ? profile.city.name.split(',').pop()?.trim() : (isIndianCity(profile.city) ? 'India' : ''));
-  const fullLocation = profile.city.name.includes(',')
+  const rawCityName = (profile.city?.name || '').split(',')[0].trim();
+  const isGeneric =
+    !rawCityName ||
+    rawCityName.toLowerCase().includes('current location') ||
+    rawCityName.toLowerCase().includes('my current location') ||
+    rawCityName.toLowerCase() === 'gps';
+
+  const resolvedNearest = isGeneric
+    ? findNearestCatalogCity(profile.city?.lat ?? 28.6139, profile.city?.lon ?? 77.2090)
+    : null;
+
+  const cityName = isGeneric ? (resolvedNearest?.name || 'Your City') : rawCityName;
+  const countryName =
+    profile.city?.country ||
+    (profile.city?.name?.includes(',')
+      ? profile.city.name.split(',').pop()?.trim()
+      : isIndianCity(profile.city)
+      ? 'India'
+      : '');
+  const fullLocation = isGeneric
+    ? (resolvedNearest
+        ? resolvedNearest.admin && !resolvedNearest.name.toLowerCase().includes(resolvedNearest.admin.toLowerCase())
+          ? `${resolvedNearest.name}, ${resolvedNearest.admin}`
+          : `${resolvedNearest.name}, ${resolvedNearest.country || 'India'}`
+        : 'Your City')
+    : profile.city?.name?.includes(',')
     ? profile.city.name
-    : (countryName ? `${profile.city.name}, ${countryName}` : profile.city.name);
+    : countryName
+    ? `${profile.city.name}, ${countryName}`
+    : profile.city?.name || 'Your City';
 
   // ================= HEADLINE LOGIC (SIMPLE, EVERYDAY NATURAL WORDS) =================
   let headlineNative: React.ReactNode = null;

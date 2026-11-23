@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { searchLocalCities, ALL_CITIES_CATALOG, POPULAR_INDIAN_CITIES } from '../lib/citiesData.ts';
+import { searchLocalCities, ALL_CITIES_CATALOG, POPULAR_INDIAN_CITIES, findNearestCatalogCity, reverseGeocodeLocation } from '../lib/citiesData.ts';
 
 describe('India Cities & Districts Location Coverage', () => {
   it('covers all 28 Indian States and 8 Union Territories', () => {
@@ -107,5 +107,33 @@ describe('India Cities & Districts Location Coverage', () => {
     assert.ok(hits.length > 0);
     assert.strictEqual(hits[0].name, 'Nagpur');
     assert.strictEqual(hits[0].country, 'India');
+  });
+
+  it('findNearestCatalogCity accurately identifies major city for GPS coordinates across regions', () => {
+    const testCases = [
+      { coords: [21.1458, 79.0882], expectedCity: 'Nagpur' },
+      { coords: [19.0760, 72.8777], expectedCity: 'Mumbai' },
+      { coords: [18.5204, 73.8567], expectedCity: 'Pune' },
+      { coords: [28.6139, 77.2090], expectedCity: 'Delhi' },
+      { coords: [12.9716, 77.5946], expectedCity: 'Bengaluru' },
+      { coords: [17.3850, 78.4867], expectedCity: 'Hyderabad' },
+    ];
+
+    for (const tc of testCases) {
+      const nearest = findNearestCatalogCity(tc.coords[0], tc.coords[1]);
+      assert.strictEqual(nearest.name, tc.expectedCity);
+      assert.notStrictEqual(nearest.name, 'My Current Location');
+      assert.notStrictEqual(nearest.name, 'Current Location');
+      assert.ok(nearest.admin, `Expected admin subdivision for ${nearest.name}`);
+    }
+  });
+
+  it('reverseGeocodeLocation returns real city name and preserves GPS coordinates for accurate AQI', async () => {
+    const nagpur = await reverseGeocodeLocation(21.1458, 79.0882);
+    assert.ok(nagpur.name.includes('Nagpur'), `Expected name to include Nagpur, got: ${nagpur.name}`);
+    assert.strictEqual(nagpur.lat, 21.1458);
+    assert.strictEqual(nagpur.lon, 79.0882);
+    assert.notStrictEqual(nagpur.name, 'Current Location');
+    assert.notStrictEqual(nagpur.name, 'My Current Location');
   });
 });

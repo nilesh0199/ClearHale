@@ -7,6 +7,7 @@ import { useApp } from '@/context/AppContext';
 import { AirQualityCard, ShareAudience } from './AirQualityCard';
 import { toPng } from 'html-to-image';
 import QRCode from 'qrcode';
+import { findNearestCatalogCity } from '@/lib/citiesData';
 import {
   Share2,
   Download,
@@ -111,10 +112,19 @@ export function ShareModal({
     { id: 'outdoor_worker', icon: Briefcase, labelEn: 'Outdoor workers' },
   ];
 
+  // Resolve clean city name avoiding generic placeholders
+  const resolvedCityName = React.useMemo(() => {
+    const raw = (profile.city?.name || '').split(',')[0].trim();
+    if (!raw || raw.toLowerCase().includes('current location') || raw.toLowerCase().includes('my current location')) {
+      return findNearestCatalogCity(profile.city?.lat ?? 28.6139, profile.city?.lon ?? 77.2090).name;
+    }
+    return raw;
+  }, [profile.city?.name, profile.city?.lat, profile.city?.lon]);
+
   // Localized caption text for native sharing
   const getCaptionText = useCallback(() => {
     const url = 'https://clearhale-vercel.vercel.app/';
-    const city = profile.city.name;
+    const city = resolvedCityName;
     const pm = airData.current.pm2_5;
     const band = currentBand.label;
 
@@ -124,7 +134,7 @@ export function ShareModal({
       return `आज ${city} में वायु गुणवत्ता: ${band} (PM2.5: ${pm} µg/m³)। Clearhale पर स्वच्छ वायु योजना देखें: ${url}`;
     }
     return `Air in ${city} today: ${band} (PM2.5: ${pm} µg/m³). Check clean-air advice at ${url}`;
-  }, [profile.city.name, profile.language, currentBand.label, airData.current.pm2_5]);
+  }, [resolvedCityName, profile.language, currentBand.label, airData.current.pm2_5]);
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -218,7 +228,8 @@ export function ShareModal({
   // Action: Share Poster
   const handleShare = async () => {
     const caption = getCaptionText();
-    const fileName = `clearhale-${profile.city.name.toLowerCase().replace(/\s+/g, '-')}-card.png`;
+    const safeSlug = resolvedCityName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'city';
+    const fileName = `clearhale-${safeSlug}-card.png`;
 
     if (previewBlob && typeof navigator !== 'undefined' && navigator.share) {
       try {
@@ -228,7 +239,7 @@ export function ShareModal({
         });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
-            title: `Clearhale Air Poster - ${profile.city.name}`,
+            title: `Clearhale Air Poster - ${resolvedCityName}`,
             text: caption,
             files: [file],
           });
@@ -251,7 +262,8 @@ export function ShareModal({
   // Action: Download Image
   const handleDownload = () => {
     if (!previewDataUrl) return;
-    const fileName = `clearhale-${profile.city.name.toLowerCase().replace(/\s+/g, '-')}-card.png`;
+    const safeSlug = resolvedCityName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'city';
+    const fileName = `clearhale-${safeSlug}-card.png`;
     const link = document.createElement('a');
     link.href = previewDataUrl;
     link.download = fileName;

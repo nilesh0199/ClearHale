@@ -19,6 +19,7 @@ import {
 } from '@/lib/languages';
 import { DEMO_LOCATION, DEMO_PROFILE, generateDemoAirData } from '@/lib/demoData';
 import { fetchAirQuality } from '@/lib/openMeteo';
+import { findNearestCatalogCity } from '@/lib/citiesData';
 import { VoiceProvider } from './VoiceContext';
 import {
   DEFAULT_INITIAL_PROFILE,
@@ -282,7 +283,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Sync profile updates to localStorage
   const updateProfile = (partial: Partial<UserProfile>) => {
     setProfile((prev) => {
-      const updated = { ...prev, ...partial };
+      let resolvedPartial = partial;
+      if (
+        partial.city &&
+        (partial.city.name.toLowerCase().includes('current location') ||
+          partial.city.name.toLowerCase().includes('my current location') ||
+          partial.city.admin === 'Local GPS')
+      ) {
+        const resolved = findNearestCatalogCity(
+          partial.city.lat ?? prev.city.lat,
+          partial.city.lon ?? prev.city.lon
+        );
+        const fixedName =
+          resolved.admin && !resolved.name.toLowerCase().includes(resolved.admin.toLowerCase())
+            ? `${resolved.name}, ${resolved.admin}`
+            : resolved.name;
+        resolvedPartial = {
+          ...partial,
+          city: {
+            name: fixedName,
+            lat: partial.city.lat,
+            lon: partial.city.lon,
+            admin: resolved.admin,
+            country: resolved.country || 'India',
+          },
+        };
+      }
+      const updated = { ...prev, ...resolvedPartial };
       saveStoredProfile(updated);
       return updated;
     });

@@ -31,6 +31,7 @@ import {
 } from '@/lib/languages';
 import { FamilyView } from '@/types';
 import { getAQIBand } from '@/lib/aqi';
+import { findNearestCatalogCity } from '@/lib/citiesData';
 import { CostChip } from '../ui/NeutralChips';
 import confetti from 'canvas-confetti';
 import {
@@ -282,6 +283,22 @@ export function HomeScreen() {
 
   const isOutsideIndia = React.useMemo(() => {
     return !isIndianCity(profile.city);
+  }, [profile.city]);
+
+  const displayCityName = React.useMemo(() => {
+    const raw = profile.city?.name || '';
+    if (
+      !raw ||
+      raw.toLowerCase().includes('current location') ||
+      raw.toLowerCase().includes('my current location') ||
+      profile.city?.admin === 'Local GPS'
+    ) {
+      const n = findNearestCatalogCity(profile.city?.lat ?? 28.6139, profile.city?.lon ?? 77.2090);
+      return n.admin && !n.name.toLowerCase().includes(n.admin.toLowerCase())
+        ? `${n.name}, ${n.admin}`
+        : n.name;
+    }
+    return raw;
   }, [profile.city]);
 
   const suggestedLangCode = getRegionalLanguageForCity(profile.city);
@@ -811,7 +828,7 @@ export function HomeScreen() {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground truncate">
-                {profile.city.name}
+                {displayCityName}
               </h1>
               <button
                 onClick={() => refreshAirData()}

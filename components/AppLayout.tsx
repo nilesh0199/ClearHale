@@ -18,6 +18,7 @@ import { HouseholdStep } from './onboarding/HouseholdStep';
 import { BuildingPlanStep } from './onboarding/BuildingPlanStep';
 import { IntakeChoiceStep } from './onboarding/IntakeChoiceStep';
 import { IntakeChatScreen } from './intake/IntakeChatScreen';
+import { findNearestCatalogCity } from '@/lib/citiesData';
 import {
   Home,
   ClipboardList,
@@ -60,6 +61,22 @@ export function AppLayout() {
   const [mobilePill, setMobilePill] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const mainRef = useRef<HTMLElement>(null);
   const [showDesktopSiteTip, setShowDesktopSiteTip] = useState(false);
+
+  const displayCityName = React.useMemo(() => {
+    const raw = profile.city?.name || '';
+    if (
+      !raw ||
+      raw.toLowerCase().includes('current location') ||
+      raw.toLowerCase().includes('my current location') ||
+      profile.city?.admin === 'Local GPS'
+    ) {
+      const n = findNearestCatalogCity(profile.city?.lat ?? 28.6139, profile.city?.lon ?? 77.2090);
+      return n.admin && !n.name.toLowerCase().includes(n.admin.toLowerCase())
+        ? `${n.name}, ${n.admin}`
+        : n.name;
+    }
+    return raw;
+  }, [profile.city]);
 
   // Detect if mobile browser has "Desktop site" toggled on (forces innerWidth to ~980px while physical screen.width is ~360-412px)
   useEffect(() => {
@@ -291,7 +308,7 @@ export function AppLayout() {
           <div className="mt-6 p-3 rounded-card bg-card-subtle border border-card-border">
             <div className="flex items-center justify-between text-xs">
               <span className="font-medium text-foreground truncate max-w-[120px]">
-                {profile.city.name}
+                {displayCityName}
               </span>
               <span
                 className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${currentBand.bgColor}`}

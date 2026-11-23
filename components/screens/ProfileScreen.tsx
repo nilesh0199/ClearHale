@@ -9,6 +9,7 @@ import { Bi } from '../Bi';
 import { SpotlightCard } from '../ui/rb/SpotlightCard';
 import { SUPPORTED_LANGUAGES, getRegionalLanguageForCity } from '@/lib/languages';
 import { searchCities } from '@/lib/openMeteo';
+import { reverseGeocodeLocation, findNearestCatalogCity, POPULAR_INDIAN_CITIES } from '@/lib/citiesData';
 import {
   BudgetTier,
   CityLocation,
@@ -46,6 +47,8 @@ import {
   Car,
   Clock,
   Wind,
+  Navigation,
+  Loader2,
 } from 'lucide-react';
 
 export function ProfileScreen() {
@@ -84,6 +87,9 @@ export function ProfileScreen() {
   const [isSearchingCity, setIsSearchingCity] = useState(false);
   const [cityQuery, setCityQuery] = useState('');
   const [cityResults, setCityResults] = useState<CityLocation[]>([]);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [detectedStatus, setDetectedStatus] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [chatClearedToast, setChatClearedToast] = useState(false);
   const [syncToast, setSyncToast] = useState(false);
@@ -117,6 +123,67 @@ export function ProfileScreen() {
     setIsSearchingCity(false);
     setCityQuery('');
     setCityResults([]);
+  };
+
+  const handleUseLocation = () => {
+    if (!('geolocation' in navigator)) {
+      setLocationError('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationError(null);
+    setDetectedStatus('Accessing GPS coordinates...');
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        setDetectedStatus('Identifying your city...');
+
+        try {
+          const autoCity = await reverseGeocodeLocation(lat, lon);
+          updateProfile({ city: autoCity });
+          refreshAirData(autoCity.lat, autoCity.lon);
+          setDetectedStatus(`Detected: ${autoCity.name}`);
+
+          setTimeout(() => {
+            setIsSearchingCity(false);
+            setDetectedStatus(null);
+            setIsLocating(false);
+          }, 900);
+        } catch (err) {
+          console.warn('Reverse geocode failed:', err);
+          const nearest = findNearestCatalogCity(lat, lon);
+          const autoCity: CityLocation = {
+            name:
+              nearest.admin && !nearest.name.toLowerCase().includes(nearest.admin.toLowerCase())
+                ? `${nearest.name}, ${nearest.admin}`
+                : nearest.name,
+            lat,
+            lon,
+            admin: nearest.admin,
+            country: nearest.country || 'India',
+          };
+          updateProfile({ city: autoCity });
+          refreshAirData(lat, lon);
+          setDetectedStatus(`Detected: ${autoCity.name}`);
+          setTimeout(() => {
+            setIsSearchingCity(false);
+            setDetectedStatus(null);
+            setIsLocating(false);
+          }, 900);
+        }
+      },
+      (err) => {
+        setIsLocating(false);
+        setDetectedStatus(null);
+        setLocationError(
+          'Could not access GPS location. Please check browser permissions or search your city below.'
+        );
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
   };
 
   const toggleMember = (m: FamilyMember) => {
@@ -463,20 +530,54 @@ export function ProfileScreen() {
 
         {isSearchingCity && (
           <div className="pt-2 space-y-2.5">
-            <input
-              type="text"
-              value={cityQuery}
-              onChange={(e) => handleCitySearch(e.target.value)}
-              placeholder="Search Indian city or district..."
-              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-card border border-card-border bg-card text-foreground text-sm focus:border-teal-accent focus:outline-none"
-            />
-            {cityResults.length > 0 && (
+            {/* GPS Current Location Option */}
+            <button
+              onClick={handleUseLocation}
+              disabled={isLocating || !!detectedStatus}
+              className={`w-full min-h-[44px] px-3.5 py-2.5 rounded-card border font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-teal-accent ${
+                detectedStatus?.startsWith('Detected:')
+                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-800 dark:text-emerald-200 shadow-soft'
+                  : 'bg-teal-light border-teal-accent/30 text-teal-accent hover:bg-teal-light/80'
+              }`}
+            >
+              {isLocating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-teal-accent" strokeWidth={1.75} />
+                  <span>{detectedStatus || 'Detecting coordinates...'}</span>
+                </>
+              ) : detectedStatus ? (
+                <>
+                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} />
+                  <span className="font-semibold">{detectedStatus}</span>
+                </>
+              ) : (
+                <>
+                  <Navigation className="w-4 h-4" strokeWidth={1.75} />
+                  <span>Use current location (GPS)</span>
+                </>
+              )}
+            </button>
+            {locationError && (
+              <p className="text-xs text-rose-600 dark:text-rose-400 px-1">{locationError}</p>
+            )}
+
+            <div className="relative">
+              <input
+                type="text"
+                value={cityQuery}
+                onChange={(e) => handleCitySearch(e.target.value)}
+                placeholder="Search Indian city or district..."
+                className="w-full min-h-[44px] px-3.5 py-2.5 rounded-card border border-card-border bg-card text-foreground text-sm focus:border-teal-accent focus:outline-none"
+              />
+            </div>
+
+            {cityResults.length > 0 ? (
               <div className="bg-card border border-card-border rounded-xl shadow-soft divide-y divide-card-border max-h-48 overflow-y-auto">
                 {cityResults.map((r, i) => (
                   <button
                     key={i}
                     onClick={() => handleSelectCity(r)}
-                    className="w-full p-3 text-left text-xs sm:text-sm hover:bg-teal-light/40 flex items-center justify-between transition-colors"
+                    className="w-full p-3 text-left text-xs sm:text-sm hover:bg-teal-light/40 flex items-center justify-between transition-colors cursor-pointer"
                   >
                     <span className="font-medium text-foreground">{r.name}</span>
                     <span className="text-muted text-xs">
@@ -484,6 +585,31 @@ export function ProfileScreen() {
                     </span>
                   </button>
                 ))}
+              </div>
+            ) : (
+              <div className="pt-1">
+                <div className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-2">
+                  Popular Indian Cities
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {POPULAR_INDIAN_CITIES.slice(0, 10).map((c) => {
+                    const isSelected = profile.city.name.startsWith(c.name);
+                    return (
+                      <button
+                        key={c.name}
+                        onClick={() => handleSelectCity(c)}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer flex items-center gap-1 ${
+                          isSelected
+                            ? 'bg-teal-accent text-white border-teal-accent shadow-soft'
+                            : 'bg-card border-card-border text-foreground hover:border-teal-accent/40'
+                        }`}
+                      >
+                        <span>{c.name}</span>
+                        {isSelected && <Check className="w-3 h-3" strokeWidth={2.5} />}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>

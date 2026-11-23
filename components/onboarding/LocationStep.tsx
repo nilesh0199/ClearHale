@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useApp } from '@/context/AppContext';
 import { Bi } from '../Bi';
 import { searchCities } from '@/lib/openMeteo';
-import { POPULAR_INDIAN_CITIES, reverseGeocodeLocation } from '@/lib/citiesData';
+import { POPULAR_INDIAN_CITIES, reverseGeocodeLocation, findNearestCatalogCity } from '@/lib/citiesData';
 import { CityLocation } from '@/types';
 import { MapPin, Navigation, Search, Check, ArrowRight, ArrowLeft, Loader2, MousePointerClick } from 'lucide-react';
 
@@ -92,16 +92,20 @@ export function LocationStep() {
           }, 850);
         } catch (err) {
           console.warn('Reverse geocode failed:', err);
-          const fallbackCity: CityLocation = {
-            name: 'Delhi, India',
+          const nearest = findNearestCatalogCity(lat, lon);
+          const autoCity: CityLocation = {
+            name:
+              nearest.admin && !nearest.name.toLowerCase().includes(nearest.admin.toLowerCase())
+                ? `${nearest.name}, ${nearest.admin}`
+                : nearest.name,
             lat,
             lon,
-            admin: 'Delhi',
-            country: 'India',
+            admin: nearest.admin,
+            country: nearest.country || 'India',
           };
-          updateProfile({ city: fallbackCity });
+          updateProfile({ city: autoCity });
           refreshAirData(lat, lon);
-          setDetectedStatus(`Detected: ${fallbackCity.name}`);
+          setDetectedStatus(`Detected: ${autoCity.name}`);
           setTimeout(() => {
             setOnboardingStep('intake-choice');
           }, 850);
