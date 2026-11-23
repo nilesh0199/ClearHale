@@ -1357,7 +1357,7 @@ export function AirQualityCard({
       <div
         style={{
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'space-between',
           position: 'relative',
           zIndex: 2,
@@ -1394,24 +1394,41 @@ export function AirQualityCard({
         </div>
 
         {/* Right: Full City Location and formatted date/time */}
-        <div style={{ textAlign: 'right' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            textAlign: 'right',
+            flexShrink: 0,
+            minWidth: '440px',
+          }}
+        >
           <div
             style={{
-              fontSize: '36px',
+              fontSize:
+                fullLocation.length > 24
+                  ? '26px'
+                  : fullLocation.length > 18
+                  ? '30px'
+                  : '34px',
               fontWeight: 800,
               color: '#0F172A',
               letterSpacing: '-0.3px',
-              lineHeight: 1.15,
+              lineHeight: 1.2,
+              whiteSpace: 'nowrap',
             }}
           >
             {fullLocation}
           </div>
           <div
             style={{
-              fontSize: '22px',
+              fontSize: '20px',
               color: '#64748B',
               fontWeight: 600,
-              marginTop: '4px',
+              marginTop: '6px',
+              lineHeight: 1.2,
+              whiteSpace: 'nowrap',
             }}
           >
             {dateStr} · {timeStr}
@@ -1419,18 +1436,19 @@ export function AirQualityCard({
 
           {/* Honest status label */}
           {(airData.isDemo || airData.isCached) && (
-            <div style={{ marginTop: '6px' }}>
+            <div style={{ marginTop: '8px' }}>
               {airData.isDemo ? (
                 <span
                   style={{
                     display: 'inline-block',
-                    fontSize: '18px',
+                    fontSize: '16px',
                     fontWeight: 700,
                     color: '#B45309',
                     backgroundColor: '#FEF3C7',
                     border: '1px solid #FCD34D',
                     padding: '4px 14px',
                     borderRadius: '9999px',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {isEn ? 'Demo data' : lang === 'hi' ? 'डेमो डेटा' : lang === 'mr' ? 'डेमो डेटा' : 'Demo data'}
@@ -1439,13 +1457,14 @@ export function AirQualityCard({
                 <span
                   style={{
                     display: 'inline-block',
-                    fontSize: '18px',
+                    fontSize: '16px',
                     fontWeight: 600,
                     color: '#64748B',
                     backgroundColor: '#F1F5F9',
                     border: '1px solid #E2E8F0',
                     padding: '4px 14px',
                     borderRadius: '9999px',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {isEn

@@ -43,17 +43,29 @@ export function generateDemoAirData(): AirData {
   let minPM = Infinity;
   let bestIndex = -1;
 
-  // Build 24 hours starting from currentHour, selecting cleanest window strictly from waking hours (7 AM to 11 PM)
+  // Build 24 hours starting from currentHour, selecting cleanest window strictly from upcoming waking hours (7 AM to 11 PM)
+  let todayBestIndex = -1;
+  let todayMinPM = Infinity;
+
   for (let i = 0; i < 24; i++) {
     const targetHour = (currentHour + i) % 24;
     const isWaking = targetHour >= 7 && targetHour < 23;
+    const isToday = currentHour + i < 24;
     if (isWaking) {
       const pm = hourlyBase[targetHour];
+      if (isToday && pm <= 60 && pm < todayMinPM) {
+        todayMinPM = pm;
+        todayBestIndex = i;
+      }
       if (pm < minPM) {
         minPM = pm;
         bestIndex = i;
       }
     }
+  }
+
+  if (todayBestIndex !== -1) {
+    bestIndex = todayBestIndex;
   }
 
   if (bestIndex === -1) {

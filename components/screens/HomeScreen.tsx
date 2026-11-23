@@ -1832,11 +1832,15 @@ export function HomeScreen() {
               >
                 <div className="text-[11px] font-medium text-muted flex items-center justify-center gap-1">
                   <span>{h.hour}</span>
-                  {i === 0 && (
+                  {i === 0 ? (
                     <span className="text-[9px] font-semibold text-teal-accent bg-teal-accent/10 px-1 py-0.2 rounded">
                       Now
                     </span>
-                  )}
+                  ) : h.hour === '00:00' ? (
+                    <span className="text-[9px] font-semibold text-muted bg-card-border/60 px-1 py-0.2 rounded">
+                      +1d
+                    </span>
+                  ) : null}
                 </div>
                 <div className="text-base font-semibold text-foreground my-1">
                   {h.pm2_5}

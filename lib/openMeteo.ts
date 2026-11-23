@@ -192,7 +192,14 @@ export async function fetchAirQuality(lat: number, lon: number): Promise<AirData
     let minPM = Infinity;
     let bestIdx = -1;
 
-    // Pick best hour strictly from waking hours (7 AM to 11 PM) - exclude sleep hours (11 PM to 7 AM)
+    // Pick best hour strictly from upcoming waking hours (7 AM to 11 PM) - exclude sleep hours (11 PM to 7 AM)
+    // If today still has upcoming waking hours with clean air (<=60), prioritize today so users can act today
+    let todayBestIdx = -1;
+    let todayMinPM = Infinity;
+    const currentDay = times[currentIndex]?.includes('T')
+      ? new Date(times[currentIndex]).getDate()
+      : -1;
+
     for (let i = currentIndex; i < sliceEnd; i++) {
       const timeStr = times[i];
       const hNum = timeStr.includes('T')
@@ -200,13 +207,26 @@ export async function fetchAirQuality(lat: number, lon: number): Promise<AirData
         : new Date(timeStr).getHours();
 
       const isWaking = hNum >= 7 && hNum < 23;
+      const isToday =
+        currentDay !== -1 && timeStr.includes('T')
+          ? new Date(timeStr).getDate() === currentDay
+          : (i - currentIndex) < (24 - (times[currentIndex]?.includes('T') ? parseInt(times[currentIndex].split('T')[1].slice(0, 2), 10) : new Date().getHours()));
+
       if (isWaking) {
         const pm = Math.round(pm25s[i] ?? 0);
+        if (isToday && pm <= 60 && pm < todayMinPM) {
+          todayMinPM = pm;
+          todayBestIdx = i - currentIndex;
+        }
         if (pm < minPM) {
           minPM = pm;
           bestIdx = i - currentIndex;
         }
       }
+    }
+
+    if (todayBestIdx !== -1) {
+      bestIdx = todayBestIdx;
     }
 
     // Fallback if no waking hours in slice

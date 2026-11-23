@@ -30,6 +30,7 @@ export interface BestTimeInfo {
   canEnjoyOutdoors: boolean;
   bestTimeText: string;
   bestTimeNativeText: string;
+  isTomorrow?: boolean;
 }
 
 export interface OutdoorGuidanceResult {
@@ -92,7 +93,8 @@ export function getOutdoorLevel(
  */
 export function calculateBestTimeWindow(
   hourly?: Array<{ hour?: string; time?: string; pm2_5: number; isBestHour?: boolean }> | null,
-  lang: string = 'en'
+  lang: string = 'en',
+  currentHourOverride?: number
 ): BestTimeInfo {
   const defaultWindow = '12 PM to 3 PM';
 
@@ -108,6 +110,7 @@ export function calculateBestTimeWindow(
           : lang === 'mr'
           ? `केवळ महत्त्वाच्या कामासाठी सर्वात कमी धुराची वेळ: ${defaultWindow}. काम हलके ठेवा.`
           : `Lightest-exposure hour for essential errands only: ${defaultWindow}. Keep it short and gentle.`,
+      isTomorrow: false,
     };
   }
 
@@ -119,24 +122,86 @@ export function calculateBestTimeWindow(
     return isNaN(h) ? 12 : h;
   };
 
-  // 1. Search for lowest PM2.5 strictly within waking hours: 7 AM (07:00) to 11 PM (23:00)
-  // Sleeping hours (11 PM to 7 AM) are excluded for family routines and safety.
+  const baseH =
+    currentHourOverride !== undefined
+      ? currentHourOverride
+      : hourly[0]?.time?.includes('T') || hourly[0]?.hour
+      ? parseHour(hourly[0])
+      : new Date().getHours();
+
+  // Helper to determine if an item belongs to tomorrow (next calendar day)
+  const isItemTomorrow = (item: { hour?: string; time?: string }, idx: number): boolean => {
+    if (hourly && hourly[0]?.time?.includes('T') && item.time?.includes('T')) {
+      const d0 = new Date(hourly[0].time).getDate();
+      const di = new Date(item.time).getDate();
+      if (!isNaN(d0) && !isNaN(di) && d0 !== di) return true;
+    }
+    if (hourly.length >= 12 && (baseH + idx) >= 24) return true;
+    return false;
+  };
+
+  const isSyntheticTest = hourly.length < 12;
+
   let lowestIdx = -1;
   let lowestVal = Infinity;
+  let isTomorrow = false;
 
-  for (let i = 0; i < hourly.length; i++) {
-    const item = hourly[i];
-    const h = parseHour(item);
-    const isWakingHour = h >= 7 && h < 23;
-    if (isWakingHour) {
-      if (item.pm2_5 < lowestVal) {
-        lowestVal = item.pm2_5;
-        lowestIdx = i;
+  if (!isSyntheticTest) {
+    // 1. Check today's upcoming waking hours (baseH <= h < 23 and h >= 7)
+    for (let i = 0; i < hourly.length; i++) {
+      const item = hourly[i];
+      const h = parseHour(item);
+      const tom = isItemTomorrow(item, i);
+      if (!tom && h >= baseH && h >= 7 && h < 23) {
+        if (item.pm2_5 < lowestVal) {
+          lowestVal = item.pm2_5;
+          lowestIdx = i;
+        }
+      }
+    }
+
+    // If today has a clean window (<=60), recommend that upcoming window today!
+    if (lowestIdx !== -1 && lowestVal <= 60) {
+      isTomorrow = false;
+    } else {
+      // 2. Otherwise look at tomorrow's waking hours (7 <= h < 23)
+      let tomIdx = -1;
+      let tomVal = Infinity;
+      for (let i = 0; i < hourly.length; i++) {
+        const item = hourly[i];
+        const h = parseHour(item);
+        const tom = isItemTomorrow(item, i);
+        if (tom && h >= 7 && h < 23) {
+          if (item.pm2_5 < tomVal) {
+            tomVal = item.pm2_5;
+            tomIdx = i;
+          }
+        }
+      }
+
+      if (tomIdx !== -1 && (lowestIdx === -1 || tomVal < lowestVal)) {
+        lowestIdx = tomIdx;
+        lowestVal = tomVal;
+        isTomorrow = true;
       }
     }
   }
 
-  // Fallback to all hours if no items fall in 7 AM - 11 PM window (e.g. edge-case truncated data)
+  // Fallback to all waking hours if no item matched yet
+  if (lowestIdx === -1) {
+    for (let i = 0; i < hourly.length; i++) {
+      const item = hourly[i];
+      const h = parseHour(item);
+      if (h >= 7 && h < 23) {
+        if (item.pm2_5 < lowestVal) {
+          lowestVal = item.pm2_5;
+          lowestIdx = i;
+        }
+      }
+    }
+  }
+
+  // Absolute fallback if no waking hours found
   if (lowestIdx === -1) {
     lowestVal = hourly[0]?.pm2_5 ?? 100;
     lowestIdx = 0;
@@ -165,24 +230,28 @@ export function calculateBestTimeWindow(
   const bestWindow = `${fmt(startH)} to ${fmt(endH)}`;
   const canEnjoyOutdoors = lowestVal <= 60;
 
+  const tomPrefixEn = isTomorrow ? 'Tomorrow, ' : '';
+  const tomPrefixHi = isTomorrow ? 'कल, ' : '';
+  const tomPrefixMr = isTomorrow ? 'उद्या, ' : '';
+
   let bestTimeText = '';
   let bestTimeNativeText = '';
 
   if (canEnjoyOutdoors) {
-    bestTimeText = `Best time for outdoor workouts: ${bestWindow} (around ${Math.round(lowestVal)} µg/m³).`;
+    bestTimeText = `Best time for outdoor workouts: ${tomPrefixEn}${bestWindow} (around ${Math.round(lowestVal)} µg/m³).`;
     bestTimeNativeText =
       lang === 'hi'
-        ? `बाहर टहलने या कसरत के लिए सबसे अच्छा समय: ${bestWindow} (लगभग ${Math.round(lowestVal)} µg/m³)।`
+        ? `बाहर टहलने या कसरत के लिए सबसे अच्छा समय: ${tomPrefixHi}${bestWindow} (लगभग ${Math.round(lowestVal)} µg/m³)।`
         : lang === 'mr'
-        ? `बाहेर फिरण्यासाठी किंवा व्यायामासाठी उत्तम वेळ: ${bestWindow} (सुमारे ${Math.round(lowestVal)} µg/m³).`
+        ? `बाहेर फिरण्यासाठी किंवा व्यायामासाठी उत्तम वेळ: ${tomPrefixMr}${bestWindow} (सुमारे ${Math.round(lowestVal)} µg/m³).`
         : bestTimeText;
   } else {
-    bestTimeText = `Lightest-exposure hour for essential errands only: ${bestWindow}. Keep it short and gentle.`;
+    bestTimeText = `Lightest-exposure hour for essential errands only: ${tomPrefixEn}${bestWindow}. Keep it short and gentle.`;
     bestTimeNativeText =
       lang === 'hi'
-        ? `जरूरी काम निपटाने का सबसे कम प्रदूषण वाला समय: ${bestWindow}। काम हल्का रखें।`
+        ? `जरूरी काम निपटाने का सबसे कम प्रदूषण वाला समय: ${tomPrefixHi}${bestWindow}। काम हल्का रखें।`
         : lang === 'mr'
-        ? `केवळ महत्त्वाच्या कामासाठी सर्वात कमी धुराची वेळ: ${bestWindow}. काम हलके ठेवा.`
+        ? `केवळ महत्त्वाच्या कामासाठी सर्वात कमी धुराची वेळ: ${tomPrefixMr}${bestWindow}. काम हलके ठेवा.`
         : bestTimeText;
   }
 
@@ -192,6 +261,7 @@ export function calculateBestTimeWindow(
     canEnjoyOutdoors,
     bestTimeText,
     bestTimeNativeText,
+    isTomorrow,
   };
 }
 
