@@ -188,6 +188,7 @@ async function run() {
     await desktopPage.addInitScript(() => {
       localStorage.setItem('clearhale_theme', 'light');
       localStorage.setItem('clearhale_accent', 'teal');
+      localStorage.setItem('clearhale_lang_hint_dismissed_v2', 'true');
       const prof = {
         city: { name: 'Nagpur, India', lat: 21.1458, lon: 79.0882 },
         language: 'en',

@@ -794,7 +794,7 @@ export function HomeScreen() {
   return (
     <div className="w-full space-y-6 pb-24 md:pb-12 max-w-5xl mx-auto lg:space-y-0 lg:pb-0 lg:max-w-none lg:h-screen lg:h-[100dvh] lg:max-h-[100dvh] lg:grid lg:grid-rows-[auto_auto_minmax(0,1fr)] lg:overflow-hidden">
       {/* Row 1: Top Bar (fixed on desktop, never scrolls, with page background & hairline bottom border) */}
-      <header className="w-full bg-background lg:border-b lg:border-card-border/60 z-20 pt-1 lg:pt-3.5 lg:pb-3 px-0 lg:px-8 shrink-0">
+      <header className="w-full bg-background lg:border-b lg:border-card-border/60 relative z-30 pt-1 lg:pt-3.5 lg:pb-3 px-0 lg:px-8 shrink-0">
         <div className="w-full max-w-5xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3 min-w-0">
           {/* Mobile Screen Logo (at left top corner, location to right) */}
@@ -862,7 +862,7 @@ export function HomeScreen() {
           </button>
 
           {/* Suggested Regional Language Toggle & Long-Press Switcher */}
-          <div className="relative" ref={langHintRef}>
+          <div className="relative z-40" ref={langHintRef}>
             <button
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
@@ -971,7 +971,7 @@ export function HomeScreen() {
       </header>
 
       {/* Row 2: Family Tabs (fixed on desktop, never scrolls, with page background & hairline bottom border) */}
-      <div className="w-full bg-background lg:border-b lg:border-card-border/60 z-20 py-0 lg:py-2.5 px-0 lg:px-8 shrink-0">
+      <div className="w-full bg-background lg:border-b lg:border-card-border/60 relative z-10 py-0 lg:py-2.5 px-0 lg:px-8 shrink-0">
         <div className="w-full max-w-5xl mx-auto space-y-2">
           {/* Family View Segmented Switcher (Mobile: Compact 4-column control, Desktop: Full pills) */}
           <div
