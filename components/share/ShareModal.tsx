@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useApp } from '@/context/AppContext';
 import { AirQualityCard, ShareAudience } from './AirQualityCard';
+import { toPng } from 'html-to-image';
 import QRCode from 'qrcode';
 import {
   Share2,
@@ -132,6 +133,19 @@ export function ShareModal({
     }, 2400);
   };
 
+  // Convert base64 data URL to binary Blob in memory instantly (< 2ms)
+  const dataUrlToBlob = (dataUrl: string): Blob => {
+    const arr = dataUrl.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  };
+
   // Convert offscreen poster DOM node to high-res PNG (1080x1350)
   const generateCardImage = useCallback(async () => {
     const width = 1080;
@@ -155,26 +169,20 @@ export function ShareModal({
         await document.fonts.ready;
       }
 
-      await new Promise((r) => setTimeout(r, 90));
-
-      const { toPng, toBlob } = await import('html-to-image');
       const node = cardRef.current;
 
+      // High-performance capture: skipFonts avoids cross-origin CSS rule security stalls,
+      // cacheBust: false avoids redundant network re-fetching of local assets
       const dataUrl = await toPng(node, {
         width,
         height,
         pixelRatio: 1,
         quality: 0.95,
-        cacheBust: true,
+        cacheBust: false,
+        skipFonts: true,
       });
 
-      const blob = await toBlob(node, {
-        width,
-        height,
-        pixelRatio: 1,
-        quality: 0.95,
-        cacheBust: true,
-      });
+      const blob = dataUrlToBlob(dataUrl);
 
       if (dataUrl && blob) {
         imageCache.current[cacheKey] = { dataUrl, blob };
@@ -202,7 +210,7 @@ export function ShareModal({
     if (isOpen) {
       const timer = setTimeout(() => {
         generateCardImage();
-      }, 120);
+      }, 16);
       return () => clearTimeout(timer);
     }
   }, [isOpen, audience, generateCardImage]);
