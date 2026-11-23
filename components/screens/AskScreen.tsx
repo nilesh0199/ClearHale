@@ -338,6 +338,9 @@ export function AskScreen() {
     if (!query || isStreaming) return;
 
     setInput('');
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 10);
 
     // 1. Add user message
     const userMsg: ChatMessage = {
@@ -895,6 +898,9 @@ export function AskScreen() {
           onSubmit={(e) => {
             e.preventDefault();
             handleSendMessage();
+            setTimeout(() => {
+              textareaRef.current?.focus();
+            }, 10);
           }}
           className="flex items-end gap-2"
         >
@@ -915,7 +921,9 @@ export function AskScreen() {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 handleSendMessage();
-                textareaRef.current?.focus();
+                setTimeout(() => {
+                  textareaRef.current?.focus();
+                }, 10);
               }
             }}
             rows={1}

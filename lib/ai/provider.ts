@@ -44,7 +44,7 @@ function devLog(message: string, ...args: any[]): void {
 function getGeminiModel(): string {
   const custom = process.env.GEMINI_MODEL?.trim();
   if (custom) return custom;
-  return 'gemini-flash-lite-latest';
+  return 'gemini-3.5-flash-lite';
 }
 
 function getGroqModel(): string {
@@ -113,14 +113,11 @@ async function callGeminiStream(
   const modelsToTry = Array.from(
     new Set([
       preferredModel,
-      'gemini-flash-lite-latest',
       'gemini-3.5-flash-lite',
       'gemini-flash-latest',
-      'gemini-3.5-flash',
       'gemini-3.8-flash',
-      'gemini-2.5-flash-lite',
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
+      'gemini-3.7-flash',
+      'gemini-flash-lite-latest',
     ])
   );
   let lastError: any = null;
@@ -148,9 +145,6 @@ async function callGeminiStream(
       });
 
       if (!res.ok) {
-        if (res.status === 429 || res.status >= 500) {
-          markProviderRateLimited('gemini');
-        }
         const errText = await res.text().catch(() => '');
         devLog(`Gemini stream model [${modelName}] HTTP error ${res.status}: ${errText}`);
         lastError = new Error(`Gemini HTTP error ${res.status}: ${errText}`);
@@ -227,14 +221,11 @@ async function callGeminiGenerate(
   const modelsToTry = Array.from(
     new Set([
       preferredModel,
-      'gemini-flash-lite-latest',
       'gemini-3.5-flash-lite',
       'gemini-flash-latest',
-      'gemini-3.5-flash',
       'gemini-3.8-flash',
-      'gemini-2.5-flash-lite',
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
+      'gemini-3.7-flash',
+      'gemini-flash-lite-latest',
     ])
   );
   let lastError: any = null;
@@ -262,9 +253,6 @@ async function callGeminiGenerate(
       });
 
       if (!res.ok) {
-        if (res.status === 429 || res.status >= 500) {
-          markProviderRateLimited('gemini');
-        }
         const errText = await res.text().catch(() => '');
         devLog(`Gemini generate model [${modelName}] HTTP error ${res.status}: ${errText}`);
         lastError = new Error(`Gemini HTTP error ${res.status}: ${errText}`);
@@ -343,9 +331,6 @@ async function callGroqStream(
       });
 
       if (!res.ok) {
-        if (res.status === 429 || res.status >= 500) {
-          markProviderRateLimited('groq');
-        }
         const errText = await res.text().catch(() => '');
         devLog(`Groq stream model [${modelName}] HTTP error ${res.status}: ${errText}`);
         lastError = new Error(`Groq HTTP error ${res.status}: ${errText}`);
@@ -454,9 +439,6 @@ async function callGroqGenerate(
       });
 
       if (!res.ok) {
-        if (res.status === 429 || res.status >= 500) {
-          markProviderRateLimited('groq');
-        }
         const errText = await res.text().catch(() => '');
         devLog(`Groq generate model [${modelName}] HTTP error ${res.status}: ${errText}`);
         lastError = new Error(`Groq HTTP error ${res.status}: ${errText}`);
