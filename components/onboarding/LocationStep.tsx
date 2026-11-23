@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useApp } from '@/context/AppContext';
 import { Bi } from '../Bi';
 import { searchCities } from '@/lib/openMeteo';
-import { POPULAR_INDIAN_CITIES } from '@/lib/citiesData';
+import { POPULAR_INDIAN_CITIES, reverseGeocodeLocation } from '@/lib/citiesData';
 import { CityLocation } from '@/types';
 import { MapPin, Navigation, Search, Check, ArrowRight, ArrowLeft, Loader2, MousePointerClick } from 'lucide-react';
 
@@ -16,6 +16,7 @@ export function LocationStep() {
   const [isSearching, setIsSearching] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [detectedStatus, setDetectedStatus] = useState<string | null>(null);
   const lastClickedCity = useRef<{ name: string; time: number } | null>(null);
 
   // Popular city chips across India for fast one-tap setup
@@ -71,26 +72,49 @@ export function LocationStep() {
 
     setIsLocating(true);
     setLocationError(null);
+    setDetectedStatus('Accessing GPS coordinates...');
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
-        const autoCity: CityLocation = {
-          name: 'My Current Location',
-          lat,
-          lon,
-          admin: 'Local GPS',
-          country: 'India',
-        };
-        handleSelectCity(autoCity);
-        setIsLocating(false);
+        setDetectedStatus('Identifying your city...');
+
+        try {
+          const autoCity = await reverseGeocodeLocation(lat, lon);
+          updateProfile({ city: autoCity });
+          refreshAirData(autoCity.lat, autoCity.lon);
+          setDetectedStatus(`Detected: ${autoCity.name}`);
+
+          // Give user a brief visual confirmation of their detected city, then automatically continue
+          setTimeout(() => {
+            setOnboardingStep('intake-choice');
+          }, 850);
+        } catch (err) {
+          console.warn('Reverse geocode failed:', err);
+          const fallbackCity: CityLocation = {
+            name: 'Delhi, India',
+            lat,
+            lon,
+            admin: 'Delhi',
+            country: 'India',
+          };
+          updateProfile({ city: fallbackCity });
+          refreshAirData(lat, lon);
+          setDetectedStatus(`Detected: ${fallbackCity.name}`);
+          setTimeout(() => {
+            setOnboardingStep('intake-choice');
+          }, 850);
+        } finally {
+          setIsLocating(false);
+        }
       },
       (err) => {
         setIsLocating(false);
-        setLocationError('Could not access GPS location. Please select your city below.');
+        setDetectedStatus(null);
+        setLocationError('Could not access GPS location. Please select or search your city below.');
       },
-      { timeout: 10000 }
+      { timeout: 10000, enableHighAccuracy: true }
     );
   };
 
@@ -118,7 +142,7 @@ export function LocationStep() {
           </p>
           <p className="text-xs text-teal-accent font-medium mt-2 flex items-center gap-1.5">
             <MousePointerClick className="w-3.5 h-3.5 shrink-0" />
-            <span>Double-click or tap twice to select & continue</span>
+            <span>Search or double-tap any city to select & continue</span>
           </p>
         </motion.div>
 
@@ -126,21 +150,31 @@ export function LocationStep() {
         <div className="mt-6">
           <button
             onClick={handleUseLocation}
-            disabled={isLocating}
-            className="w-full min-h-[48px] px-4 py-3 rounded-card bg-teal-light border border-teal-accent/30 text-teal-accent font-medium hover:bg-teal-light/80 transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-teal-accent"
+            disabled={isLocating || !!detectedStatus}
+            className={`w-full min-h-[48px] px-4 py-3 rounded-card border font-medium transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-teal-accent ${
+              detectedStatus?.startsWith('Detected:')
+                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-800 dark:text-emerald-200 shadow-soft'
+                : 'bg-teal-light border-teal-accent/30 text-teal-accent hover:bg-teal-light/80'
+            }`}
           >
             {isLocating ? (
-              <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.75} />
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-teal-accent" strokeWidth={1.75} />
+                <span>{detectedStatus || 'Detecting coordinates...'}</span>
+              </>
+            ) : detectedStatus ? (
+              <>
+                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} />
+                <span className="font-semibold">{detectedStatus} • Continuing...</span>
+              </>
             ) : (
-              <Navigation className="w-4 h-4" strokeWidth={1.75} />
+              <>
+                <Navigation className="w-4 h-4" strokeWidth={1.75} />
+                <span>
+                  <Bi k="onboarding.useGps" layout="inline" />
+                </span>
+              </>
             )}
-            <span>
-              {isLocating ? (
-                'Detecting coordinates...'
-              ) : (
-                <Bi k="onboarding.useGps" layout="inline" />
-              )}
-            </span>
           </button>
           {locationError && (
             <p className="text-xs text-rose-600 mt-2 px-1">{locationError}</p>
@@ -243,8 +277,8 @@ export function LocationStep() {
         </div>
       </div>
 
-      {/* Continue - Hidden on mobile, visible on desktop/tablet */}
-      <div className="hidden sm:block pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-4 sm:mt-6">
+      {/* Continue - Visible and sticky on all viewports */}
+      <div className="pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-4 sm:mt-6">
         <button
           onClick={() => setOnboardingStep('intake-choice')}
           className={`w-full min-h-[48px] px-6 py-3.5 rounded-card font-medium shadow-soft transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 ${

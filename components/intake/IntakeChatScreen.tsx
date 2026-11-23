@@ -15,6 +15,7 @@ import { Bi } from '../Bi';
 import { HouseholdProfile, FamilyMember, CommuteType, CookingFuel, BudgetTier, PriorityGoal } from '@/types';
 import {
   ArrowLeft,
+  ArrowRight,
   Volume2,
   VolumeX,
   Mic,
@@ -116,14 +117,11 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
 
     setHeardText(text.trim());
     setIsEditingHeard(false);
-
-    // Start 1.5s countdown before auto-advancing
-    setAutoAdvanceCountdown(1.5);
-    if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
-
-    autoAdvanceTimerRef.current = setTimeout(() => {
-      submitAnswer(text.trim());
-    }, 1500);
+    if (autoAdvanceTimerRef.current) {
+      clearTimeout(autoAdvanceTimerRef.current);
+      autoAdvanceTimerRef.current = null;
+    }
+    setAutoAdvanceCountdown(null);
   }, []);
 
   const {
@@ -618,52 +616,72 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
                   </div>
                 )}
 
-                {/* Heard feedback display */}
+                {/* Heard feedback display - spacious, wrapping, with Edit and Speak again */}
                 {heardText && (
-                  <div className="p-3.5 rounded-xl bg-teal-light/30 border border-teal-accent/25 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-medium text-teal-accent">
-                      <span className="flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={1.75} />
-                        Heard:
+                  <div className="p-4 sm:p-5 rounded-2xl bg-teal-light/20 border border-teal-accent/30 space-y-3">
+                    <div className="flex items-center justify-between text-xs font-semibold text-teal-accent">
+                      <span className="flex items-center gap-1.5 uppercase tracking-wider">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500" strokeWidth={2} />
+                        You said:
                       </span>
-                      {autoAdvanceCountdown !== null && !isEditingHeard && (
-                        <span className="text-[11px] text-muted">
-                          Moving on in {autoAdvanceCountdown}s...
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {!isEditingHeard && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={handleStartEditingHeard}
+                              className="px-2.5 py-1 rounded-lg border border-card-border bg-card hover:bg-card-subtle text-muted hover:text-foreground text-xs flex items-center gap-1 cursor-pointer transition-colors"
+                            >
+                              <Edit2 className="w-3 h-3" strokeWidth={1.75} />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setHeardText('');
+                                setIsEditingHeard(false);
+                                startRecording();
+                              }}
+                              className="px-2.5 py-1 rounded-lg border border-teal-accent/40 bg-teal-light/50 text-teal-accent hover:bg-teal-light text-xs flex items-center gap-1 cursor-pointer transition-colors"
+                            >
+                              <Mic className="w-3 h-3" strokeWidth={1.75} />
+                              <span>Speak again</span>
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
 
                     {isEditingHeard ? (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
+                      <div className="space-y-2">
+                        <textarea
                           value={heardText}
                           onChange={(e) => setHeardText(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') submitAnswer(heardText);
-                          }}
-                          className="flex-1 min-h-[40px] px-3 py-1.5 rounded-lg border border-teal-accent bg-card text-foreground text-sm focus:outline-none"
+                          rows={3}
+                          className="w-full p-3 rounded-xl border border-teal-accent bg-card text-foreground text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-teal-accent/40 resize-none leading-relaxed"
+                          placeholder="Edit your response..."
                           autoFocus
                         />
-                        <button
-                          onClick={() => submitAnswer(heardText)}
-                          className="min-h-[40px] px-3 py-1.5 rounded-lg bg-teal-accent text-white font-medium text-xs"
-                        >
-                          Confirm
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingHeard(false)}
+                            className="px-3 py-1.5 rounded-lg border border-card-border text-xs text-muted hover:text-foreground cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingHeard(false)}
+                            className="px-3.5 py-1.5 rounded-lg bg-teal-accent text-white text-xs font-semibold cursor-pointer"
+                          >
+                            Done Editing
+                          </button>
+                        </div>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-sm text-foreground font-medium truncate">
-                          "{heardText}"
-                        </span>
-                        <button
-                          onClick={handleStartEditingHeard}
-                          className="p-1 rounded text-muted hover:text-foreground text-xs flex items-center gap-1 cursor-pointer shrink-0"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" strokeWidth={1.75} />
-                          <span>Edit</span>
-                        </button>
+                      <div className="p-3.5 rounded-xl bg-card border border-card-border/80 text-foreground text-sm sm:text-base font-medium leading-relaxed whitespace-pre-wrap break-words">
+                        &ldquo;{heardText}&rdquo;
                       </div>
                     )}
                   </div>
@@ -744,19 +762,24 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
                 </div>
               )}
 
-              {/* Bottom Continue button for chip selection */}
-              {selectedChips.length > 0 && !heardText && !isRecording && (
-                <div className="pt-2">
+              {/* Bottom Continue button for speech transcript or chip selection */}
+              {(heardText || selectedChips.length > 0) && !isRecording && (
+                <div className="pt-3">
                   <button
+                    type="button"
                     onClick={() => submitAnswer()}
-                    className="w-full min-h-[48px] px-6 py-3.5 rounded-card bg-teal-accent text-white font-medium shadow-soft hover:bg-teal-hover transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                    disabled={isAiProcessing}
+                    className="w-full min-h-[50px] px-6 py-3.5 rounded-card bg-teal-accent text-white font-medium shadow-soft hover:bg-teal-hover transition-colors flex items-center justify-center gap-2 cursor-pointer text-base disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-teal-accent"
                   >
                     {isAiProcessing ? (
-                      <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.75} />
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.75} />
+                        <span>Personalising your plan...</span>
+                      </>
                     ) : (
                       <>
                         <span>Continue</span>
-                        <Check className="w-4 h-4" strokeWidth={2} />
+                        <ArrowRight className="w-4 h-4" strokeWidth={2} />
                       </>
                     )}
                   </button>

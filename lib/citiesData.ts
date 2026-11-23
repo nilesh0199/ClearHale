@@ -632,3 +632,90 @@ export function searchLocalCities(query: string, limit = 10): CityLocation[] {
     country: item.country,
   }));
 }
+
+/**
+ * Find the nearest city in our offline catalog using great-circle distance (Haversine formula).
+ */
+export function findNearestCatalogCity(lat: number, lon: number): CityLocation {
+  let nearest: ExtendedCityLocation = ALL_CITIES_CATALOG[0];
+  let minDistance = Infinity;
+
+  const R = 6371; // Earth radius in km
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+
+  for (const c of ALL_CITIES_CATALOG) {
+    const dLat = toRad(c.lat - lat);
+    const dLon = toRad(c.lon - lon);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat)) * Math.cos(toRad(c.lat)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const d = 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    if (d < minDistance) {
+      minDistance = d;
+      nearest = c;
+    }
+  }
+
+  return {
+    name: nearest.name,
+    lat: nearest.lat,
+    lon: nearest.lon,
+    admin: nearest.admin,
+    country: nearest.country,
+  };
+}
+
+/**
+ * Reverse geocode coordinates to a human-readable city and state/admin location.
+ * Fast remote reverse geocoder with instant offline catalog fallback.
+ */
+export async function reverseGeocodeLocation(lat: number, lon: number): Promise<CityLocation> {
+  // 1. Try public reverse geocoder with a 2-second timeout
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 2000);
+    const res = await fetch(
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`,
+      { signal: ctrl.signal }
+    );
+    clearTimeout(timer);
+
+    if (res.ok) {
+      const data = await res.json();
+      const city = data.city || data.locality || data.principalSubdivision;
+      const admin = data.principalSubdivision || '';
+      const country = data.countryName || 'India';
+
+      if (city) {
+        const displayName = admin && !city.toLowerCase().includes(admin.toLowerCase())
+          ? `${city}, ${admin}`
+          : city;
+        return {
+          name: displayName,
+          lat,
+          lon,
+          admin,
+          country,
+        };
+      }
+    }
+  } catch (err) {
+    // Fall back to offline nearest catalog city
+  }
+
+  // 2. Offline fallback: nearest catalog city
+  const nearest = findNearestCatalogCity(lat, lon);
+  const displayName = nearest.admin && !nearest.name.toLowerCase().includes(nearest.admin.toLowerCase())
+    ? `${nearest.name}, ${nearest.admin}`
+    : nearest.name;
+
+  return {
+    name: displayName,
+    lat,
+    lon,
+    admin: nearest.admin,
+    country: nearest.country || 'India',
+  };
+}
