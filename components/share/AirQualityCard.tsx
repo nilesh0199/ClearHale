@@ -5,7 +5,7 @@ import { AirData, AQIBandInfo, UserProfile, ActionItem } from '@/types';
 import { getTop3Actions, getFilteredAndRankedActions } from '@/lib/rulesEngine';
 import { calculateAQIFromPM25, getAQIBand } from '@/lib/aqi';
 import { outdoorGuidance } from '@/lib/outdoorGuidance';
-import { isIndianCity } from '@/lib/languages';
+import { isIndianCity, ACTIONS_I18N } from '@/lib/languages';
 import { findNearestCatalogCity } from '@/lib/citiesData';
 
 export type ShareFormat = '4:5';
@@ -100,7 +100,7 @@ function getBestOutdoorWindow(hourly: AirData['hourly']): string {
 }
 
 // Calculate WHO 2021 24-hr comparison guideline from today's hourly average
-function computeWhoComparison(airData: AirData) {
+function computeWhoComparison(airData: AirData, lang: string = 'en') {
   let avgPM2_5 = airData.current.pm2_5;
   if (airData.hourly && airData.hourly.length > 0) {
     const d = new Date();
@@ -120,12 +120,50 @@ function computeWhoComparison(airData: AirData) {
   const ratio = Number((avgPM2_5 / 15).toFixed(1));
 
   let pillText = '';
-  if (ratio > 1.1) {
-    pillText = `${ratio}× WHO's daily guideline`;
-  } else if (ratio >= 0.9 && ratio <= 1.1) {
-    pillText = "About at WHO's daily guideline";
+  if (lang === 'en') {
+    if (ratio > 1.1) {
+      pillText = `${ratio}× WHO's daily guideline`;
+    } else if (ratio >= 0.9 && ratio <= 1.1) {
+      pillText = "About at WHO's daily guideline";
+    } else {
+      pillText = "Within WHO's daily guideline";
+    }
+  } else if (lang === 'hi') {
+    if (ratio > 1.1) {
+      pillText = `${ratio}× WHO मानक सीमा`;
+    } else if (ratio >= 0.9 && ratio <= 1.1) {
+      pillText = 'WHO मानक सीमा के करीब';
+    } else {
+      pillText = 'WHO मानक सीमा के भीतर';
+    }
+  } else if (lang === 'mr') {
+    if (ratio > 1.1) {
+      pillText = `${ratio}× WHO मानक मर्यादा`;
+    } else if (ratio >= 0.9 && ratio <= 1.1) {
+      pillText = 'WHO मानक मर्यादेजवळ';
+    } else {
+      pillText = 'WHO मानक मर्यादेत';
+    }
+  } else if (lang === 'bn') {
+    if (ratio > 1.1) {
+      pillText = `${ratio}× WHO নির্দেশিকা`;
+    } else {
+      pillText = 'WHO নির্দেশিকার মধ্যে';
+    }
+  } else if (lang === 'ta') {
+    if (ratio > 1.1) {
+      pillText = `${ratio}× WHO வழிகாட்டுதல்`;
+    } else {
+      pillText = 'WHO வழிகாட்டுதலுக்குள்';
+    }
+  } else if (lang === 'te') {
+    if (ratio > 1.1) {
+      pillText = `${ratio}× WHO మార్గదర్శకం`;
+    } else {
+      pillText = 'WHO పరిమితిలోపు';
+    }
   } else {
-    pillText = "Within WHO's daily guideline";
+    pillText = `${ratio}× WHO guideline`;
   }
 
   return { avgPM2_5, ratio, pillText };
@@ -526,9 +564,57 @@ function getPlainActionTitle(
       mr: 'घरात ताजी हवा येऊ द्या',
       bn: 'ঘরে তাজা বাতাস আসতে দিন',
     },
+    maintain_purifier_filters: {
+      en: 'Replace purifier filters on schedule',
+      hi: 'प्यूरिफायर फ़िल्टर समय पर बदलें',
+      mr: 'प्युरिफायरचे फिल्टर वेळेवर बदला',
+      bn: 'ফিল্টার সময়মতো বদলান',
+    },
   };
 
   const smogDictionary: Record<string, { en: string; hi: string; mr: string; bn?: string }> = {
+    maintain_purifier_filters: {
+      en: 'Replace purifier filters on schedule',
+      hi: 'प्यूरिफायर फ़िल्टर समय पर बदलें',
+      mr: 'प्युरिफायरचे फिल्टर वेळेवर बदला',
+      bn: 'ফিল্টার সময়মতো বদলান',
+    },
+    stop_incense_coils: {
+      en: 'Stop incense, dhoop and coils',
+      hi: 'अगरबत्ती, धूप और कॉइल न जलाएं',
+      mr: 'अगरबत्ती आणि कॉइल लावणे टाळा',
+      bn: 'ধূপ ও মশার কয়েল বন্ধ রাখুন',
+    },
+    kitchen_exhaust_chimney: {
+      en: 'Run kitchen chimney or exhaust',
+      hi: 'रसोई में चिमनी या एग्जॉस्ट चलाएं',
+      mr: 'स्वयंपाकघरात एक्झॉस्ट फॅन चालवा',
+      bn: 'রান্নাঘরে এক্সহস্ট চালান',
+    },
+    avoid_aerosol_sprays: {
+      en: 'Avoid room sprays and aerosols',
+      hi: 'रूम स्प्रे और परफ्यूम से बचें',
+      mr: 'रूम स्प्रे वापरणे टाळा',
+      bn: 'রুম স্প্রে ব্যবহার এড়ান',
+    },
+    damp_mopping_floors: {
+      en: 'Wet mop floors, skip sweeping',
+      hi: 'गीला पोछा लगाएं, झाड़ू नहीं',
+      mr: 'ओला बोळा फिरवा, झाडू नको',
+      bn: 'ভিজে কাপড় দিয়ে মুছুন',
+    },
+    air_out_cleanest_hour: {
+      en: 'Air out home during cleanest hour',
+      hi: 'साफ हवा के समय खिड़कियां खोलें',
+      mr: 'स्वच्छ हवेच्या वेळी खिडक्या उघडा',
+      bn: 'পরিষ্কার বাতাসে জানালা খুলুন',
+    },
+    recirculating_ac_fan: {
+      en: 'Use AC internal recirculation mode',
+      hi: 'एसी को रीसर्क्युलेशन पर चलाएं',
+      mr: 'एसी रीसर्क्युलेशन मोडवर चालवा',
+      bn: 'এসি রিকার্কুলেশন মোডে চালান',
+    },
     good_day_outdoor_workout: {
       en: 'Move workouts indoors today',
       hi: 'कसरत घर के अंदर करें',
@@ -677,6 +763,12 @@ function getPlainActionTitle(
     return { native, en: item.en };
   }
 
+  if (lang !== 'en' && ACTIONS_I18N[lang]?.[action.id]?.title) {
+    const raw = ACTIONS_I18N[lang][action.id].title;
+    const trimmed = raw.split(' ').slice(0, 6).join(' ');
+    return { native: trimmed, en: action.title };
+  }
+
   const words = action.title.split(' ');
   const trimmed = words.slice(0, 6).join(' ');
   return { native: trimmed, en: trimmed };
@@ -699,7 +791,7 @@ export function AirQualityCard({
 
   // Best outdoor window and WHO calculation
   const bestWindow = getBestOutdoorWindow(airData.hourly);
-  const { avgPM2_5, pillText } = computeWhoComparison(airData);
+  const { avgPM2_5, pillText } = computeWhoComparison(airData, lang);
 
   // Primary displayed PM2.5 metric for today's air (strictly current PM2.5 so it matches Home ring!)
   const displayPM = airData.current.pm2_5;
@@ -1341,7 +1433,7 @@ export function AirQualityCard({
                     borderRadius: '9999px',
                   }}
                 >
-                  Demo data
+                  {isEn ? 'Demo data' : lang === 'hi' ? 'डेमो डेटा' : lang === 'mr' ? 'डेमो डेटा' : 'Demo data'}
                 </span>
               ) : (
                 <span
@@ -1356,7 +1448,13 @@ export function AirQualityCard({
                     borderRadius: '9999px',
                   }}
                 >
-                  Old data, {timeDiffMinutes} min ago
+                  {isEn
+                    ? `Old data, ${timeDiffMinutes} min ago`
+                    : lang === 'hi'
+                    ? `पुराना डेटा, ${timeDiffMinutes} मि. पहले`
+                    : lang === 'mr'
+                    ? `जुना डेटा, ${timeDiffMinutes} मि. पूर्वी`
+                    : `Old data, ${timeDiffMinutes} min ago`}
                 </span>
               )}
             </div>
@@ -1385,24 +1483,10 @@ export function AirQualityCard({
           {headlineNative}
         </h1>
 
-        {!isEn && headlineEn && (
-          <p
-            style={{
-              fontSize: '30px',
-              fontWeight: 600,
-              color: '#475569',
-              margin: '6px 0 0 0',
-              lineHeight: 1.25,
-            }}
-          >
-            {headlineEn}
-          </p>
-        )}
-
         {/* Lovely line: Must finish in ONE line only */}
         <div
           style={{
-            marginTop: '10px',
+            marginTop: '12px',
             fontSize: '32px',
             fontWeight: 700,
             color: '#0F172A',
@@ -1414,25 +1498,10 @@ export function AirQualityCard({
         >
           {lovelyLineNative}
         </div>
-        {!isEn && lovelyLineEn !== lovelyLineNative && (
-          <div
-            style={{
-              fontSize: '22px',
-              color: '#64748B',
-              fontWeight: 500,
-              marginTop: '2px',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {lovelyLineEn}
-          </div>
-        )}
 
         {/* When air is clean ('go'): Best time outside line sits directly below lovely line */}
         {level === 'go' && (
-          <div style={{ marginTop: '8px' }}>
+          <div style={{ marginTop: '10px' }}>
             <div
               style={{
                 fontSize: '28px',
@@ -1443,18 +1512,6 @@ export function AirQualityCard({
             >
               {bestTimeNative}
             </div>
-            {!isEn && bestTimeEn !== bestTimeNative && (
-              <div
-                style={{
-                  fontSize: '21px',
-                  color: '#64748B',
-                  fontWeight: 500,
-                  marginTop: '2px',
-                }}
-              >
-                {bestTimeEn}
-              </div>
-            )}
           </div>
         )}
       </div>
@@ -1509,7 +1566,19 @@ export function AirQualityCard({
                   whiteSpace: 'nowrap',
                 }}
               >
-                PM2.5 · Current
+                {isEn
+                  ? 'PM2.5 · Current'
+                  : lang === 'hi'
+                  ? 'PM2.5 · वर्तमान'
+                  : lang === 'mr'
+                  ? 'PM2.5 · सध्याचे'
+                  : lang === 'bn'
+                  ? 'PM2.5 · বর্তমান'
+                  : lang === 'ta'
+                  ? 'PM2.5 · தற்போதைய'
+                  : lang === 'te'
+                  ? 'PM2.5 · ప్రస్తుత'
+                  : 'PM2.5 · Current'}
               </span>
             </div>
           </div>
@@ -1600,7 +1669,19 @@ export function AirQualityCard({
               marginTop: '4px',
             }}
           >
-            WHO 24h limit: 15 µg/m³
+            {isEn
+              ? 'WHO 24h limit: 15 µg/m³'
+              : lang === 'hi'
+              ? 'WHO 24 घंटे की सीमा: 15 µg/m³'
+              : lang === 'mr'
+              ? 'WHO २४ तास मर्यादा: १५ µg/m³'
+              : lang === 'bn'
+              ? 'WHO ২৪ ঘণ্টার সীমা: ১৫ µg/m³'
+              : lang === 'ta'
+              ? 'WHO 24 மணி வரம்பு: 15 µg/m³'
+              : lang === 'te'
+              ? 'WHO 24 గంటల పరిమితి: 15 µg/m³'
+              : 'WHO 24h limit: 15 µg/m³'}
           </div>
           <div
             style={{
@@ -1609,7 +1690,19 @@ export function AirQualityCard({
               fontWeight: 600,
             }}
           >
-            24h avg: {avgPM2_5} µg/m³ (AQI {calculateAQIFromPM25(avgPM2_5)})
+            {isEn
+              ? `24h avg: ${avgPM2_5} µg/m³ (AQI ${calculateAQIFromPM25(avgPM2_5)})`
+              : lang === 'hi'
+              ? `24 घंटे का औसत: ${avgPM2_5} µg/m³ (AQI ${calculateAQIFromPM25(avgPM2_5)})`
+              : lang === 'mr'
+              ? `२४ तास सरासरी: ${avgPM2_5} µg/m³ (AQI ${calculateAQIFromPM25(avgPM2_5)})`
+              : lang === 'bn'
+              ? `২৪ ঘণ্টার গড়: ${avgPM2_5} µg/m³ (AQI ${calculateAQIFromPM25(avgPM2_5)})`
+              : lang === 'ta'
+              ? `24 மணி சராசரி: ${avgPM2_5} µg/m³ (AQI ${calculateAQIFromPM25(avgPM2_5)})`
+              : lang === 'te'
+              ? `24 గంటల సగటు: ${avgPM2_5} µg/m³ (AQI ${calculateAQIFromPM25(avgPM2_5)})`
+              : `24h avg: ${avgPM2_5} µg/m³ (AQI ${calculateAQIFromPM25(avgPM2_5)})`}
           </div>
         </div>
       </div>
@@ -1645,18 +1738,6 @@ export function AirQualityCard({
             >
               {outdoorAdviceNative}
             </div>
-            {!isEn && outdoorAdviceEn !== outdoorAdviceNative && (
-              <div
-                style={{
-                  fontSize: '20px',
-                  color: '#64748B',
-                  fontWeight: 500,
-                  marginTop: '2px',
-                }}
-              >
-                {outdoorAdviceEn}
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -1687,7 +1768,19 @@ export function AirQualityCard({
               letterSpacing: '1.2px',
             }}
           >
-            Do this today
+            {isEn
+              ? 'Do this today'
+              : lang === 'hi'
+              ? 'आज के मुख्य कदम'
+              : lang === 'mr'
+              ? 'आजच्या मुख्य कृती'
+              : lang === 'bn'
+              ? 'আজকের মূল পদক্ষেপ'
+              : lang === 'ta'
+              ? 'இன்றைய முக்கிய நடவடிக்கைகள்'
+              : lang === 'te'
+              ? 'ఈ రోజు చేయవలసిన ముఖ్య పనులు'
+              : 'Do this today'}
           </span>
         </div>
 
@@ -1699,20 +1792,56 @@ export function AirQualityCard({
                   bg: '#ECFDF5',
                   color: '#059669',
                   border: '#A7F3D0',
-                  label: 'Free',
+                  label: isEn
+                    ? 'Free'
+                    : lang === 'hi'
+                    ? 'मुफ़्त'
+                    : lang === 'mr'
+                    ? 'मोफत'
+                    : lang === 'bn'
+                    ? 'বিনামূল্যে'
+                    : lang === 'ta'
+                    ? 'இலவசம்'
+                    : lang === 'te'
+                    ? 'ఉచితం'
+                    : 'Free',
                 }
               : action.cost_tier === 'Low-cost'
               ? {
                   bg: '#FFFBEB',
                   color: '#D97706',
                   border: '#FDE68A',
-                  label: 'Low-cost',
+                  label: isEn
+                    ? 'Low-cost'
+                    : lang === 'hi'
+                    ? 'कम खर्च'
+                    : lang === 'mr'
+                    ? 'कमी खर्च'
+                    : lang === 'bn'
+                    ? 'স্বল্প খরচ'
+                    : lang === 'ta'
+                    ? 'குறைந்த செலவு'
+                    : lang === 'te'
+                    ? 'తక్కువ ఖర్చు'
+                    : 'Low-cost',
                 }
               : {
                   bg: '#EFF6FF',
                   color: '#2563EB',
                   border: '#BFDBFE',
-                  label: 'If you can afford',
+                  label: isEn
+                    ? 'If you can afford'
+                    : lang === 'hi'
+                    ? 'बजट हो तो'
+                    : lang === 'mr'
+                    ? 'परवडत असल्यास'
+                    : lang === 'bn'
+                    ? 'সামর্থ্য থাকলে'
+                    : lang === 'ta'
+                    ? 'வசதியிருந்தால்'
+                    : lang === 'te'
+                    ? 'వీలైతే'
+                    : 'If you can afford',
                 };
 
           return (
@@ -1759,18 +1888,6 @@ export function AirQualityCard({
                   >
                     {shortTitles.native}
                   </div>
-                  {!isEn && shortTitles.en !== shortTitles.native && (
-                    <div
-                      style={{
-                        fontSize: '22px',
-                        color: '#64748B',
-                        fontWeight: 500,
-                        marginTop: '2px',
-                      }}
-                    >
-                      {shortTitles.en}
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -1813,7 +1930,19 @@ export function AirQualityCard({
               lineHeight: 1.2,
             }}
           >
-            Check your city&apos;s air
+            {isEn
+              ? "Check your city's air"
+              : lang === 'hi'
+              ? 'अपने शहर की हवा जांचें'
+              : lang === 'mr'
+              ? 'आपल्या शहराची हवा तपासा'
+              : lang === 'bn'
+              ? 'আপনার শহরের বাতাস দেখুন'
+              : lang === 'ta'
+              ? 'உங்கள் நகரத்தின் காற்றை சோதிக்கவும்'
+              : lang === 'te'
+              ? 'మీ నగర గాలిని తనిఖీ చేయండి'
+              : "Check your city's air"}
           </div>
           <div
             style={{
