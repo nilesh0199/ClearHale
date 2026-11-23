@@ -8,7 +8,7 @@ import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { useSpeech } from '@/hooks/useSpeech';
 import { isSttSupported, isTtsSupported } from '@/lib/ai/config';
 import { INTAKE_QUESTIONS, IntakeQuestionDef, IntakeChipOption } from '@/data/intakeQuestions';
-import { mergeProfilePatch } from '@/lib/ai/intakeParser';
+import { mergeProfilePatch, parseWithRules } from '@/lib/ai/intakeParser';
 import { hasEmergencySymptoms } from '@/lib/medicalSafety';
 import { WaveformBars } from '../voice/WaveformBars';
 import { Bi } from '../Bi';
@@ -88,6 +88,7 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
   const [showTypeInput, setShowTypeInput] = useState(!sttEnabled);
   const [typeInput, setTypeInput] = useState('');
   const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const isSubmittingRef = useRef(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Speaker toggle (default ON if ttsEnabled)
@@ -142,8 +143,18 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
     },
   });
 
-  const currentQ: IntakeQuestionDef | undefined = INTAKE_QUESTIONS[questionIdx];
+  // Clamp questionIdx safely so it never overflows or points to undefined
+  const safeQuestionIdx = Math.min(Math.max(0, questionIdx), INTAKE_QUESTIONS.length - 1);
+  const currentQ: IntakeQuestionDef = INTAKE_QUESTIONS[safeQuestionIdx];
   const questionPromptText = currentQ ? currentQ.question[lang] || currentQ.question.en : '';
+
+  // Guard: if phase is questions but questionIdx >= INTAKE_QUESTIONS.length, transition to summary immediately
+  useEffect(() => {
+    if (phase === 'questions' && questionIdx >= INTAKE_QUESTIONS.length) {
+      setQuestionIdx(INTAKE_QUESTIONS.length - 1);
+      setPhase('summary');
+    }
+  }, [phase, questionIdx]);
 
   // Speak question aloud when question changes if voice enabled and not muted
   useEffect(() => {
@@ -154,14 +165,14 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
       stopSpeaking();
       if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
     };
-  }, [questionIdx, followUp, phase, isVoiceMuted, ttsEnabled]);
+  }, [safeQuestionIdx, followUp, phase, isVoiceMuted, ttsEnabled, questionPromptText]);
 
   // Move keyboard focus to question heading on question change
   useEffect(() => {
     if (phase === 'questions') {
       headingRef.current?.focus();
     }
-  }, [questionIdx, followUp, phase]);
+  }, [safeQuestionIdx, followUp, phase]);
 
   // Clean up timer on unmount
   useEffect(() => {
@@ -220,6 +231,9 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
 
   // Submit current answer (via speech transcript, typed text, or chip selection)
   const submitAnswer = async (textOverride?: string) => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+
     if (autoAdvanceTimerRef.current) {
       clearTimeout(autoAdvanceTimerRef.current);
       autoAdvanceTimerRef.current = null;
@@ -230,8 +244,17 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
 
     if (textToSubmit && hasEmergencySymptoms(textToSubmit)) {
       setPhase('emergency');
+      isSubmittingRef.current = false;
       return;
     }
+
+    // 1. Immediately apply deterministic local rule parsing so user's speech is NEVER lost even if network drops
+    const localPatch = parseWithRules(currentQ?.id || 'question', textToSubmit, selectedChips);
+    setAccumulatedPatch((prev) => {
+      const next = { ...prev };
+      mergeProfilePatch(next, localPatch);
+      return next;
+    });
 
     setIsAiProcessing(true);
     setErrorMessage(null);
@@ -255,15 +278,17 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
       if (data.emergency) {
         setPhase('emergency');
         setIsAiProcessing(false);
+        isSubmittingRef.current = false;
         return;
       }
 
-      // Merge patch into accumulated profile
+      // Merge server AI patch into accumulated profile
       if (data.patch) {
-        setAccumulatedPatch((prev) => ({
-          ...prev,
-          ...mergeProfilePatch({ ...prev }, data.patch),
-        }));
+        setAccumulatedPatch((prev) => {
+          const next = { ...prev };
+          mergeProfilePatch(next, data.patch);
+          return next;
+        });
       }
 
       // Check if AI requested a single follow-up and we haven't hit 6 turns
@@ -274,21 +299,24 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
         setTypeInput('');
         setSelectedChips([]);
         setIsAiProcessing(false);
+        isSubmittingRef.current = false;
         return;
       }
 
       // Advance to next question or summary
       advanceToNextQuestion();
     } catch (err) {
-      console.warn('[Intake] API call failed, falling back to local patch:', err);
-      // Fallback: apply selected chips locally
+      console.warn('[Intake] API call failed, saved with robust local rules engine:', err);
+      // Advance to next question with local patch already applied
       advanceToNextQuestion();
     } finally {
       setIsAiProcessing(false);
+      isSubmittingRef.current = false;
     }
   };
 
-  const advanceToNextQuestion = () => {
+  const advanceToNextQuestion = useCallback(() => {
+    isSubmittingRef.current = false;
     setFollowUp(null);
     setHeardText('');
     setTypeInput('');
@@ -302,14 +330,18 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
       setShowGotIt(false);
     }, 600);
 
-    if (questionIdx + 1 < INTAKE_QUESTIONS.length) {
-      setQuestionIdx((prev) => prev + 1);
-    } else {
+    setQuestionIdx((prev) => {
+      const nextIdx = prev + 1;
+      if (nextIdx < INTAKE_QUESTIONS.length) {
+        return nextIdx;
+      }
       setPhase('summary');
-    }
-  };
+      return Math.min(prev, INTAKE_QUESTIONS.length - 1);
+    });
+  }, []);
 
   const handleSkipQuestion = () => {
+    if (isSubmittingRef.current) return;
     advanceToNextQuestion();
   };
 
@@ -436,14 +468,14 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
 
           {/* Progress dots (Questions 1 to 4) */}
           {phase === 'questions' && (
-            <div className="flex items-center gap-2" aria-label={`Step ${questionIdx + 1} of 4`}>
+            <div className="flex items-center gap-2" aria-label={`Step ${safeQuestionIdx + 1} of ${INTAKE_QUESTIONS.length}`}>
               {INTAKE_QUESTIONS.map((_, i) => (
                 <span
                   key={i}
                   className={`h-2 rounded-full transition-all duration-300 ${
-                    i === questionIdx
+                    i === safeQuestionIdx
                       ? 'w-6 bg-teal-accent'
-                      : i < questionIdx
+                      : i < safeQuestionIdx
                       ? 'w-2 bg-teal-accent'
                       : 'w-2 bg-card-border'
                   }`}
@@ -531,7 +563,7 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
         {phase === 'questions' && (
           <AnimatePresence mode="wait">
             <motion.div
-              key={`${questionIdx}-${followUp ? 'followup' : 'main'}`}
+              key={`${safeQuestionIdx}-${followUp ? 'followup' : 'main'}`}
               initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -14 }}
@@ -544,7 +576,7 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
                   <div className="space-y-1.5 flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] uppercase tracking-wider font-semibold text-teal-accent">
-                        Question {questionIdx + 1} of 4
+                        Question {safeQuestionIdx + 1} of {INTAKE_QUESTIONS.length}
                       </span>
                       {showGotIt && (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-teal-light text-teal-accent border border-teal-accent/30 text-[11px] font-semibold shadow-xs animate-in fade-in duration-200">

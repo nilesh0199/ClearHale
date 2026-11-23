@@ -71,26 +71,26 @@ export function parseWithRules(
     // Household members
     const members: FamilyMember[] = [...(patch.members || [])];
 
-    if (/\b(just me|alone|myself|single|एकला|अकेला|फक्त मी)\b/i.test(lower)) {
+    if (/\b(just me|alone|myself|single|only me|live alone|living alone|akela|sirf mai|sirf main|ekla|अकेला|एकला|फक्त मी)\b/i.test(lower)) {
       patch.members = [];
     } else {
-      if (/\b(baby|infant|toddler|नवजात|छोटा बच्चा|लहान मूल|under 2)\b/i.test(lower)) {
+      if (/\b(baby|infant|toddler|newborn|navjat|chhota baccha|chota baccha|lahan mool|under 2|नवजात|छोटा बच्चा|लहान मूल)\b/i.test(lower)) {
         if (!members.includes('child')) members.push('child');
         patch.childAgeBand = 'infant_0_2';
-      } else if (/\b(child|children|kid|kids|school kid|बच्चे|मुले)\b/i.test(lower)) {
+      } else if (/\b(child|children|kid|kids|school kid|son|daughter|beta|beti|baccha|bacche|bache|bachhe|chote bacche|बच्चे|मुले)\b/i.test(lower)) {
         if (!members.includes('child')) members.push('child');
         if (!patch.childAgeBand) patch.childAgeBand = 'child_2_12';
       }
 
-      if (/\b(elder|elders|elderly|grandparent|parents|grandpa|grandma|बुजुर्ग|दादा|दादी|आजी|आजोबा|60\+)\b/i.test(lower)) {
+      if (/\b(elder|elders|elderly|grandparent|grandparents|parents|mother|father|mom|dad|maa|papa|pitaji|mataji|aai|baba|dada|dadi|nana|nani|in-laws|saas|sasur|senior|senior citizen|60\+|बुजुर्ग|दादा|दादी|आजी|आजोबा)\b/i.test(lower)) {
         if (!members.includes('elderly')) members.push('elderly');
       }
 
-      if (/\b(pregnant|pregnancy|गर्भवती|गरोदर)\b/i.test(lower)) {
+      if (/\b(pregnant|pregnancy|expecting|garbhvati|garodar|गर्भवती|गरोदर)\b/i.test(lower)) {
         if (!members.includes('pregnant')) members.push('pregnant');
       }
 
-      if (/\b(asthma|heart|inhaler|breathing issue|दमा|हृदय|श्वास)\b/i.test(lower)) {
+      if (/\b(asthma|heart|inhaler|breathing issue|breathing problem|shortness of breath|breathless|respiratory|chest|cough|copd|cardiac|allergy|bronchitis|dama|saans|hryday|दमा|हृदय|श्वास)\b/i.test(lower)) {
         if (!members.includes('asthma_heart')) members.push('asthma_heart');
         patch.respiratoryOrHeart = true;
       }
@@ -101,27 +101,27 @@ export function parseWithRules(
     }
 
     // Work environment
-    if (/\b(outdoor|site|field|traffic|delivery|कन्स्ट्रक्शन|बाहर काम|बाहेर काम)\b/i.test(lower)) {
+    if (/\b(outdoor|outdoors|site|field|traffic|delivery|construction|driver|sales|swiggy|zomato|uber|ola|courier|vendor|security|कन्स्ट्रक्शन|बाहर काम|बाहेर काम)\b/i.test(lower)) {
       patch.work = 'outdoor';
-    } else if (/\b(indoor|office|wfh|home|desk|घर से काम|कार्यालय|ऑफिस)\b/i.test(lower)) {
+    } else if (/\b(indoor|indoors|office|wfh|home|desk|remote|software|it|bank|teacher|shop|dukan|घर से काम|कार्यालय|ऑफिस)\b/i.test(lower)) {
       patch.work = 'indoor';
     }
 
     // Commute
     const commute: CommuteType[] = [...(patch.commute || [])];
-    if (/\b(two-wheeler|two wheeler|bike|scooter|motorcycle|स्कूटर|बाइक|दुचाकी)\b/i.test(lower)) {
+    if (/\b(two-wheeler|two wheeler|2 wheeler|bike|scooter|scooty|activa|motorcycle|bullet|बाइक|स्कूटर|दुचाकी)\b/i.test(lower)) {
       if (!commute.includes('two_wheeler')) commute.push('two_wheeler');
     }
-    if (/\b(bus|metro|train|public transit|बस|मेट्रो)\b/i.test(lower)) {
+    if (/\b(bus|metro|train|local|local train|public transit|transit|rail|बस|मेट्रो)\b/i.test(lower)) {
       if (!commute.includes('bus_metro')) commute.push('bus_metro');
     }
-    if (/\b(walk|walking|foot|पैदल|पायी)\b/i.test(lower)) {
+    if (/\b(walk|walking|foot|pedestrian|on foot|paidal|payi|पैदल|पायी)\b/i.test(lower)) {
       if (!commute.includes('walk')) commute.push('walk');
     }
-    if (/\b(cycle|bicycle|cycling|साइकिल|सायकल)\b/i.test(lower)) {
+    if (/\b(cycle|bicycle|cycling|cycle chalana|saikal|साइकिल|सायकल)\b/i.test(lower)) {
       if (!commute.includes('cycle')) commute.push('cycle');
     }
-    if (/\b(car|auto|cab|uber|ola|कार)\b/i.test(lower)) {
+    if (/\b(car|auto|auto-rickshaw|rickshaw|cab|uber|ola|taxi|drive|driving|van|gadi|गाड़ी|कार)\b/i.test(lower)) {
       if (!commute.includes('car')) commute.push('car');
     }
     if (commute.length > 0) {
@@ -129,56 +129,56 @@ export function parseWithRules(
     }
 
     // School run & peak hours
-    if (/\b(school drop|pickup|school run|स्कूल छोड़ना|शाळा)\b/i.test(lower)) {
+    if (/\b(school drop|pickup|school run|drop kids|school|school bus|स्कूल छोड़ना|शाळा)\b/i.test(lower)) {
       patch.schoolRun = true;
     }
-    if (/\b(peak|rush hour|8 am|9 am|6 pm|गर्दी|पीक)\b/i.test(lower)) {
+    if (/\b(peak|rush hour|morning peak|evening peak|8 am|9 am|10 am|5 pm|6 pm|7 pm|गर्दी|पीक)\b/i.test(lower)) {
       patch.commuteTimes = ['morning_peak', 'evening_peak'];
     }
 
     // Cooking fuel
-    if (/\b(lpg|gas cylinder|gas stove|गैस|एलपीजी)\b/i.test(lower)) {
+    if (/\b(lpg|gas|gas cylinder|gas stove|piped gas|png|cylinder|stovetop|गैस|एलपीजी)\b/i.test(lower)) {
       patch.cookingFuel = 'lpg';
-    } else if (/\b(induction|electric stove|विद्युत|इंडक्शन)\b/i.test(lower)) {
+    } else if (/\b(induction|electric|electric stove|heater|विद्युत|इंडक्शन)\b/i.test(lower)) {
       patch.cookingFuel = 'induction_electric';
-    } else if (/\b(wood|biomass|chulha|coal|लकड़ी|चूल्हा|शेणी)\b/i.test(lower)) {
+    } else if (/\b(wood|biomass|chulha|coal|kerosene|cow dung|uple|lakdi|लकड़ी|चूल्हा|शेणी)\b/i.test(lower)) {
       patch.cookingFuel = 'wood_biomass';
     }
 
     // Equipment
-    if (/\b(have a purifier|got a purifier|own a purifier|have purifier|प्यूरीफायर है|प्युरिफायर आहे)\b/i.test(lower)) {
+    if (/\b(have a purifier|have an air purifier|have purifier|got a purifier|own a purifier|have air purifier|yes purifier|use purifier|purifier hai|air purifier hai|hepa|air filter|प्यूरीफायर है|प्युरिफायर आहे)\b/i.test(lower)) {
       patch.hasPurifier = true;
-    } else if (/\b(no purifier|don't have purifier|do not have purifier|प्यूरीफायर नहीं|प्युरिफायर नाही)\b/i.test(lower)) {
+    } else if (/\b(no purifier|no air purifier|don't have purifier|don't have air purifier|do not have purifier|do not have air purifier|no filter|purifier nahi hai|air purifier nahi|प्यूरीफायर नहीं|प्युरिफायर नाही)\b/i.test(lower)) {
       patch.hasPurifier = false;
     }
 
-    if (/\b(n95|n-95|respirator)\b/i.test(lower)) {
+    if (/\b(n95|n-95|respirator|kn95|ffp2|pollution mask)\b/i.test(lower)) {
       patch.maskType = 'n95';
-    } else if (/\b(cloth mask|cloth|handkerchief|गमछा|रूमाल)\b/i.test(lower)) {
+    } else if (/\b(cloth|cloth mask|cotton|surgical|gamcha|rumal|handkerchief|गमछा|रूमाल)\b/i.test(lower)) {
       patch.maskType = 'cloth';
     }
 
     // Budget
-    if (/\b(free|zero cost|no money|मुफ़्त|मोफत)\b/i.test(lower)) {
+    if (/\b(free|zero cost|no money|0|cheap|no spend|no expense|muft|mofat|मुफ़्त|मोफत)\b/i.test(lower)) {
       patch.budget = 'free_only';
-    } else if (/\b(low-cost|low cost|diy|affordable|किफायती|कमी खर्च)\b/i.test(lower)) {
+    } else if (/\b(low-cost|low cost|diy|affordable|moderate|kam kharcha|kifayati|किफायती|कमी खर्च)\b/i.test(lower)) {
       patch.budget = 'low_cost';
-    } else if (/\b(flexible|can afford|no constraint|बजट की चिंता नहीं|लवचिक)\b/i.test(lower)) {
+    } else if (/\b(flexible|can afford|no constraint|high|premium|budget not an issue|paisa koi problem nahi|बजट की चिंता नहीं|लवचिक)\b/i.test(lower)) {
       patch.budget = 'flexible';
     }
 
     // Priorities
     const priorities: PriorityGoal[] = [...(patch.priorities || [])];
-    if (/\b(kid|kids|child|children|बच्चे|मुले)\b/i.test(lower) && !priorities.includes('kids_health')) {
+    if (/\b(kid|kids|child|children|baby|son|daughter|family|बच्चे|मुले)\b/i.test(lower) && !priorities.includes('kids_health')) {
       priorities.push('kids_health');
     }
-    if (/\b(money|cost|cheap|budget|पैसे|किफायत)\b/i.test(lower) && !priorities.includes('saving_money')) {
+    if (/\b(money|cost|cheap|saving|budget|paisa|पैसे|किफायत)\b/i.test(lower) && !priorities.includes('saving_money')) {
       priorities.push('saving_money');
     }
-    if (/\b(number|aqi|pm2.5|safe hours|आंकड़े|नियम)\b/i.test(lower) && !priorities.includes('understanding_numbers')) {
+    if (/\b(number|numbers|aqi|pm2.5|safe hours|forecast|data|आंकड़े|नियम)\b/i.test(lower) && !priorities.includes('understanding_numbers')) {
       priorities.push('understanding_numbers');
     }
-    if (/\b(smoke|emission|green|धुआं|प्रदूषण)\b/i.test(lower) && !priorities.includes('cutting_emissions')) {
+    if (/\b(smoke|emission|green|environment|pollution|clean air|धुआं|प्रदूषण)\b/i.test(lower) && !priorities.includes('cutting_emissions')) {
       priorities.push('cutting_emissions');
     }
     if (priorities.length > 0) {
@@ -197,7 +197,11 @@ export function mergeProfilePatch(
   patch: Partial<HouseholdProfile>
 ): Partial<HouseholdProfile> {
   if (patch.members) {
-    target.members = Array.from(new Set([...(target.members || []), ...patch.members]));
+    if (patch.members.length === 0) {
+      target.members = [];
+    } else {
+      target.members = Array.from(new Set([...(target.members || []), ...patch.members]));
+    }
   }
   if (patch.childAgeBand !== undefined) target.childAgeBand = patch.childAgeBand;
   if (patch.respiratoryOrHeart !== undefined) target.respiratoryOrHeart = patch.respiratoryOrHeart;
