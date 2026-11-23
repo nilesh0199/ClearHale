@@ -29,7 +29,7 @@ service cloud.firestore {
 
     // Explicitly deny everything else
     match /{document=**} {
-      allow read, write: false;
+      allow read, write: if false;
     }
   }
 }
