@@ -403,6 +403,11 @@ export function AskScreen() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: query,
+          history: messages.slice(-6).map((m) => ({
+            role: m.role === 'user' ? 'user' : 'assistant',
+            content: m.content,
+          })),
+
           language: profile.language,
           city: profile.city.name,
           pm2_5: airData.current.pm2_5,
@@ -494,6 +499,9 @@ export function AskScreen() {
       );
     } finally {
       setIsStreaming(false);
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 50);
     }
   };
 
@@ -907,9 +915,9 @@ export function AskScreen() {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 handleSendMessage();
+                textareaRef.current?.focus();
               }
             }}
-            disabled={isStreaming}
             rows={1}
             placeholder={
               profile.language === 'en'

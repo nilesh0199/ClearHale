@@ -41,15 +41,40 @@ function devLog(message: string, ...args: any[]): void {
   }
 }
 
+function getGeminiModel(): string {
+  const custom = process.env.GEMINI_MODEL?.trim();
+  if (custom && !custom.includes('3.5')) {
+    return custom;
+  }
+  return 'gemini-2.0-flash';
+}
+
+function getGroqModel(): string {
+  const custom = process.env.GROQ_MODEL?.trim();
+  if (custom) return custom;
+  return 'llama-3.3-70b-versatile';
+}
+
 /**
  * Determines primary and secondary provider order:
- * 1. Language-based routing if language is specified.
- * 2. Defaults to AI_PRIMARY env var (default: 'groq').
+ * 1. Checks which API keys are actually configured in the environment.
+ * 2. If only one provider's key is set (e.g. GEMINI_API_KEY on Vercel), prioritizes that provider.
+ * 3. If both are set, routes according to language capability (Groq for EN/HI, Gemini for regional).
  */
 export function getProviderOrder(language?: string): {
   primary: ProviderName;
   secondary: ProviderName;
 } {
+  const hasGroq = Boolean(process.env.GROQ_API_KEY?.trim());
+  const hasGemini = Boolean(process.env.GEMINI_API_KEY?.trim());
+
+  if (!hasGroq && hasGemini) {
+    return { primary: 'gemini', secondary: 'groq' };
+  }
+  if (hasGroq && !hasGemini) {
+    return { primary: 'groq', secondary: 'gemini' };
+  }
+
   const primary: ProviderName = getLanguageAiProvider(language);
   const secondary: ProviderName = primary === 'gemini' ? 'groq' : 'gemini';
   return { primary, secondary };
@@ -72,10 +97,9 @@ async function callGeminiStream(
   onFirstToken: () => void,
   onChunk: (text: string) => void
 ): Promise<void> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey) throw new Error('GEMINI_API_KEY is not set');
 
-  const modelName = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
   const genAI = new GoogleGenerativeAI(apiKey);
 
   const systemMessage =
@@ -85,33 +109,53 @@ async function callGeminiStream(
 
   const userMessages = messages.filter((m) => m.role !== 'system');
   const lastUserMessage = userMessages[userMessages.length - 1]?.content || '';
+  const conversationText = userMessages.length > 1
+    ? userMessages.map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n\n')
+    : lastUserMessage;
 
-  const model = genAI.getGenerativeModel({
-    model: modelName,
-    systemInstruction: systemMessage,
-    generationConfig: {
-      temperature: options.temperature ?? 0.2,
-      maxOutputTokens: options.maxTokens,
-      ...(options.jsonMode ? { responseMimeType: 'application/json' } : {}),
-    },
-  });
+  const preferredModel = getGeminiModel();
+  const modelsToTry = Array.from(new Set([preferredModel, 'gemini-2.0-flash', 'gemini-1.5-flash']));
+  let lastError: any = null;
 
-  const result = await model.generateContentStream(lastUserMessage);
+  for (const modelName of modelsToTry) {
+    try {
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        systemInstruction: systemMessage,
+        generationConfig: {
+          temperature: options.temperature ?? 0.2,
+          maxOutputTokens: options.maxTokens,
+          ...(options.jsonMode ? { responseMimeType: 'application/json' } : {}),
+        },
+      });
 
-  let hasEmittedFirst = false;
-  for await (const chunk of result.stream) {
-    if (signal.aborted) {
-      throw new Error('Gemini stream aborted');
-    }
-    const text = chunk.text();
-    if (text) {
-      if (!hasEmittedFirst) {
-        hasEmittedFirst = true;
-        onFirstToken();
+      const result = await model.generateContentStream(conversationText);
+
+      let hasEmittedFirst = false;
+      for await (const chunk of result.stream) {
+        if (signal.aborted) {
+          throw new Error('Gemini stream aborted');
+        }
+        const text = chunk.text();
+        if (text) {
+          if (!hasEmittedFirst) {
+            hasEmittedFirst = true;
+            onFirstToken();
+          }
+          onChunk(text);
+        }
       }
-      onChunk(text);
+      return; // Succeeded!
+    } catch (err: any) {
+      lastError = err;
+      devLog(`Gemini stream model [${modelName}] failed:`, err?.message || err);
+      if (!err?.message?.includes('404') && !err?.message?.includes('not found')) {
+        throw err;
+      }
     }
   }
+
+  if (lastError) throw lastError;
 }
 
 async function callGeminiGenerate(
@@ -119,10 +163,9 @@ async function callGeminiGenerate(
   options: AIOptions,
   signal: AbortSignal
 ): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey) throw new Error('GEMINI_API_KEY is not set');
 
-  const modelName = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
   const genAI = new GoogleGenerativeAI(apiKey);
 
   const systemMessage =
@@ -132,20 +175,40 @@ async function callGeminiGenerate(
 
   const userMessages = messages.filter((m) => m.role !== 'system');
   const lastUserMessage = userMessages[userMessages.length - 1]?.content || '';
+  const conversationText = userMessages.length > 1
+    ? userMessages.map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n\n')
+    : lastUserMessage;
 
-  const model = genAI.getGenerativeModel({
-    model: modelName,
-    systemInstruction: systemMessage,
-    generationConfig: {
-      temperature: options.temperature ?? 0.2,
-      maxOutputTokens: options.maxTokens,
-      ...(options.jsonMode ? { responseMimeType: 'application/json' } : {}),
-    },
-  });
+  const preferredModel = getGeminiModel();
+  const modelsToTry = Array.from(new Set([preferredModel, 'gemini-2.0-flash', 'gemini-1.5-flash']));
+  let lastError: any = null;
 
-  const response = await model.generateContent(lastUserMessage);
-  if (signal.aborted) throw new Error('Gemini generate aborted');
-  return response.response.text();
+  for (const modelName of modelsToTry) {
+    try {
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        systemInstruction: systemMessage,
+        generationConfig: {
+          temperature: options.temperature ?? 0.2,
+          maxOutputTokens: options.maxTokens,
+          ...(options.jsonMode ? { responseMimeType: 'application/json' } : {}),
+        },
+      });
+
+      const response = await model.generateContent(conversationText);
+      if (signal.aborted) throw new Error('Gemini generate aborted');
+      return response.response.text();
+    } catch (err: any) {
+      lastError = err;
+      devLog(`Gemini generate model [${modelName}] failed:`, err?.message || err);
+      if (!err?.message?.includes('404') && !err?.message?.includes('not found')) {
+        throw err;
+      }
+    }
+  }
+
+  if (lastError) throw lastError;
+  return '';
 }
 
 // --- GROQ IMPLEMENTATION (OpenAI-compatible) ---
@@ -156,10 +219,10 @@ async function callGroqStream(
   onFirstToken: () => void,
   onChunk: (text: string) => void
 ): Promise<void> {
-  const apiKey = process.env.GROQ_API_KEY;
+  const apiKey = (process.env.GROQ_API_KEY || '').trim();
   if (!apiKey) throw new Error('GROQ_API_KEY is not set');
 
-  const modelName = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+  const modelName = getGroqModel();
 
   const groqMessages = [...messages];
   if (options.systemPrompt && !groqMessages.some((m) => m.role === 'system')) {
@@ -242,10 +305,10 @@ async function callGroqGenerate(
   options: AIOptions,
   signal: AbortSignal
 ): Promise<string> {
-  const apiKey = process.env.GROQ_API_KEY;
+  const apiKey = (process.env.GROQ_API_KEY || '').trim();
   if (!apiKey) throw new Error('GROQ_API_KEY is not set');
 
-  const modelName = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+  const modelName = getGroqModel();
 
   const groqMessages = [...messages];
   if (options.systemPrompt && !groqMessages.some((m) => m.role === 'system')) {

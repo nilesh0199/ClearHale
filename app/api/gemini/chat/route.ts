@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       message,
+      history = [],
       language = 'en',
       city = 'Delhi',
       pm2_5 = 180,
@@ -103,8 +104,15 @@ ${JSON.stringify(actionsData, null, 2)}
 6. Houseplants and cloth masks/scarves are scientifically verified MYTHS for PM2.5 smog protection. Explicitly clarify this if asked.
 7. Keep answers calm, concise, actionable, and structured with bullet points. Tone should be reassuring and protective.`;
 
+    const conversationHistory: AIMessage[] = Array.isArray(history)
+      ? (history as any[])
+          .filter((h) => h && (h.role === 'user' || h.role === 'assistant') && typeof h.content === 'string')
+          .slice(-6)
+      : [];
+
     const messages: AIMessage[] = [
       { role: 'system', content: systemPrompt },
+      ...conversationHistory,
       { role: 'user', content: message },
     ];
 
