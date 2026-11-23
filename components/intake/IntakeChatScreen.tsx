@@ -419,7 +419,7 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
 
   return (
     <div
-      className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-6 sm:p-10 select-none bg-background text-foreground pb-12 overflow-y-auto overscroll-y-contain touch-pan-y [scrollbar-width:thin]"
+      className="min-h-screen max-w-lg mx-auto flex flex-col justify-between p-6 sm:p-10 select-none bg-background text-foreground"
       role="region"
       aria-label="Personalisation Intake"
     >

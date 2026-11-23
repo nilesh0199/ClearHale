@@ -77,12 +77,12 @@ export function ThemeStep() {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-4 sm:p-8 select-none pb-36 sm:pb-40">
+    <div className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-4 sm:p-8 select-none">
       <div>
         {/* Back navigation */}
         <button
           onClick={() => setOnboardingStep('welcome')}
-          className="mb-2 sm:mb-4 min-h-[44px] px-2 -ml-2 rounded-lg text-muted hover:text-foreground transition-colors flex items-center gap-1.5 text-sm cursor-pointer"
+          className="mb-4 sm:mb-6 min-h-[44px] px-2 -ml-2 rounded-lg text-muted hover:text-foreground transition-colors flex items-center gap-1.5 text-sm cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
           <span>Back</span>
@@ -101,8 +101,8 @@ export function ThemeStep() {
           </p>
         </motion.div>
 
-        {/* 3 Tappable Theme Preview Cards */}
-        <div className="my-4 sm:my-6 space-y-3 sm:space-y-3.5 pb-2">
+        {/* 3 Tappable Theme Preview Cards with React Bits SpotlightCard */}
+        <div className="mt-5 sm:mt-8 space-y-3 sm:space-y-3.5">
           {themes.map((item, idx) => {
             const isSelected = theme === item.id;
             return (
@@ -180,30 +180,28 @@ export function ThemeStep() {
         </div>
       </div>
 
-      {/* Pinned Bottom Actions */}
-      <div className="fixed bottom-0 inset-x-0 z-30 bg-background/95 backdrop-blur-md border-t border-card-border/60 p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-soft">
-        <div className="max-w-lg mx-auto space-y-2">
-          <motion.button
-            whileHover={shouldReduceMotion ? undefined : { scale: 1.01 }}
-            whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}
-            onClick={handleContinue}
-            className={`w-full min-h-[48px] px-6 py-3.5 rounded-card font-medium shadow-soft transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 ${
-              profile.accentMode === 'mono'
-                ? 'bg-neutral-900 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950 hover:bg-neutral-800 focus-visible:ring-neutral-400'
-                : 'bg-teal-accent text-white hover:bg-teal-hover focus-visible:ring-teal-accent'
-            }`}
-          >
-            <span>Continue</span>
-            <ArrowRight className="w-4 h-4" strokeWidth={1.75} />
-          </motion.button>
+      {/* Bottom Actions - sticky on all viewports, shifted up on mobile view */}
+      <div className="pt-3 pb-[max(2.25rem,env(safe-area-inset-bottom)+1.25rem)] sm:pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-4 sm:mt-6 space-y-2">
+        <motion.button
+          whileHover={shouldReduceMotion ? undefined : { scale: 1.01 }}
+          whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}
+          onClick={handleContinue}
+          className={`w-full min-h-[48px] px-6 py-3.5 rounded-card font-medium shadow-soft transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 ${
+            profile.accentMode === 'mono'
+              ? 'bg-neutral-900 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950 hover:bg-neutral-800 focus-visible:ring-neutral-400'
+              : 'bg-teal-accent text-white hover:bg-teal-hover focus-visible:ring-teal-accent'
+          }`}
+        >
+          <span>Continue</span>
+          <ArrowRight className="w-4 h-4" strokeWidth={1.75} />
+        </motion.button>
 
-          <button
-            onClick={handleSkip}
-            className="w-full min-h-[38px] py-1 text-center text-xs font-medium text-muted hover:text-foreground transition-colors cursor-pointer"
-          >
-            Skip (defaults to System)
-          </button>
-        </div>
+        <button
+          onClick={handleSkip}
+          className="w-full min-h-[40px] py-1 text-center text-xs font-medium text-muted hover:text-foreground transition-colors cursor-pointer"
+        >
+          Skip (defaults to System)
+        </button>
       </div>
     </div>
   );

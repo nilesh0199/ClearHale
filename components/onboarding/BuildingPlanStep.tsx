@@ -35,7 +35,7 @@ export function BuildingPlanStep() {
   ];
 
   return (
-    <div className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center p-6 text-center select-none overflow-y-auto overscroll-y-contain touch-pan-y [scrollbar-width:thin]">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center select-none">
       <div className="flex flex-col items-center max-w-sm">
         <BreathingRing
           colorHex="var(--teal-accent)"

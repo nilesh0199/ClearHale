@@ -41,7 +41,7 @@ export function WelcomeStep() {
   return (
     <div
       onClick={handleScreenTap}
-      className="min-h-screen min-h-[100dvh] w-full flex flex-col items-center justify-center p-6 py-8 sm:py-12 bg-background relative overflow-y-auto overscroll-y-contain touch-pan-y select-none cursor-pointer [scrollbar-width:thin]"
+      className="min-h-screen min-h-[100dvh] w-full flex items-center justify-center p-6 bg-background relative overflow-hidden select-none cursor-pointer"
       role="region"
       aria-label="Welcome screen"
     >
@@ -74,8 +74,8 @@ export function WelcomeStep() {
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
           >
             <ClearhaleMarkFull
-              size={144}
-              className="w-28 h-28 sm:w-44 sm:h-44 transition-transform"
+              size={168}
+              className="w-36 h-36 sm:w-44 sm:h-44 transition-transform"
               introAnimation={!disableEffects && !isSkipped && !isIntroDone}
               isBreathing={isSkipped || isIntroDone}
             />
@@ -117,7 +117,7 @@ export function WelcomeStep() {
             delay: disableEffects || isSkipped ? 0 : 2.0,
             ease: [0.16, 1, 0.3, 1],
           }}
-          className="mt-6 sm:mt-8 w-full space-y-3 pb-6 sm:pb-0"
+          className="mt-8 w-full space-y-3"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Primary Button: Get started */}

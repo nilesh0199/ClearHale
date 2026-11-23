@@ -257,10 +257,10 @@ export function AppLayout() {
     }
   }, [activeTab, onboardingStep, isIntakeChatOpen]);
 
-  // Handle Onboarding Steps (wrapped in a dedicated smooth container for any screen height)
+  // Handle Onboarding Steps (wrapped in a dedicated smooth scroll container for any screen height)
   if (onboardingStep !== 'complete') {
     return (
-      <div className="min-h-screen min-h-[100dvh] w-full bg-background text-foreground flex flex-col overflow-y-auto overscroll-y-contain">
+      <div className="h-screen h-[100dvh] max-h-screen w-full bg-background text-foreground overflow-y-auto overscroll-contain">
         {onboardingStep === 'welcome' && <WelcomeStep />}
         {onboardingStep === 'theme' && <ThemeStep />}
         {onboardingStep === 'language' && <LanguageStep />}
