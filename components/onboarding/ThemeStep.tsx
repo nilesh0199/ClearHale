@@ -77,7 +77,7 @@ export function ThemeStep() {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-4 sm:p-8 select-none">
+    <div className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-4 sm:p-8 select-none overflow-y-auto overscroll-y-contain touch-pan-y [scrollbar-width:thin]">
       <div>
         {/* Back navigation */}
         <button
@@ -102,7 +102,7 @@ export function ThemeStep() {
         </motion.div>
 
         {/* 3 Tappable Theme Preview Cards with React Bits SpotlightCard */}
-        <div className="mt-5 sm:mt-8 space-y-3 sm:space-y-3.5">
+        <div className="mt-5 sm:mt-8 space-y-3 sm:space-y-3.5 pb-28 sm:pb-32">
           {themes.map((item, idx) => {
             const isSelected = theme === item.id;
             return (
@@ -181,7 +181,7 @@ export function ThemeStep() {
       </div>
 
       {/* Bottom Actions - sticky on all viewports */}
-      <div className="pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-4 sm:mt-6 space-y-2">
+      <div className="pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-auto shrink-0 space-y-2">
         <motion.button
           whileHover={shouldReduceMotion ? undefined : { scale: 1.01 }}
           whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}

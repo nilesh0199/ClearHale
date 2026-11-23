@@ -195,7 +195,7 @@ export function AppLayout() {
   // Handle Onboarding Steps (wrapped in a dedicated smooth scroll container for any screen height)
   if (onboardingStep !== 'complete') {
     return (
-      <div className="h-screen h-[100dvh] max-h-screen w-full bg-background text-foreground overflow-y-auto overscroll-contain">
+      <div className="min-h-screen min-h-[100dvh] w-full bg-background text-foreground overflow-y-auto overscroll-y-contain touch-pan-y [scrollbar-width:thin]">
         {onboardingStep === 'welcome' && <WelcomeStep />}
         {onboardingStep === 'theme' && <ThemeStep />}
         {onboardingStep === 'language' && <LanguageStep />}

@@ -12,7 +12,7 @@ export function IntakeChoiceStep() {
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <div className="min-h-screen max-w-lg mx-auto flex flex-col justify-between p-6 sm:p-10 select-none">
+    <div className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-6 sm:p-10 select-none pb-12 overflow-y-auto overscroll-y-contain touch-pan-y [scrollbar-width:thin]">
       <div>
         {/* Back navigation */}
         <button

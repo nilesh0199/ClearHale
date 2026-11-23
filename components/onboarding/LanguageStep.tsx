@@ -18,7 +18,7 @@ export function LanguageStep() {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-4 sm:p-8 select-none">
+    <div className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-4 sm:p-8 select-none overflow-y-auto overscroll-y-contain touch-pan-y [scrollbar-width:thin]">
       <div>
         {/* Back navigation */}
         <button
@@ -43,7 +43,7 @@ export function LanguageStep() {
         </motion.div>
 
         {/* 10 Language Cards with React Bits SpotlightCard */}
-        <div className="mt-5 sm:mt-8 grid grid-cols-2 gap-2.5 sm:gap-3.5">
+        <div className="mt-5 sm:mt-8 grid grid-cols-2 gap-2.5 sm:gap-3.5 pb-28 sm:pb-32">
           {SUPPORTED_LANGUAGES.map((lang, idx) => {
             const isSelected = profile.language === lang.code;
             return (
@@ -98,7 +98,7 @@ export function LanguageStep() {
       </div>
 
       {/* Bottom Continue button - sticky on all viewports so it is never hidden offscreen */}
-      <div className="pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-4 sm:mt-6">
+      <div className="pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-auto shrink-0">
         <motion.button
           whileHover={shouldReduceMotion ? undefined : { scale: 1.01 }}
           whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}

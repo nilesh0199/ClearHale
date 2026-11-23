@@ -79,8 +79,8 @@ export function LocationStep() {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-4 sm:p-8 select-none">
-      <div>
+    <div className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-4 sm:p-8 select-none overflow-y-auto overscroll-y-contain touch-pan-y [scrollbar-width:thin]">
+      <div className="pb-28 sm:pb-32">
         <button
           onClick={() => setOnboardingStep('language')}
           className="mb-4 sm:mb-6 min-h-[44px] px-2 -ml-2 rounded-lg text-muted hover:text-foreground transition-colors flex items-center gap-1.5 text-sm cursor-pointer"
@@ -218,7 +218,7 @@ export function LocationStep() {
       </div>
 
       {/* Continue - sticky on all viewports */}
-      <div className="pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-4 sm:mt-6">
+      <div className="pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-auto shrink-0">
         <button
           onClick={() => setOnboardingStep('intake-choice')}
           className={`w-full min-h-[48px] px-6 py-3.5 rounded-card font-medium shadow-soft transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 ${

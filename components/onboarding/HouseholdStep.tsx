@@ -63,8 +63,8 @@ export function HouseholdStep() {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-4 sm:p-8 select-none">
-      <div className="space-y-6">
+    <div className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-4 sm:p-8 select-none overflow-y-auto overscroll-y-contain touch-pan-y [scrollbar-width:thin]">
+      <div className="space-y-6 pb-36 sm:pb-40">
         {/* Navigation & Header */}
         <div>
           <button
@@ -238,7 +238,7 @@ export function HouseholdStep() {
       </div>
 
       {/* Bottom actions - sticky on all viewports */}
-      <div className="pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-4 sm:mt-6 space-y-2">
+      <div className="pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-auto shrink-0 space-y-2">
         <button
           onClick={handleFinish}
           className={`w-full min-h-[48px] px-6 py-3.5 rounded-card font-medium shadow-soft transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 ${
