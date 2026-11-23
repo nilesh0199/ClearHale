@@ -50,15 +50,43 @@ export async function POST(req: NextRequest) {
       language
     );
 
-    let personaGuidance = 'balanced household protection (sealed windows, filtration, avoiding morning smog)';
-    if (familyView === 'child') {
-      personaGuidance = 'infant and young child safety, outdoor play and school run timing, clean bedroom filtration, and note that respirators are not for children under 2';
-    } else if (familyView === 'elderly') {
-      personaGuidance = 'a cleaner-air room, keeping medications and rescue inhalers accessible, avoiding physical exertion, and knowing when to seek urgent care';
-    } else if (familyView === 'pregnant') {
-      personaGuidance = 'maternal and fetal protection, PM2.5 placental barrier risks, continuous HEPA bedroom filtration, avoiding morning smog/traffic exposure, wearing well-fitted N95 for essential clinical visits, eliminating indoor incense and chulha smoke, and staying hydrated';
-    } else if (familyView === 'outdoor_worker') {
-      personaGuidance = 'tight-fitting N95 seal check, frequent indoor rest-break timing, and shifting heavy physical labor to cleaner afternoon hours';
+    let personaGuidance = '';
+    if (outdoorLevel === 'go') {
+      if (familyView === 'child') {
+        personaGuidance = 'Air is clean and safe for children. Encourage outdoor playtime, playground sports, and fresh air.';
+      } else if (familyView === 'elderly') {
+        personaGuidance = 'Air is gentle and comfortable. Encourage a pleasant outdoor garden walk or peaceful stroll.';
+      } else if (familyView === 'pregnant') {
+        personaGuidance = 'Air is safe and refreshing. Encourage gentle walks, relaxing outside, and opening windows for fresh air.';
+      } else if (familyView === 'outdoor_worker') {
+        personaGuidance = 'Working conditions are safe and comfortable. No mask required unless around dust; stay hydrated.';
+      } else {
+        personaGuidance = 'Air is pleasant and safe. Encourage opening windows for natural home ventilation, outdoor exercise, and errands.';
+      }
+    } else if (outdoorLevel === 'light-only') {
+      if (familyView === 'child') {
+        personaGuidance = 'Mild haze. Kids can play outside normally, but take breaks if running fast or sensitive to dust.';
+      } else if (familyView === 'elderly') {
+        personaGuidance = 'Mild haze. Safe for light walks; avoid heavy physical exertion and keep rescue inhalers close.';
+      } else if (familyView === 'pregnant') {
+        personaGuidance = 'Mild haze. Safe for routine tasks; steer clear of heavy traffic fumes and dusty intersections.';
+      } else if (familyView === 'outdoor_worker') {
+        personaGuidance = 'Manageable outdoor conditions. Take periodic shade breaks and drink plenty of water.';
+      } else {
+        personaGuidance = 'Mild haze. Normal daily routines are fine; pace heavy sports or shift intense workouts indoors.';
+      }
+    } else {
+      if (familyView === 'child') {
+        personaGuidance = 'Heavy smog. Protect children by keeping them indoors in a filtered room; delay park visits.';
+      } else if (familyView === 'elderly') {
+        personaGuidance = 'Unhealthy smog. Stay comfortably indoors in a filtered room, keep medicines close, avoid outdoor walks.';
+      } else if (familyView === 'pregnant') {
+        personaGuidance = 'High pollution. Protect maternal health by resting indoors in filtered air; wear an N95 if stepping out.';
+      } else if (familyView === 'outdoor_worker') {
+        personaGuidance = 'Hazardous smog. Wear a snug-fitting N95 respirator and take regular breaks in cleaner indoor spaces.';
+      } else {
+        personaGuidance = 'Smog is elevated. Keep windows closed, run indoor filtration, and wear an N95 respirator if stepping out.';
+      }
     }
 
     const isRegional = language !== 'en';
@@ -80,17 +108,18 @@ then a short 1-sentence English version. Both must be present.`;
         ? `measured reading from government monitoring station "${stationName || 'Nearby Station'}" (${timestamp || 'recent'})`
         : `forecast model estimate from Open-Meteo (${timestamp || 'current hour'})`;
 
-    const prompt = `Write ONE concise, actionable decision sentence for the next 2 hours for ${familyView === 'whole_family' ? 'a family' : familyView} in ${city}.
+    const prompt = `Write ONE warm, friendly, caring decision (1 to 2 short sentences max) for the next 2 hours for ${familyView === 'whole_family' ? 'a family' : familyView} in ${city}.
 Current PM2.5 is ${pm2_5} µg/m³ (Band: ${aqiBand}), based on ${sourceContext}.
-Data Type: ${dataType}.
-Focus perspective: ${familyView}.
-Specific persona rules to emphasize: ${personaGuidance}.
+Outdoor Air Quality Status: ${outdoorLevel === 'go' ? 'FRESH & SAFE (open windows, outdoor exercise safe)' : outdoorLevel === 'light-only' ? 'MODERATE (light activities ok)' : 'UNHEALTHY SMOG (keep windows shut, run filter)'}.
+Guidance perspective: ${personaGuidance}.
 ${languageRule}
-MANDATORY DATA INTEGRITY RULES:
-- Maximum 2 sentences total. Be calm, directive, and scientific.
-- NEVER invent, hallucinate, or alter any PM2.5 or AQI number. Use ONLY the provided PM2.5 value.
-- If data type is "estimate", say "forecast estimate" or "model estimate" if referencing air quality numbers.
-- Ground directly in the actions catalog.`;
+CRITICAL TONE & ACCURACY RULES:
+- Sound like a warm, supportive, caring friend or family doctor who genuinely cares.
+- Keep sentences short (under 16 words each). Speak directly using 'you' or 'your family'.
+- NEVER use bureaucratic preamble like "With the model estimate indicating..." or "rely on filtration systems for balanced household protection".
+- CRITICAL: Match the air quality! If air is Safe (${outdoorLevel === 'go'}), CELEBRATE the clean air (open windows, go outdoors). NEVER say to seal windows or avoid outdoor activities when air is clean!
+- If air is Unhealthy (${outdoorLevel === 'avoid'}), gently advise staying indoors with air filtration.
+- NEVER invent, hallucinate, or alter any PM2.5 or AQI number.`;
 
     const messages: AIMessage[] = [{ role: 'user', content: prompt }];
 

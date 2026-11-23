@@ -152,6 +152,12 @@ function getOfflineChatReply(message: string, language: string, pm2_5: number): 
   const lower = message.toLowerCase();
 
   const getEnglish = () => {
+    if (pm2_5 <= 60) {
+      if (lower.includes('office') || lower.includes('wfh') || lower.includes('commute') || lower.includes('outside')) {
+        return `Air is in the Pleasant / Good range (${pm2_5} µg/m³):\n\n• **Office & Commuting:** It is completely safe to commute to office today! Outdoor air quality is comfortable and well within safe limits.\n• **Indoor Ventilation:** Feel free to open windows for natural fresh air ventilation.\n• **Outdoor Activities:** Walking, jogging, and outdoor exercise are safe to enjoy without needing a mask.`;
+      }
+      return `Good Air Guidance for current PM2.5 (${pm2_5} µg/m³):\n\n1. **Air is Clean & Safe:** Current levels are comfortable for normal everyday activities.\n2. **Open Windows:** Perfect time for natural ventilation to refresh indoor air.\n3. **Outdoor Time:** Enjoy outdoor walks, errands, and sports safely without masks.\n4. **Sensitive Members:** Safe for children and seniors to spend time outside.`;
+    }
     if (lower.includes('purifier') || lower.includes('filter')) {
       return `Evidence-based Air Cleaning Guidance:\n\n• **Portable True HEPA Purifier:** May reduce indoor PM2.5 by about 50-80% when run continuously with doors and windows closed.\n• **Low-Cost DIY Box-Fan Filter:** Studies demonstrate about 40-70% particle reduction using MERV-13 media taped to a box fan. (Safety note: Always check fan temperature, use fused plugs, and never leave running unattended or while sleeping).\n• **Sealing Windows & Doors:** Keeping windows shut keeps indoor PM2.5 at roughly 55-60% of outdoor levels, meaning active filtration is still recommended.`;
     }

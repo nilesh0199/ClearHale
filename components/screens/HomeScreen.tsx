@@ -743,6 +743,92 @@ export function HomeScreen() {
     }
   };
 
+  // 3-second intro card whenever persona tab changes
+  const [isDecisionTransitioning, setIsDecisionTransitioning] = useState(false);
+  const decisionTransitionTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setIsDecisionTransitioning(true);
+    if (decisionTransitionTimerRef.current) {
+      clearTimeout(decisionTransitionTimerRef.current);
+    }
+    decisionTransitionTimerRef.current = setTimeout(() => {
+      setIsDecisionTransitioning(false);
+    }, 3000);
+
+    return () => {
+      if (decisionTransitionTimerRef.current) {
+        clearTimeout(decisionTransitionTimerRef.current);
+      }
+    };
+  }, [activeFamilyView]);
+
+  const getNext2HoursIntro = (view: FamilyView, lang: string) => {
+    const personaMap: Record<string, Record<FamilyView, string>> = {
+      hi: {
+        whole_family: 'पूरे परिवार के लिए',
+        child: 'शिशु और बच्चों के लिए',
+        elderly: 'बुजुर्गों के लिए',
+        pregnant: 'गर्भवती माताओं के लिए',
+        outdoor_worker: 'बाहर काम करने वालों के लिए',
+      },
+      mr: {
+        whole_family: 'संपूर्ण कुटुंबासाठी',
+        child: 'लहान मुलांसाठी',
+        elderly: 'ज्येष्ठ नागरिकांसाठी',
+        pregnant: 'गर्भवती मातांसाठी',
+        outdoor_worker: 'बाहेर काम करणाऱ्यांसाठी',
+      },
+      bn: {
+        whole_family: 'পুরো পরিবারের জন্য',
+        child: 'শিশু ও বাচ্চাদের জন্য',
+        elderly: 'প্রবীণদের জন্য',
+        pregnant: 'গর্ভবতী মায়েদের জন্য',
+        outdoor_worker: 'বাইরে কর্মরতদের জন্য',
+      },
+      ta: {
+        whole_family: 'முழு குடும்பத்திற்கும்',
+        child: 'குழந்தைகளுக்கான',
+        elderly: 'முதியவர்களுக்கான',
+        pregnant: 'கர்ப்பிணிப் பெண்களுக்கு',
+        outdoor_worker: 'வெளியில் வேலை செய்வோருக்கு',
+      },
+      te: {
+        whole_family: 'మొత్తం కుటుంబం కోసం',
+        child: 'పిల్లల కోసం',
+        elderly: 'పెద్దల కోసం',
+        pregnant: 'గర్భిణుల కోసం',
+        outdoor_worker: 'బయట పనిచేసేవారి కోసం',
+      },
+      en: {
+        whole_family: 'Whole Family',
+        child: 'Baby & Kids',
+        elderly: 'Elderly Members',
+        pregnant: 'Expecting Mothers',
+        outdoor_worker: 'Outdoor Workers',
+      },
+    };
+
+    const personaName = personaMap[lang]?.[view] || personaMap.en[view] || 'Whole Family';
+
+    if (lang === 'hi') {
+      return {
+        title: `अगले 2 घंटे का निर्णय: ${personaName}...`,
+        subtitle: 'ताज़ा हवा की गुणवत्ता के अनुसार सुरक्षित सलाह तैयार हो रही है',
+      };
+    }
+    if (lang === 'mr') {
+      return {
+        title: `पुढील २ तासांचा निर्णय: ${personaName}...`,
+        subtitle: 'हवेच्या गुणवत्तेनुसार सुरक्षित सल्ला तयार होत आहे',
+      };
+    }
+    return {
+      title: `Next 2 hours decision for ${personaName}...`,
+      subtitle: 'Matching guidance with current air quality',
+    };
+  };
+
   // Fetch or update Next 2 hours AI text whenever air data, persona, city, or language changes
   useEffect(() => {
     let isCancelled = false;
@@ -1376,7 +1462,7 @@ export function HomeScreen() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {loadingDecision && (
+            {loadingDecision && !isDecisionTransitioning && (
               <span className="text-[11px] text-teal-accent/80 flex items-center gap-1">
                 <RefreshCw className="w-3 h-3 animate-spin" strokeWidth={1.75} />
                 <Bi k="home.refining" en="Refining..." layout="inline" />
@@ -1399,63 +1485,107 @@ export function HomeScreen() {
           </div>
         </div>
         <AnimatePresence mode="wait">
-          <motion.div
-            key={activeFamilyView + '-' + (next2HoursText || '')}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2 }}
-          >
-            {(() => {
-              const fullText =
-                next2HoursText ||
-                getFallbackNext2Hours(
-                  currentBand.key,
-                  activeFamilyView,
-                  profile.language
-                );
-              const isCurrentSpeaking = activeSpeakingId === 'next_2_hours';
-              const parts = fullText.split('---EN---');
-              const nativePart = parts[0]?.trim();
-              const enPart = parts[1]?.trim();
+          {isDecisionTransitioning ? (
+            <motion.div
+              key={`intro-${activeFamilyView}`}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.25 }}
+              onClick={() => setIsDecisionTransitioning(false)}
+              className="py-3 px-1 flex items-center justify-between gap-3 cursor-pointer group"
+              title="Click to view full decision immediately"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-teal-accent/15 border border-teal-accent/30 flex items-center justify-center text-teal-accent shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                  {activeFamilyView === 'child' ? (
+                    <Baby className="w-5 h-5" strokeWidth={1.75} />
+                  ) : activeFamilyView === 'elderly' ? (
+                    <HeartPulse className="w-5 h-5" strokeWidth={1.75} />
+                  ) : activeFamilyView === 'pregnant' ? (
+                    <Heart className="w-5 h-5" strokeWidth={1.75} />
+                  ) : activeFamilyView === 'outdoor_worker' ? (
+                    <HardHat className="w-5 h-5" strokeWidth={1.75} />
+                  ) : (
+                    <Users className="w-5 h-5" strokeWidth={1.75} />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground tracking-tight flex items-center gap-2">
+                    <span className="truncate">{getNext2HoursIntro(activeFamilyView, profile.language).title}</span>
+                    <span className="flex h-2 w-2 relative shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-accent opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-accent" />
+                    </span>
+                  </h3>
+                  <p className="text-xs text-muted mt-0.5 truncate font-normal">
+                    {getNext2HoursIntro(activeFamilyView, profile.language).subtitle}
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] text-muted font-medium bg-card-subtle px-2 py-0.5 rounded-full border border-card-border shrink-0 hidden sm:inline-flex">
+                3s preview
+              </span>
+            </motion.div>
+          ) : (
+            <motion.div
+              key={activeFamilyView + '-' + (next2HoursText || '')}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
+            >
+              {(() => {
+                const fullText =
+                  next2HoursText ||
+                  getFallbackNext2Hours(
+                    currentBand.key,
+                    activeFamilyView,
+                    profile.language
+                  );
+                const isCurrentSpeaking = activeSpeakingId === 'next_2_hours';
+                const parts = fullText.split('---EN---');
+                const nativePart = parts[0]?.trim();
+                const enPart = parts[1]?.trim();
 
-              if (enPart && profile.language !== 'en') {
-                return (
-                  <div className="space-y-2">
-                    <p className="text-sm sm:text-base text-foreground font-medium leading-relaxed">
-                      {renderHighlightedSentences(
-                        nativePart,
-                        isCurrentSpeaking,
-                        currentSentenceIndex,
-                        currentSentences
-                      )}
-                    </p>
-                    <div className="border-t border-teal-accent/20 pt-1.5">
-                      <p className="text-xs text-muted leading-relaxed font-normal">
+                if (enPart && profile.language !== 'en') {
+                  return (
+                    <div className="space-y-2">
+                      <p className="text-base sm:text-lg text-foreground font-semibold sm:font-medium leading-relaxed">
                         {renderHighlightedSentences(
-                          enPart,
+                          nativePart,
                           isCurrentSpeaking,
                           currentSentenceIndex,
                           currentSentences
                         )}
                       </p>
+                      <div className="border-t border-teal-accent/20 pt-1.5">
+                        <p className="text-xs sm:text-sm text-muted leading-relaxed font-normal">
+                          {renderHighlightedSentences(
+                            enPart,
+                            isCurrentSpeaking,
+                            currentSentenceIndex,
+                            currentSentences
+                          )}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                );
-              }
+                  );
+                }
 
-              return (
-                <p className="text-sm sm:text-base text-foreground font-medium leading-relaxed">
-                  {renderHighlightedSentences(
-                    nativePart || fullText,
-                    isCurrentSpeaking,
-                    currentSentenceIndex,
-                    currentSentences
-                  )}
-                </p>
-              );
-            })()}
-          </motion.div>
+                return (
+                  <p className="text-base sm:text-lg text-foreground font-semibold sm:font-medium leading-relaxed">
+                    {renderHighlightedSentences(
+                      nativePart || fullText,
+                      isCurrentSpeaking,
+                      currentSentenceIndex,
+                      currentSentences
+                    )}
+                  </p>
+                );
+              })()}
+            </motion.div>
+          )}
         </AnimatePresence>
       </SpotlightCard>
 
