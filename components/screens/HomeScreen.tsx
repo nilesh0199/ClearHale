@@ -1202,7 +1202,13 @@ export function HomeScreen() {
             </div>
 
             {/* Plain Language Status Line & Animated Persona-Specific Risk Note */}
-            <div className={`${isCompact ? 'mt-2 space-y-1.5' : 'mt-4 space-y-2'} max-w-lg text-center w-full my-auto`}>
+            <div
+              className={`${
+                isCompact
+                  ? 'mt-2 space-y-1.5'
+                  : 'mt-4 lg:mt-0 lg:my-auto lg:translate-y-7 space-y-2'
+              } max-w-lg text-center w-full my-auto`}
+            >
               <p className={`${isCompact ? 'text-xs sm:text-sm leading-snug' : 'text-sm sm:text-base leading-relaxed'} font-medium text-foreground`}>
                 {currentBand.statusLine}
               </p>
