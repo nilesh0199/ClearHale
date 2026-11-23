@@ -1154,7 +1154,7 @@ export function ProfileScreen() {
           </h2>
         </div>
         <p className="text-xs sm:text-sm text-muted leading-relaxed">
-          Air forecast data provided by Open-Meteo, a forecast model estimate. Clearhale provides science-backed environmental guidance for cleaner indoor air.
+          Real live air quality data powered by OpenAQ from official government ground monitoring stations, with forecast models by Open-Meteo. Clearhale provides science-backed environmental guidance for cleaner indoor air.
         </p>
       </SpotlightCard>
 
