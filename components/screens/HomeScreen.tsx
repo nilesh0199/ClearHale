@@ -1090,7 +1090,7 @@ export function HomeScreen() {
       {/* Row 3: Two-Column Body (Left ring card fixed in view, Right column scrolls) */}
       <div className="w-full min-h-0 h-full overflow-hidden px-0 lg:px-8 pt-0 lg:pt-4 pb-0">
         <div className="w-full max-w-5xl mx-auto h-full min-h-0">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start lg:items-stretch h-full min-h-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start lg:items-stretch h-full min-h-0 min-w-0 max-w-full">
             {/* Left Column: Center Breathing Ring & Air Severity Card */}
             <div
               ref={leftColRef}
@@ -1291,7 +1291,7 @@ export function HomeScreen() {
               role="region"
               id="recommendations-container" aria-label="Recommendations"
               onKeyDown={handleRightColKeyDown}
-              className="lg:col-span-7 space-y-6 h-full min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-2.5 pb-0 lg:pb-32 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-accent/70 focus-visible:ring-offset-2 rounded-2xl desktop-scroll-slim"
+              className="min-w-0 max-w-full lg:col-span-7 space-y-6 h-full min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-2.5 pb-0 lg:pb-32 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-accent/70 focus-visible:ring-offset-2 rounded-2xl desktop-scroll-slim"
             >
 
       {/* "Next 2 Hours" Clear Decision Card */}
@@ -1600,7 +1600,7 @@ export function HomeScreen() {
       <SpotlightCard
         id="forecast-section"
         spotlightColor="rgba(45, 212, 191, 0.1)"
-        className="scroll-mt-4 bg-card rounded-card border border-card-border shadow-soft p-5"
+        className="scroll-mt-4 bg-card rounded-card border border-card-border shadow-soft p-5 min-w-0 max-w-full overflow-hidden"
       >
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <div className="flex items-center gap-2">

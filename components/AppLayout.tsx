@@ -59,6 +59,23 @@ export function AppLayout() {
   const mobileBtnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [mobilePill, setMobilePill] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const mainRef = useRef<HTMLElement>(null);
+  const [showDesktopSiteTip, setShowDesktopSiteTip] = useState(false);
+
+  // Detect if mobile browser has "Desktop site" toggled on (forces innerWidth to ~980px while physical screen.width is ~360-412px)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const checkDesktopSite = () => {
+      const isDesktopModeOnPhone =
+        window.innerWidth > 600 &&
+        window.screen.width > 0 &&
+        window.innerWidth > window.screen.width + 120 &&
+        (navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
+      setShowDesktopSiteTip(isDesktopModeOnPhone);
+    };
+    checkDesktopSite();
+    window.addEventListener('resize', checkDesktopSite);
+    return () => window.removeEventListener('resize', checkDesktopSite);
+  }, []);
 
   // Disable automatic browser scroll restoration for seamless single-page tab transitions
   useEffect(() => {
@@ -196,6 +213,21 @@ export function AppLayout() {
   if (onboardingStep !== 'complete') {
     return (
       <div className="h-screen h-[100dvh] max-h-screen w-full bg-background text-foreground overflow-y-auto overscroll-contain">
+        {showDesktopSiteTip && (
+          <div className="bg-amber-500/15 border-b border-amber-500/30 text-amber-900 dark:text-amber-200 px-4 py-2.5 text-xs flex items-center justify-between gap-3 sticky top-0 z-50 backdrop-blur-md">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">📱 'Desktop Site' Mode Detected:</span>
+              <span>For normal full-size mobile layout, uncheck <strong>'Desktop site'</strong> in your browser menu (⋮).</span>
+            </div>
+            <button
+              onClick={() => setShowDesktopSiteTip(false)}
+              className="p-1 rounded text-amber-800 dark:text-amber-200 hover:bg-amber-500/20 text-xs shrink-0 cursor-pointer"
+              aria-label="Dismiss desktop mode tip"
+            >
+              ✕
+            </button>
+          </div>
+        )}
         {onboardingStep === 'welcome' && <WelcomeStep />}
         {onboardingStep === 'theme' && <ThemeStep />}
         {onboardingStep === 'language' && <LanguageStep />}
@@ -215,7 +247,7 @@ export function AppLayout() {
 
   return (
     <div
-      className={`bg-background text-foreground flex flex-col lg:flex-row antialiased ${
+      className={`bg-background text-foreground flex flex-col lg:flex-row antialiased relative ${
         activeTab === 'ask'
           ? 'h-[100dvh] max-h-[100dvh] overflow-hidden'
           : activeTab === 'home'
@@ -223,6 +255,21 @@ export function AppLayout() {
           : 'min-h-screen'
       }`}
     >
+      {showDesktopSiteTip && (
+        <div className="lg:hidden bg-amber-500/15 border-b border-amber-500/30 text-amber-900 dark:text-amber-200 px-4 py-2 text-xs flex items-center justify-between gap-2 sticky top-0 z-50 backdrop-blur-md w-full">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="font-semibold shrink-0">📱 'Desktop Site' Detected:</span>
+            <span className="truncate">For full-size mobile view, uncheck <strong>'Desktop site'</strong> in browser menu (⋮).</span>
+          </div>
+          <button
+            onClick={() => setShowDesktopSiteTip(false)}
+            className="p-1 rounded text-amber-800 dark:text-amber-200 hover:bg-amber-500/20 text-xs shrink-0 cursor-pointer"
+            aria-label="Dismiss desktop mode tip"
+          >
+            ✕
+          </button>
+        </div>
+      )}
       <a
         href="#recommendations-container"
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-teal-accent focus:text-white focus:rounded-xl focus:shadow-float focus:outline-none"
