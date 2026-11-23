@@ -7,7 +7,7 @@
 <p align="center">
   <img src="docs/screenshots/01-home-dark-teal.png" width="280" alt="Home Dashboard (Dark Teal)" />
   <img src="docs/screenshots/01-home-dark-mono.png" width="280" alt="Home Dashboard (Dark Monochrome)" />
-  <img src="docs/screenshots/08-desktop-dashboard-view.png" width="380" alt="Desktop Dashboard View" />
+  <img src="docs/screenshots/desktop-dashboard-view.png" width="380" alt="Desktop Dashboard View" />
 </p>
 
 ---

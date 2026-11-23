@@ -79,11 +79,12 @@ export function LocationStep() {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-4 sm:p-8 select-none overflow-y-auto overscroll-y-contain touch-pan-y [scrollbar-width:thin]">
-      <div className="pb-28 sm:pb-32">
+    <div className="h-full min-h-screen min-h-[100dvh] max-h-screen max-h-[100dvh] max-w-lg mx-auto flex flex-col p-4 sm:p-8 select-none">
+      {/* Pinned Header & Controls */}
+      <div className="shrink-0">
         <button
           onClick={() => setOnboardingStep('language')}
-          className="mb-4 sm:mb-6 min-h-[44px] px-2 -ml-2 rounded-lg text-muted hover:text-foreground transition-colors flex items-center gap-1.5 text-sm cursor-pointer"
+          className="mb-2 sm:mb-4 min-h-[44px] px-2 -ml-2 rounded-lg text-muted hover:text-foreground transition-colors flex items-center gap-1.5 text-sm cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
           <span>Back</span>
@@ -103,11 +104,11 @@ export function LocationStep() {
         </motion.div>
 
         {/* GPS Button */}
-        <div className="mt-6">
+        <div className="mt-4">
           <button
             onClick={handleUseLocation}
             disabled={isLocating}
-            className="w-full min-h-[48px] px-4 py-3 rounded-card bg-teal-light border border-teal-accent/30 text-teal-accent font-medium hover:bg-teal-light/80 transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-teal-accent"
+            className="w-full min-h-[44px] px-4 py-2.5 rounded-card bg-teal-light border border-teal-accent/30 text-teal-accent font-medium hover:bg-teal-light/80 transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-teal-accent text-sm"
           >
             {isLocating ? (
               <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.75} />
@@ -123,12 +124,12 @@ export function LocationStep() {
             </span>
           </button>
           {locationError && (
-            <p className="text-xs text-rose-600 mt-2 px-1">{locationError}</p>
+            <p className="text-xs text-rose-600 mt-1.5 px-1">{locationError}</p>
           )}
         </div>
 
         {/* City Search Input */}
-        <div className="mt-5 relative">
+        <div className="mt-3.5 relative">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted">
             <Search className="w-4 h-4" strokeWidth={1.75} />
           </div>
@@ -137,7 +138,7 @@ export function LocationStep() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t.onboarding.searchCity}
-            className="w-full min-h-[48px] pl-10 pr-10 py-2.5 rounded-card border border-card-border bg-card text-foreground placeholder:text-muted/60 focus:border-teal-accent focus-visible:ring-2 focus-visible:ring-teal-accent transition-colors outline-none"
+            className="w-full min-h-[44px] pl-10 pr-10 py-2 rounded-card border border-card-border bg-card text-foreground placeholder:text-muted/60 focus:border-teal-accent focus-visible:ring-2 focus-visible:ring-teal-accent transition-colors outline-none text-sm"
           />
           {isSearching && (
             <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-muted">
@@ -145,10 +146,13 @@ export function LocationStep() {
             </div>
           )}
         </div>
+      </div>
 
+      {/* Dedicated Scrollable Cities / Results Area */}
+      <div className="flex-1 min-h-0 my-3 sm:my-4 overflow-y-auto overscroll-contain touch-pan-y pr-1 -mr-1 [scrollbar-width:thin]">
         {/* Search Results Dropdown or Chips */}
         {results.length > 0 ? (
-          <div className="mt-3 bg-card border border-card-border rounded-card shadow-soft divide-y divide-card-border overflow-hidden">
+          <div className="bg-card border border-card-border rounded-card shadow-soft divide-y divide-card-border overflow-hidden">
             {results.map((r, i) => (
               <button
                 key={i}
@@ -170,7 +174,7 @@ export function LocationStep() {
             ))}
           </div>
         ) : (
-          <div className="mt-6">
+          <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-muted uppercase tracking-wider">
                 Popular Cities & Districts
@@ -188,7 +192,7 @@ export function LocationStep() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleSelectCity(city)}
-                    className={`min-h-[44px] px-3.5 py-2 rounded-card text-sm font-medium border transition-colors flex items-center gap-1.5 cursor-pointer ${
+                    className={`min-h-[40px] px-3.5 py-1.5 rounded-card text-xs sm:text-sm font-medium border transition-colors flex items-center gap-1.5 cursor-pointer ${
                       isSelected
                         ? 'border-teal-accent bg-teal-accent text-white shadow-soft'
                         : 'border-card-border bg-card text-foreground hover:border-teal-accent/40'
@@ -204,21 +208,21 @@ export function LocationStep() {
         )}
 
         {/* Selected City Indicator */}
-        <div className="mt-6 p-4 rounded-card bg-card-subtle border border-card-border flex items-center gap-3">
+        <div className="mt-4 p-3.5 rounded-card bg-card-subtle border border-card-border flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-teal-light text-teal-accent flex items-center justify-center shrink-0">
             <MapPin className="w-4 h-4" strokeWidth={1.75} />
           </div>
           <div className="min-w-0">
-            <div className="text-xs text-muted">Selected Location:</div>
-            <div className="font-medium text-foreground truncate">
+            <div className="text-[11px] text-muted">Selected Location:</div>
+            <div className="font-medium text-foreground truncate text-sm">
               {profile.city.name}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Continue - sticky on all viewports */}
-      <div className="pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-auto shrink-0">
+      {/* Pinned Bottom Continue Button */}
+      <div className="pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-card-border/60 shrink-0 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 mt-auto">
         <button
           onClick={() => setOnboardingStep('intake-choice')}
           className={`w-full min-h-[48px] px-6 py-3.5 rounded-card font-medium shadow-soft transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 ${

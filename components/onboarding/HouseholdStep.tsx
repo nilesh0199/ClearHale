@@ -63,25 +63,27 @@ export function HouseholdStep() {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-4 sm:p-8 select-none overflow-y-auto overscroll-y-contain touch-pan-y [scrollbar-width:thin]">
-      <div className="space-y-6 pb-36 sm:pb-40">
-        {/* Navigation & Header */}
-        <div>
-          <button
-            onClick={() => setOnboardingStep('location')}
-            className="mb-4 sm:mb-6 min-h-[44px] px-2 -ml-2 rounded-lg text-muted hover:text-foreground transition-colors flex items-center gap-1.5 text-sm cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back</span>
-          </button>
+    <div className="h-full min-h-screen min-h-[100dvh] max-h-screen max-h-[100dvh] max-w-lg mx-auto flex flex-col p-4 sm:p-8 select-none">
+      {/* Pinned Header */}
+      <div className="shrink-0">
+        <button
+          onClick={() => setOnboardingStep('location')}
+          className="mb-2 sm:mb-4 min-h-[44px] px-2 -ml-2 rounded-lg text-muted hover:text-foreground transition-colors flex items-center gap-1.5 text-sm cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back</span>
+        </button>
 
-          <h2 className="text-xl sm:text-2xl font-semibold text-foreground tracking-tight">
-            <Bi k="onboarding.householdTitle" layout="plain" />
-          </h2>
-          <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
-            <Bi k="onboarding.householdSub" layout="plain" />
-          </p>
-        </div>
+        <h2 className="text-xl sm:text-2xl font-semibold text-foreground tracking-tight">
+          <Bi k="onboarding.householdTitle" layout="plain" />
+        </h2>
+        <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
+          <Bi k="onboarding.householdSub" layout="plain" />
+        </p>
+      </div>
+
+      {/* Dedicated Scrollable Sections Area */}
+      <div className="flex-1 min-h-0 my-3 sm:my-4 overflow-y-auto overscroll-contain touch-pan-y pr-1 -mr-1 [scrollbar-width:thin] space-y-5 pb-3">
 
         {/* 1. Who is at home? */}
         <div>
@@ -237,8 +239,8 @@ export function HouseholdStep() {
         </div>
       </div>
 
-      {/* Bottom actions - sticky on all viewports */}
-      <div className="pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-auto shrink-0 space-y-2">
+      {/* Pinned Bottom actions */}
+      <div className="pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-card-border/60 shrink-0 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 mt-auto space-y-2">
         <button
           onClick={handleFinish}
           className={`w-full min-h-[48px] px-6 py-3.5 rounded-card font-medium shadow-soft transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 ${
@@ -253,7 +255,7 @@ export function HouseholdStep() {
 
         <button
           onClick={handleFinish}
-          className="w-full min-h-[40px] py-1 text-center text-xs font-medium text-muted hover:text-foreground transition-colors cursor-pointer"
+          className="w-full min-h-[38px] py-1 text-center text-xs font-medium text-muted hover:text-foreground transition-colors cursor-pointer"
         >
           <Bi k="onboarding.skip" layout="inline" />
         </button>

@@ -59,6 +59,71 @@ export function AppLayout() {
   const mobileBtnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [mobilePill, setMobilePill] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const mainRef = useRef<HTMLElement>(null);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  // Detect mobile virtual keyboard to hide bottom tab navigation bar during input
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        if (window.innerWidth < 1024) {
+          setIsKeyboardOpen(true);
+        }
+      }
+    };
+
+    const handleFocusOut = () => {
+      setTimeout(() => {
+        const active = document.activeElement as HTMLElement | null;
+        if (
+          !active ||
+          (active.tagName !== 'INPUT' &&
+            active.tagName !== 'TEXTAREA' &&
+            !active.isContentEditable)
+        ) {
+          setIsKeyboardOpen(false);
+        }
+      }, 100);
+    };
+
+    const handleViewportResize = () => {
+      if (window.visualViewport && window.innerWidth < 1024) {
+        const isHeightShrunk = window.visualViewport.height < window.innerHeight - 80;
+        const active = document.activeElement as HTMLElement | null;
+        const isInputFocused =
+          active &&
+          (active.tagName === 'INPUT' ||
+            active.tagName === 'TEXTAREA' ||
+            active.isContentEditable);
+        if (isHeightShrunk && isInputFocused) {
+          setIsKeyboardOpen(true);
+        } else if (!isInputFocused) {
+          setIsKeyboardOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportResize);
+    }
+
+    return () => {
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportResize);
+      }
+    };
+  }, []);
 
   // Disable automatic browser scroll restoration for seamless single-page tab transitions
   useEffect(() => {
@@ -192,10 +257,10 @@ export function AppLayout() {
     }
   }, [activeTab, onboardingStep, isIntakeChatOpen]);
 
-  // Handle Onboarding Steps (wrapped in a dedicated smooth scroll container for any screen height)
+  // Handle Onboarding Steps (wrapped in a dedicated smooth container for any screen height)
   if (onboardingStep !== 'complete') {
     return (
-      <div className="min-h-screen min-h-[100dvh] w-full bg-background text-foreground overflow-y-auto overscroll-y-contain touch-pan-y [scrollbar-width:thin]">
+      <div className="h-full min-h-screen min-h-[100dvh] max-h-[100dvh] w-full bg-background text-foreground flex flex-col overflow-hidden">
         {onboardingStep === 'welcome' && <WelcomeStep />}
         {onboardingStep === 'theme' && <ThemeStep />}
         {onboardingStep === 'language' && <LanguageStep />}
@@ -334,7 +399,9 @@ export function AppLayout() {
         ref={mainRef}
         className={`flex-1 min-w-0 ${
           activeTab === 'ask'
-            ? 'h-[100dvh] max-h-[100dvh] flex flex-col p-3 sm:p-4 pb-[76px] sm:pb-[80px] lg:p-6 lg:pb-6 overflow-hidden'
+            ? `h-[100dvh] max-h-[100dvh] flex flex-col p-3 sm:p-4 ${
+                isKeyboardOpen ? 'pb-2 sm:pb-3' : 'pb-[76px] sm:pb-[80px]'
+              } lg:p-6 lg:pb-6 overflow-hidden`
             : activeTab === 'home'
             ? 'p-4 sm:p-6 lg:p-0 lg:h-screen lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden'
             : 'p-4 sm:p-6 lg:p-8'
@@ -353,8 +420,13 @@ export function AppLayout() {
 
       {/* ================= MOBILE BOTTOM TAB BAR (<1024px) ================= */}
       <nav
-        className="lg:hidden fixed bottom-0 inset-x-0 bg-card/95 backdrop-blur-md border-t border-card-border z-40 px-2 pt-1 pb-[max(0.35rem,env(safe-area-inset-bottom))] shadow-soft"
+        className={`lg:hidden fixed bottom-0 inset-x-0 bg-card/95 backdrop-blur-md border-t border-card-border z-40 px-2 pt-1 pb-[max(0.35rem,env(safe-area-inset-bottom))] shadow-soft transition-all duration-200 ${
+          isKeyboardOpen
+            ? 'translate-y-full opacity-0 pointer-events-none'
+            : 'translate-y-0 opacity-100'
+        }`}
         aria-label="Mobile Navigation"
+        aria-hidden={isKeyboardOpen}
       >
         <div className="flex items-center justify-around max-w-md mx-auto relative">
           {/* Single persistent sliding indicator on mobile */}

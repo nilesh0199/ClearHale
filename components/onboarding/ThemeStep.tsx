@@ -77,12 +77,13 @@ export function ThemeStep() {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-4 sm:p-8 select-none overflow-y-auto overscroll-y-contain touch-pan-y [scrollbar-width:thin]">
-      <div>
+    <div className="h-full min-h-screen min-h-[100dvh] max-h-screen max-h-[100dvh] max-w-lg mx-auto flex flex-col p-4 sm:p-8 select-none">
+      {/* Pinned Header */}
+      <div className="shrink-0">
         {/* Back navigation */}
         <button
           onClick={() => setOnboardingStep('welcome')}
-          className="mb-4 sm:mb-6 min-h-[44px] px-2 -ml-2 rounded-lg text-muted hover:text-foreground transition-colors flex items-center gap-1.5 text-sm cursor-pointer"
+          className="mb-2 sm:mb-4 min-h-[44px] px-2 -ml-2 rounded-lg text-muted hover:text-foreground transition-colors flex items-center gap-1.5 text-sm cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" strokeWidth={1.75} />
           <span>Back</span>
@@ -100,9 +101,11 @@ export function ThemeStep() {
             Clearhale adapts comfortably to day or night with tuned contrast.
           </p>
         </motion.div>
+      </div>
 
-        {/* 3 Tappable Theme Preview Cards with React Bits SpotlightCard */}
-        <div className="mt-5 sm:mt-8 space-y-3 sm:space-y-3.5 pb-28 sm:pb-32">
+      {/* Dedicated Scrollable Theme Preview Cards */}
+      <div className="flex-1 min-h-0 my-3 sm:my-4 overflow-y-auto overscroll-contain touch-pan-y pr-1 -mr-1 [scrollbar-width:thin]">
+        <div className="space-y-3 sm:space-y-3.5 pb-2">
           {themes.map((item, idx) => {
             const isSelected = theme === item.id;
             return (
@@ -180,8 +183,8 @@ export function ThemeStep() {
         </div>
       </div>
 
-      {/* Bottom Actions - sticky on all viewports */}
-      <div className="pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-auto shrink-0 space-y-2">
+      {/* Pinned Bottom Actions */}
+      <div className="pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-card-border/60 shrink-0 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 mt-auto space-y-2">
         <motion.button
           whileHover={shouldReduceMotion ? undefined : { scale: 1.01 }}
           whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}
@@ -198,7 +201,7 @@ export function ThemeStep() {
 
         <button
           onClick={handleSkip}
-          className="w-full min-h-[40px] py-1 text-center text-xs font-medium text-muted hover:text-foreground transition-colors cursor-pointer"
+          className="w-full min-h-[38px] py-1 text-center text-xs font-medium text-muted hover:text-foreground transition-colors cursor-pointer"
         >
           Skip (defaults to System)
         </button>
