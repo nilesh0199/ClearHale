@@ -57,9 +57,9 @@ export function ShareModal({
     Math.round((Date.now() - airData.updatedAt) / (60 * 1000))
   );
 
-  // Generate QR Code once for clearhale.app
+  // Generate QR Code once for clearhale-vercel.vercel.app
   useEffect(() => {
-    QRCode.toDataURL('https://clearhale.app', {
+    QRCode.toDataURL('https://clearhale-vercel.vercel.app/', {
       width: 140,
       margin: 1,
       color: {
@@ -113,7 +113,7 @@ export function ShareModal({
 
   // Localized caption text for native sharing
   const getCaptionText = useCallback(() => {
-    const url = 'https://clearhale.app';
+    const url = 'https://clearhale-vercel.vercel.app/';
     const city = profile.city.name;
     const pm = airData.current.pm2_5;
     const band = currentBand.label;

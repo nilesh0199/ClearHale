@@ -1781,14 +1781,14 @@ export function AirQualityCard({
           </div>
           <div
             style={{
-              fontSize: '42px',
+              fontSize: '34px',
               fontWeight: 800,
               color: '#0D5C52',
               letterSpacing: '-0.3px',
               marginTop: '4px',
             }}
           >
-            clearhale.app
+            clearhale-vercel.vercel.app
           </div>
         </div>
 
@@ -1810,7 +1810,7 @@ export function AirQualityCard({
           >
             <img
               src={qrCodeDataUrl}
-              alt="QR Code clearhale.app"
+              alt="QR Code clearhale-vercel.vercel.app"
               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />
           </div>

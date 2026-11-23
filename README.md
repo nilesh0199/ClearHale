@@ -2,7 +2,7 @@
 
 **Breathe clearer, one smart choice at a time: an offline-first clean air intelligence platform and plain-language air guide for families in India.**
 
-[Live Application Demo]([LIVE_URL]) • [Walkthrough Video]([VIDEO_URL]) • [LinkedIn Project Post]([LINKEDIN_URL])
+[Live Application Demo](https://clearhale-vercel.vercel.app/) • [Walkthrough Video]([VIDEO_URL]) • [LinkedIn Project Post]([LINKEDIN_URL])
 
 <p align="center">
   <img src="docs/screenshots/01-home-dark-teal.png" width="280" alt="Home Dashboard (Dark Teal)" />
