@@ -264,11 +264,9 @@ export function AppLayout() {
 
   return (
     <div
-      className={`bg-background text-foreground flex flex-col lg:flex-row antialiased relative ${
+      className={`bg-background text-foreground flex flex-col lg:flex-row antialiased relative lg:h-screen lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden ${
         activeTab === 'ask'
           ? 'h-[100dvh] max-h-[100dvh] overflow-hidden'
-          : activeTab === 'home'
-          ? 'min-h-screen lg:h-screen lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden'
           : 'min-h-screen'
       }`}
     >
@@ -296,7 +294,7 @@ export function AppLayout() {
       {/* ================= DESKTOP SIDEBAR (1024px and up) ================= */}
       <aside
         ref={desktopSidebarRef}
-        className="hidden lg:flex flex-col justify-between w-64 bg-card border-r border-card-border p-6 shrink-0 h-screen sticky top-0 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="hidden lg:flex flex-col justify-between w-64 bg-card border-r border-card-border p-6 shrink-0 h-full max-h-screen overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden select-none z-30"
       >
         <div>
           {/* Logo & Brand */}
@@ -355,8 +353,14 @@ export function AppLayout() {
                   }}
                   onClick={() => {
                     if (activeTab === item.id) {
+                      if (mainRef.current) {
+                        mainRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                      }
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     } else {
+                      if (mainRef.current) {
+                        mainRef.current.scrollTo({ top: 0 });
+                      }
                       window.scrollTo({ top: 0 });
                       setActiveTab(item.id);
                     }
@@ -400,8 +404,8 @@ export function AppLayout() {
           activeTab === 'ask'
             ? 'h-[100dvh] max-h-[100dvh] flex flex-col p-3 sm:p-4 pb-[76px] sm:pb-[80px] lg:p-6 lg:pb-6 overflow-hidden'
             : activeTab === 'home'
-            ? 'p-4 sm:p-6 lg:p-0 lg:h-screen lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden'
-            : 'p-4 sm:p-6 lg:p-8'
+            ? 'p-4 sm:p-6 lg:p-0 lg:h-full lg:overflow-hidden'
+            : 'p-4 sm:p-6 lg:p-8 lg:h-full lg:overflow-y-auto lg:overscroll-contain desktop-scroll-slim'
         }`}
       >
         {activeTab === 'home' && <HomeScreen />}
