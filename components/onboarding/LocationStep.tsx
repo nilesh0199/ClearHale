@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useApp } from '@/context/AppContext';
 import { Bi } from '../Bi';
 import { searchCities } from '@/lib/openMeteo';
 import { POPULAR_INDIAN_CITIES } from '@/lib/citiesData';
 import { CityLocation } from '@/types';
-import { MapPin, Navigation, Search, Check, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { MapPin, Navigation, Search, Check, ArrowRight, ArrowLeft, Loader2, MousePointerClick } from 'lucide-react';
 
 export function LocationStep() {
   const { profile, updateProfile, setOnboardingStep, refreshAirData, t } = useApp();
@@ -16,6 +16,7 @@ export function LocationStep() {
   const [isSearching, setIsSearching] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const lastClickedCity = useRef<{ name: string; time: number } | null>(null);
 
   // Popular city chips across India for fast one-tap setup
   const sampleCities: CityLocation[] = POPULAR_INDIAN_CITIES;
@@ -43,6 +44,21 @@ export function LocationStep() {
   }, [query]);
 
   const handleSelectCity = (city: CityLocation) => {
+    const now = Date.now();
+    const isDoubleTap =
+      lastClickedCity.current &&
+      lastClickedCity.current.name === city.name &&
+      now - lastClickedCity.current.time < 500;
+
+    // Double tap or clicking already selected city advances immediately
+    if (isDoubleTap || profile.city.name.startsWith(city.name)) {
+      updateProfile({ city });
+      refreshAirData(city.lat, city.lon);
+      setOnboardingStep('intake-choice');
+      return;
+    }
+
+    lastClickedCity.current = { name: city.name, time: now };
     updateProfile({ city });
     refreshAirData(city.lat, city.lon);
   };
@@ -100,6 +116,10 @@ export function LocationStep() {
           <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
             Smog levels and cold air smoke traps depend heavily on your local district.
           </p>
+          <p className="text-xs text-teal-accent font-medium mt-2 flex items-center gap-1.5">
+            <MousePointerClick className="w-3.5 h-3.5 shrink-0" />
+            <span>Double-click or tap twice to select & continue</span>
+          </p>
         </motion.div>
 
         {/* GPS Button */}
@@ -152,10 +172,11 @@ export function LocationStep() {
             {results.map((r, i) => (
               <button
                 key={i}
-                onClick={() => {
-                  handleSelectCity(r);
-                  setQuery('');
-                  setResults([]);
+                onClick={() => handleSelectCity(r)}
+                onDoubleClick={() => {
+                  updateProfile({ city: r });
+                  refreshAirData(r.lat, r.lon);
+                  setOnboardingStep('intake-choice');
                 }}
                 className="w-full p-3 text-left hover:bg-teal-light/40 flex items-center justify-between transition-colors cursor-pointer"
               >
@@ -179,7 +200,7 @@ export function LocationStep() {
                 India & Global
               </span>
             </div>
-            <div className="mt-2.5 flex flex-wrap gap-2">
+            <div className="mt-2.5 flex flex-wrap gap-2 pb-6 sm:pb-0">
               {sampleCities.map((city) => {
                 const isSelected = profile.city.name.startsWith(city.name);
                 return (
@@ -188,6 +209,11 @@ export function LocationStep() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleSelectCity(city)}
+                    onDoubleClick={() => {
+                      updateProfile({ city });
+                      refreshAirData(city.lat, city.lon);
+                      setOnboardingStep('intake-choice');
+                    }}
                     className={`min-h-[44px] px-3.5 py-2 rounded-card text-sm font-medium border transition-colors flex items-center gap-1.5 cursor-pointer ${
                       isSelected
                         ? 'border-teal-accent bg-teal-accent text-white shadow-soft'
@@ -217,8 +243,8 @@ export function LocationStep() {
         </div>
       </div>
 
-      {/* Continue - sticky on all viewports, shifted up on mobile view */}
-      <div className="pt-3 pb-[max(2.25rem,env(safe-area-inset-bottom)+1.25rem)] sm:pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-4 sm:mt-6">
+      {/* Continue - Hidden on mobile, visible on desktop/tablet */}
+      <div className="hidden sm:block pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-4 sm:mt-6">
         <button
           onClick={() => setOnboardingStep('intake-choice')}
           className={`w-full min-h-[48px] px-6 py-3.5 rounded-card font-medium shadow-soft transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 ${

@@ -41,7 +41,7 @@ export function WelcomeStep() {
   return (
     <div
       onClick={handleScreenTap}
-      className="min-h-screen min-h-[100dvh] w-full flex items-center justify-center p-6 bg-background relative overflow-hidden select-none cursor-pointer"
+      className="min-h-screen w-full flex items-center justify-center p-6 bg-background relative overflow-hidden select-none cursor-pointer"
       role="region"
       aria-label="Welcome screen"
     >

@@ -1,11 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useApp } from '@/context/AppContext';
 import { AppTheme } from '@/types';
 import { SpotlightCard } from '../ui/rb/SpotlightCard';
-import { ArrowLeft, ArrowRight, Check, Sun, Moon, Laptop } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Sun, Moon, Laptop, MousePointerClick } from 'lucide-react';
 
 interface ThemeOption {
   id: AppTheme;
@@ -23,6 +23,7 @@ interface ThemeOption {
 export function ThemeStep() {
   const { theme, setTheme, setOnboardingStep, profile } = useApp();
   const shouldReduceMotion = useReducedMotion();
+  const lastClickedTheme = useRef<{ id: string; time: number } | null>(null);
 
   const themes: ThemeOption[] = [
     {
@@ -64,6 +65,20 @@ export function ThemeStep() {
   ];
 
   const handleSelect = (selectedTheme: AppTheme) => {
+    const now = Date.now();
+    const isDoubleTap =
+      lastClickedTheme.current &&
+      lastClickedTheme.current.id === selectedTheme &&
+      now - lastClickedTheme.current.time < 500;
+
+    // Double tap or clicking already selected theme advances immediately
+    if (isDoubleTap || theme === selectedTheme) {
+      setTheme(selectedTheme);
+      setOnboardingStep('language');
+      return;
+    }
+
+    lastClickedTheme.current = { id: selectedTheme, time: now };
     setTheme(selectedTheme);
   };
 
@@ -99,6 +114,10 @@ export function ThemeStep() {
           <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
             Clearhale adapts comfortably to day or night with tuned contrast.
           </p>
+          <p className="text-xs text-teal-accent font-medium mt-2 flex items-center gap-1.5">
+            <MousePointerClick className="w-3.5 h-3.5 shrink-0" />
+            <span>Double-click or tap twice to select & continue</span>
+          </p>
         </motion.div>
 
         {/* 3 Tappable Theme Preview Cards with React Bits SpotlightCard */}
@@ -116,6 +135,10 @@ export function ThemeStep() {
               >
                 <SpotlightCard
                   onClick={() => handleSelect(item.id)}
+                  onDoubleClick={() => {
+                    setTheme(item.id);
+                    setOnboardingStep('language');
+                  }}
                   spotlightColor={
                     theme === 'dark' ? 'rgba(45, 212, 191, 0.12)' : 'rgba(13, 92, 82, 0.08)'
                   }
@@ -180,8 +203,8 @@ export function ThemeStep() {
         </div>
       </div>
 
-      {/* Bottom Actions - sticky on all viewports, shifted up on mobile view */}
-      <div className="pt-3 pb-[max(2.25rem,env(safe-area-inset-bottom)+1.25rem)] sm:pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-4 sm:mt-6 space-y-2">
+      {/* Bottom Actions - Hidden on mobile (users double tap to select & proceed), visible on desktop */}
+      <div className="hidden sm:block pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-4 sm:mt-6 space-y-2">
         <motion.button
           whileHover={shouldReduceMotion ? undefined : { scale: 1.01 }}
           whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}
@@ -199,6 +222,16 @@ export function ThemeStep() {
         <button
           onClick={handleSkip}
           className="w-full min-h-[40px] py-1 text-center text-xs font-medium text-muted hover:text-foreground transition-colors cursor-pointer"
+        >
+          Skip (defaults to System)
+        </button>
+      </div>
+
+      {/* Mobile-only Skip link */}
+      <div className="sm:hidden text-center mt-6 pb-4">
+        <button
+          onClick={handleSkip}
+          className="min-h-[40px] px-4 py-1 text-center text-xs font-medium text-muted hover:text-foreground transition-colors cursor-pointer"
         >
           Skip (defaults to System)
         </button>

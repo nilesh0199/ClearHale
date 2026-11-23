@@ -1,19 +1,34 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useApp } from '@/context/AppContext';
 import { Bi } from '../Bi';
 import { SUPPORTED_LANGUAGES } from '@/lib/languages';
 import { SupportedLanguage } from '@/types';
 import { SpotlightCard } from '../ui/rb/SpotlightCard';
-import { Check, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Check, ArrowRight, ArrowLeft, MousePointerClick } from 'lucide-react';
 
 export function LanguageStep() {
   const { profile, updateProfile, setOnboardingStep, theme } = useApp();
   const shouldReduceMotion = useReducedMotion();
+  const lastClickedLang = useRef<{ code: string; time: number } | null>(null);
 
   const handleSelectLanguage = (code: SupportedLanguage) => {
+    const now = Date.now();
+    const isDoubleTap =
+      lastClickedLang.current &&
+      lastClickedLang.current.code === code &&
+      now - lastClickedLang.current.time < 500;
+
+    // Double tap or clicking already selected language advances immediately
+    if (isDoubleTap || profile.language === code) {
+      updateProfile({ language: code });
+      setOnboardingStep('location');
+      return;
+    }
+
+    lastClickedLang.current = { code, time: now };
     updateProfile({ language: code });
   };
 
@@ -40,10 +55,14 @@ export function LanguageStep() {
           <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
             <Bi k="onboarding.languageSub" layout="plain" />
           </p>
+          <p className="text-xs text-teal-accent font-medium mt-2 flex items-center gap-1.5">
+            <MousePointerClick className="w-3.5 h-3.5 shrink-0" />
+            <span>Double-click or tap twice to select & continue</span>
+          </p>
         </motion.div>
 
-        {/* 10 Language Cards with React Bits SpotlightCard */}
-        <div className="mt-5 sm:mt-8 grid grid-cols-2 gap-2.5 sm:gap-3.5">
+        {/* 11 Language Cards with React Bits SpotlightCard */}
+        <div className="mt-5 sm:mt-8 grid grid-cols-2 gap-2.5 sm:gap-3.5 pb-6 sm:pb-0">
           {SUPPORTED_LANGUAGES.map((lang, idx) => {
             const isSelected = profile.language === lang.code;
             return (
@@ -57,6 +76,10 @@ export function LanguageStep() {
               >
                 <SpotlightCard
                   onClick={() => handleSelectLanguage(lang.code)}
+                  onDoubleClick={() => {
+                    updateProfile({ language: lang.code });
+                    setOnboardingStep('location');
+                  }}
                   spotlightColor={
                     theme === 'dark' ? 'rgba(45, 212, 191, 0.12)' : 'rgba(13, 92, 82, 0.08)'
                   }
@@ -97,8 +120,8 @@ export function LanguageStep() {
         </div>
       </div>
 
-      {/* Bottom Continue button - sticky on all viewports, shifted up on mobile view */}
-      <div className="pt-3 pb-[max(2.25rem,env(safe-area-inset-bottom)+1.25rem)] sm:pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-4 sm:mt-6">
+      {/* Bottom Continue button - Hidden on mobile, visible on desktop/tablet */}
+      <div className="hidden sm:block pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-4 sm:mt-6">
         <motion.button
           whileHover={shouldReduceMotion ? undefined : { scale: 1.01 }}
           whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}

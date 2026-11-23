@@ -1206,8 +1206,8 @@ export function HomeScreen() {
               className={`${
                 isCompact
                   ? 'mt-2 space-y-1.5'
-                  : 'mt-4 lg:mt-auto lg:mb-3 lg:space-y-2.5 space-y-2'
-              } max-w-lg text-center w-full`}
+                  : 'mt-4 lg:mt-0 lg:my-auto lg:translate-y-7 space-y-2'
+              } max-w-lg text-center w-full my-auto`}
             >
               <p className={`${isCompact ? 'text-xs sm:text-sm leading-snug' : 'text-sm sm:text-base leading-relaxed'} font-medium text-foreground`}>
                 {currentBand.statusLine}

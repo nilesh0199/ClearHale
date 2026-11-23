@@ -1,4 +1,4 @@
-const CACHE_NAME = 'clearhale-shell-v10';
+const CACHE_NAME = 'clearhale-shell-v11';
 const STATIC_ASSETS = [
   '/',
   '/manifest.webmanifest',

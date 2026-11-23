@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { motion } from 'framer-motion';
 import { useApp } from '@/context/AppContext';
 import { Bi } from '../Bi';
 import {
@@ -84,7 +85,7 @@ export function HouseholdStep() {
 
         {/* 1. Who is at home? */}
         <div>
-          <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-3">
+          <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-2.5">
             <Bi k="onboarding.vulnerable" layout="plain" />
           </label>
           <div className="grid grid-cols-2 gap-2.5">
@@ -99,7 +100,7 @@ export function HouseholdStep() {
                 <button
                   key={item.id}
                   onClick={() => toggleMember(item.id as FamilyMember)}
-                  className={`min-h-[48px] p-3 rounded-card border text-sm font-medium transition-all flex items-center justify-between cursor-pointer ${
+                  className={`min-h-[48px] p-3 rounded-card border text-sm font-medium transition-all flex items-center justify-between ${
                     active
                       ? 'border-teal-accent bg-teal-light text-teal-accent ring-1 ring-teal-accent'
                       : 'border-card-border bg-card text-foreground hover:border-teal-accent/40'
@@ -108,7 +109,7 @@ export function HouseholdStep() {
                   <div className="flex items-center gap-2">
                     <item.icon className="w-4 h-4 shrink-0" />
                     <span className="text-left leading-tight">
-                      <Bi k={item.key} layout="inline" />
+                      <Bi k={item.key} en={item.fallbackEn} layout="inline" />
                     </span>
                   </div>
                   {active && <Check className="w-4 h-4 stroke-[2.5] shrink-0" />}
@@ -120,7 +121,7 @@ export function HouseholdStep() {
 
         {/* 2. Cooking fuel */}
         <div>
-          <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-3">
+          <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-2.5">
             <Bi k="onboarding.fuel" layout="plain" />
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -128,19 +129,19 @@ export function HouseholdStep() {
               { id: 'lpg', label: 'LPG Gas', icon: Flame },
               { id: 'induction_electric', label: 'Induction / Elec', icon: Zap },
               { id: 'wood_biomass', label: 'Wood / Biomass', icon: Flame },
-            ].map((f) => {
-              const active = household.cookingFuel === f.id;
+            ].map((fuel) => {
+              const active = household.cookingFuel === fuel.id;
               return (
                 <button
-                  key={f.id}
-                  onClick={() => setFuel(f.id as CookingFuel)}
-                  className={`min-h-[46px] p-2.5 rounded-card border text-xs font-medium text-center transition-all cursor-pointer ${
+                  key={fuel.id}
+                  onClick={() => setFuel(fuel.id as CookingFuel)}
+                  className={`min-h-[44px] p-2.5 rounded-card border text-xs font-medium text-center transition-all ${
                     active
                       ? 'border-teal-accent bg-teal-light text-teal-accent ring-1 ring-teal-accent'
                       : 'border-card-border bg-card text-foreground hover:border-teal-accent/40'
                   }`}
                 >
-                  {f.label}
+                  {fuel.label}
                 </button>
               );
             })}
@@ -149,7 +150,7 @@ export function HouseholdStep() {
 
         {/* 3. Commute */}
         <div>
-          <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-3">
+          <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-2.5">
             <Bi k="onboarding.commute" layout="plain" />
           </label>
           <div className="flex flex-wrap gap-2">
@@ -165,7 +166,7 @@ export function HouseholdStep() {
                 <button
                   key={com.id}
                   onClick={() => toggleCommute(com.id as CommuteType)}
-                  className={`min-h-[42px] px-3.5 py-2 rounded-full border text-xs font-medium transition-all cursor-pointer ${
+                  className={`min-h-[44px] px-3 py-2 rounded-card border text-xs font-medium transition-all ${
                     active
                       ? 'border-teal-accent bg-teal-light text-teal-accent ring-1 ring-teal-accent'
                       : 'border-card-border bg-card text-foreground hover:border-teal-accent/40'
@@ -180,10 +181,10 @@ export function HouseholdStep() {
 
         {/* 4. Work environment */}
         <div>
-          <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-3">
+          <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-2.5">
             <Bi k="onboarding.work" layout="plain" />
           </label>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-2">
             {[
               { id: 'indoor', label: 'Indoor / Desk' },
               { id: 'outdoor', label: 'Outdoor / Field' },
@@ -193,7 +194,7 @@ export function HouseholdStep() {
                 <button
                   key={w.id}
                   onClick={() => setWork(w.id as WorkType)}
-                  className={`min-h-[46px] p-3 rounded-card border text-xs sm:text-sm font-medium text-center transition-all cursor-pointer ${
+                  className={`min-h-[44px] p-2.5 rounded-card border text-xs font-medium text-center transition-all ${
                     active
                       ? 'border-teal-accent bg-teal-light text-teal-accent ring-1 ring-teal-accent'
                       : 'border-card-border bg-card text-foreground hover:border-teal-accent/40'
@@ -208,7 +209,7 @@ export function HouseholdStep() {
 
         {/* 5. Budget preference */}
         <div>
-          <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-3">
+          <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-2.5">
             <Bi k="onboarding.budget" layout="plain" />
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -222,7 +223,7 @@ export function HouseholdStep() {
                 <button
                   key={b.id}
                   onClick={() => setBudget(b.id as BudgetTier)}
-                  className={`min-h-[46px] p-2.5 rounded-card border text-xs font-medium text-center transition-all cursor-pointer ${
+                  className={`min-h-[44px] p-2.5 rounded-card border text-xs font-medium text-center transition-all ${
                     active
                       ? 'border-teal-accent bg-teal-light text-teal-accent ring-1 ring-teal-accent'
                       : 'border-card-border bg-card text-foreground hover:border-teal-accent/40'
@@ -236,8 +237,8 @@ export function HouseholdStep() {
         </div>
       </div>
 
-      {/* Bottom actions - sticky on all viewports, shifted up on mobile view */}
-      <div className="pt-3 pb-[max(2.25rem,env(safe-area-inset-bottom)+1.25rem)] sm:pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-4 sm:mt-6 space-y-2">
+      {/* Bottom actions - sticky on all viewports */}
+      <div className="pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 border-t border-card-border/60 mt-4 sm:mt-6 space-y-2">
         <button
           onClick={handleFinish}
           className={`w-full min-h-[48px] px-6 py-3.5 rounded-card font-medium shadow-soft transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 ${
