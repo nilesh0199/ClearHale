@@ -204,7 +204,7 @@ async function run() {
     await desktopPage.goto('http://localhost:3001');
     await desktopPage.waitForTimeout(1500);
     await desktopPage.screenshot({
-      path: path.join(outDir, `08-desktop-home-teal.png`),
+      path: path.join(outDir, `08-desktop-dashboard-view.png`),
       fullPage: false,
     });
     await desktopContext.close();

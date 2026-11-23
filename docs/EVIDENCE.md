@@ -170,6 +170,6 @@ Contrast ratios measured via relative luminance formula `(L1 + 0.05) / (L2 + 0.0
 - **Total Repository Footprint**: `~3.97 MB` (Well below the 10 MB strict limit and 7 MB target)
 - **Top 3 Largest Tracked Files**:
   1. `package-lock.json`: 138.6 KB
-  2. `docs/screenshots/08-desktop-home-teal.png`: 119.5 KB
+  2. `docs/screenshots/08-desktop-dashboard-view.png`: 120.9 KB
   3. `lib/languages.ts`: 103.2 KB
 - **Screenshots in `docs/screenshots/`**: Exactly 6 curated PNGs, each strictly under 150 KB.
