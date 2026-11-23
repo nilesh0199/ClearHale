@@ -1,0 +1,38 @@
+{
+  "name": "clearhale",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "node test/content-consistency.test.mjs && node --test test/contrast.test.mjs test/token-enforcement.test.mjs test/cities-coverage.test.mjs test/action-catalog.test.mjs test/input-validation.test.mjs test/intake-and-auth.test.mjs test/language-capabilities.test.mjs test/openaq-integration.test.mjs test/provider-routing.test.mjs"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@types/qrcode": "^1.5.6",
+    "canvas-confetti": "^1.9.4",
+    "clsx": "^2.1.1",
+    "firebase": "^13.4.0",
+    "framer-motion": "^12.4.7",
+    "html-to-image": "^1.11.13",
+    "lucide-react": "^0.475.0",
+    "next": "^15.1.7",
+    "qrcode": "^1.5.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/node": "^22.13.4",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3"
+  }
+}
