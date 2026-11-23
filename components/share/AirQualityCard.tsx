@@ -1495,32 +1495,42 @@ export function AirQualityCard({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '10px 22px',
+              padding: (activeBand.label || '').length > 10 ? '8px 18px' : '10px 22px',
               borderRadius: '18px',
               backgroundColor: palette.pillBg,
               border: `2px solid ${palette.borderHex}`,
+              minWidth: '140px',
+              flexShrink: 0,
             }}
           >
             <span
               style={{
-                fontSize: '26px',
+                fontSize:
+                  (activeBand.label || '').replace(/\s*\([^)]*\)/g, '').trim().length > 11
+                    ? '22px'
+                    : (activeBand.label || '').replace(/\s*\([^)]*\)/g, '').trim().length > 8
+                    ? '24px'
+                    : '26px',
                 fontWeight: 800,
                 color: bandColor,
                 letterSpacing: '-0.2px',
                 lineHeight: 1.15,
                 textTransform: 'capitalize',
+                whiteSpace: 'nowrap',
+                textAlign: 'center',
               }}
             >
-              {activeBand.label}
+              {(activeBand.label || '').replace(/\s*\([^)]*\)/g, '').trim() || activeBand.label}
             </span>
             <span
               style={{
-                fontSize: '22px',
+                fontSize: '21px',
                 fontWeight: 800,
                 color: bandColor,
                 opacity: 0.9,
                 letterSpacing: '0.2px',
                 marginTop: '3px',
+                whiteSpace: 'nowrap',
               }}
             >
               AQI {displayAQI}

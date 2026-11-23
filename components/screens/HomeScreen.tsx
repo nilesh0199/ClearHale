@@ -1170,7 +1170,7 @@ export function HomeScreen() {
                 </div>
               ) : (
                 <div className={`${isCompact ? 'mt-1.5 text-[11px]' : 'mt-3 text-xs'} flex items-center justify-center gap-1.5 text-muted max-w-sm sm:max-w-md mx-auto text-center px-2`}>
-                  <span className="truncate leading-normal">
+                  <span className="line-clamp-2 leading-snug sm:leading-normal">
                     {airData.dataType === 'measured' && airData.station
                       ? `Measured at ${airData.station.name}, ${airData.station.distanceKm} km away, ${
                           airData.station.minutesAgo ??
