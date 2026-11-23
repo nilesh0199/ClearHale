@@ -43,16 +43,14 @@ function devLog(message: string, ...args: any[]): void {
 
 function getGeminiModel(): string {
   const custom = process.env.GEMINI_MODEL?.trim();
-  if (custom && !custom.includes('3.5')) {
-    return custom;
-  }
-  return 'gemini-2.0-flash';
+  if (custom) return custom;
+  return 'gemini-flash-lite-latest';
 }
 
 function getGroqModel(): string {
   const custom = process.env.GROQ_MODEL?.trim();
   if (custom) return custom;
-  return 'llama-3.3-70b-versatile';
+  return 'qwen/qwen3.8-27b';
 }
 
 /**
@@ -89,7 +87,7 @@ function getRegionalTip(lang?: string, sessionHadTip?: boolean): string | null {
   return tip ? `\n\n(${tip})` : null;
 }
 
-// --- GEMINI IMPLEMENTATION ---
+// --- GEMINI IMPLEMENTATION (Direct REST SSE Streaming) ---
 async function callGeminiStream(
   messages: AIMessage[],
   options: AIOptions,
@@ -99,8 +97,6 @@ async function callGeminiStream(
 ): Promise<void> {
   const apiKey = (process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey) throw new Error('GEMINI_API_KEY is not set');
-
-  const genAI = new GoogleGenerativeAI(apiKey);
 
   const systemMessage =
     options.systemPrompt ||
@@ -114,44 +110,94 @@ async function callGeminiStream(
     : lastUserMessage;
 
   const preferredModel = getGeminiModel();
-  const modelsToTry = Array.from(new Set([preferredModel, 'gemini-2.0-flash', 'gemini-1.5-flash']));
+  const modelsToTry = Array.from(
+    new Set([
+      preferredModel,
+      'gemini-flash-lite-latest',
+      'gemini-3.5-flash-lite',
+      'gemini-flash-latest',
+      'gemini-3.5-flash',
+      'gemini-3.8-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+    ])
+  );
   let lastError: any = null;
 
   for (const modelName of modelsToTry) {
     try {
-      const model = genAI.getGenerativeModel({
-        model: modelName,
-        systemInstruction: systemMessage,
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:streamGenerateContent?alt=sse&key=${apiKey}`;
+      const requestBody: any = {
+        contents: [{ parts: [{ text: conversationText }] }],
         generationConfig: {
           temperature: options.temperature ?? 0.2,
           maxOutputTokens: options.maxTokens,
           ...(options.jsonMode ? { responseMimeType: 'application/json' } : {}),
         },
+      };
+      if (systemMessage) {
+        requestBody.systemInstruction = { parts: [{ text: systemMessage }] };
+      }
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+        signal,
       });
 
-      const result = await model.generateContentStream(conversationText);
-
-      let hasEmittedFirst = false;
-      for await (const chunk of result.stream) {
-        if (signal.aborted) {
-          throw new Error('Gemini stream aborted');
+      if (!res.ok) {
+        if (res.status === 429 || res.status >= 500) {
+          markProviderRateLimited('gemini');
         }
-        const text = chunk.text();
-        if (text) {
-          if (!hasEmittedFirst) {
-            hasEmittedFirst = true;
-            onFirstToken();
+        const errText = await res.text().catch(() => '');
+        devLog(`Gemini stream model [${modelName}] HTTP error ${res.status}: ${errText}`);
+        lastError = new Error(`Gemini HTTP error ${res.status}: ${errText}`);
+        continue;
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('Gemini response body is not readable');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let hasEmittedFirst = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith('data: ')) continue;
+          const jsonStr = trimmed.slice(6);
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text) {
+              if (!hasEmittedFirst) {
+                hasEmittedFirst = true;
+                onFirstToken();
+              }
+              onChunk(text);
+            }
+          } catch (e) {
+            // Skip unparseable chunks
           }
-          onChunk(text);
         }
       }
       return; // Succeeded!
     } catch (err: any) {
+      if (signal.aborted) throw err;
       lastError = err;
       devLog(`Gemini stream model [${modelName}] failed:`, err?.message || err);
-      if (!err?.message?.includes('404') && !err?.message?.includes('not found')) {
-        throw err;
-      }
+      continue;
     }
   }
 
@@ -166,8 +212,6 @@ async function callGeminiGenerate(
   const apiKey = (process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey) throw new Error('GEMINI_API_KEY is not set');
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-
   const systemMessage =
     options.systemPrompt ||
     messages.find((m) => m.role === 'system')?.content ||
@@ -180,30 +224,61 @@ async function callGeminiGenerate(
     : lastUserMessage;
 
   const preferredModel = getGeminiModel();
-  const modelsToTry = Array.from(new Set([preferredModel, 'gemini-2.0-flash', 'gemini-1.5-flash']));
+  const modelsToTry = Array.from(
+    new Set([
+      preferredModel,
+      'gemini-flash-lite-latest',
+      'gemini-3.5-flash-lite',
+      'gemini-flash-latest',
+      'gemini-3.5-flash',
+      'gemini-3.8-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+    ])
+  );
   let lastError: any = null;
 
   for (const modelName of modelsToTry) {
     try {
-      const model = genAI.getGenerativeModel({
-        model: modelName,
-        systemInstruction: systemMessage,
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+      const requestBody: any = {
+        contents: [{ parts: [{ text: conversationText }] }],
         generationConfig: {
           temperature: options.temperature ?? 0.2,
           maxOutputTokens: options.maxTokens,
           ...(options.jsonMode ? { responseMimeType: 'application/json' } : {}),
         },
+      };
+      if (systemMessage) {
+        requestBody.systemInstruction = { parts: [{ text: systemMessage }] };
+      }
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+        signal,
       });
 
-      const response = await model.generateContent(conversationText);
-      if (signal.aborted) throw new Error('Gemini generate aborted');
-      return response.response.text();
+      if (!res.ok) {
+        if (res.status === 429 || res.status >= 500) {
+          markProviderRateLimited('gemini');
+        }
+        const errText = await res.text().catch(() => '');
+        devLog(`Gemini generate model [${modelName}] HTTP error ${res.status}: ${errText}`);
+        lastError = new Error(`Gemini HTTP error ${res.status}: ${errText}`);
+        continue;
+      }
+
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) return text;
     } catch (err: any) {
+      if (signal.aborted) throw err;
       lastError = err;
       devLog(`Gemini generate model [${modelName}] failed:`, err?.message || err);
-      if (!err?.message?.includes('404') && !err?.message?.includes('not found')) {
-        throw err;
-      }
+      continue;
     }
   }
 
@@ -222,8 +297,6 @@ async function callGroqStream(
   const apiKey = (process.env.GROQ_API_KEY || '').trim();
   if (!apiKey) throw new Error('GROQ_API_KEY is not set');
 
-  const modelName = getGroqModel();
-
   const groqMessages = [...messages];
   if (options.systemPrompt && !groqMessages.some((m) => m.role === 'system')) {
     groqMessages.unshift({ role: 'system', content: options.systemPrompt });
@@ -238,66 +311,93 @@ async function callGroqStream(
     }
   }
 
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: modelName,
-      messages: groqMessages,
-      stream: true,
-      temperature: options.temperature ?? 0.2,
-      max_tokens: options.maxTokens,
-    }),
-    signal,
-  });
+  const preferredModel = getGroqModel();
+  const modelsToTry = Array.from(
+    new Set([
+      preferredModel,
+      'qwen/qwen3.8-27b',
+      'openai/gpt-oss-120b',
+      'openai/gpt-oss-20b',
+      'llama-3.3-70b-versatile',
+      'llama-3.1-8b-instant',
+    ])
+  );
+  let lastError: any = null;
 
-  if (!res.ok) {
-    if (res.status === 429 || res.status >= 500) {
-      markProviderRateLimited('groq');
-    }
-    const errText = await res.text().catch(() => '');
-    throw new Error(`Groq HTTP error ${res.status}: ${errText}`);
-  }
+  for (const modelName of modelsToTry) {
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: modelName,
+          messages: groqMessages,
+          stream: true,
+          temperature: options.temperature ?? 0.2,
+          max_tokens: options.maxTokens,
+        }),
+        signal,
+      });
 
-  const reader = res.body?.getReader();
-  if (!reader) throw new Error('Groq response body is not readable');
-
-  const decoder = new TextDecoder();
-  let buffer = '';
-  let hasEmittedFirst = false;
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || !trimmed.startsWith('data: ')) continue;
-      const jsonStr = trimmed.replace(/^data:\s*/, '');
-      if (jsonStr === '[DONE]') return;
-
-      try {
-        const parsed = JSON.parse(jsonStr);
-        const delta = parsed.choices?.[0]?.delta?.content;
-        if (delta) {
-          if (!hasEmittedFirst) {
-            hasEmittedFirst = true;
-            onFirstToken();
-          }
-          onChunk(delta);
+      if (!res.ok) {
+        if (res.status === 429 || res.status >= 500) {
+          markProviderRateLimited('groq');
         }
-      } catch (e) {
-        // Skip malformed SSE chunks
+        const errText = await res.text().catch(() => '');
+        devLog(`Groq stream model [${modelName}] HTTP error ${res.status}: ${errText}`);
+        lastError = new Error(`Groq HTTP error ${res.status}: ${errText}`);
+        continue;
       }
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('Groq response body is not readable');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let hasEmittedFirst = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith('data: ')) continue;
+          const jsonStr = trimmed.replace(/^data:\s*/, '');
+          if (jsonStr === '[DONE]') return;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              if (!hasEmittedFirst) {
+                hasEmittedFirst = true;
+                onFirstToken();
+              }
+              onChunk(delta);
+            }
+          } catch (e) {
+            // Skip malformed SSE chunks
+          }
+        }
+      }
+      return; // Succeeded!
+    } catch (err: any) {
+      if (signal.aborted) throw err;
+      lastError = err;
+      devLog(`Groq stream model [${modelName}] failed:`, err?.message || err);
+      continue;
     }
   }
+
+  if (lastError) throw lastError;
 }
 
 async function callGroqGenerate(
@@ -307,8 +407,6 @@ async function callGroqGenerate(
 ): Promise<string> {
   const apiKey = (process.env.GROQ_API_KEY || '').trim();
   if (!apiKey) throw new Error('GROQ_API_KEY is not set');
-
-  const modelName = getGroqModel();
 
   const groqMessages = [...messages];
   if (options.systemPrompt && !groqMessages.some((m) => m.role === 'system')) {
@@ -323,33 +421,60 @@ async function callGroqGenerate(
     }
   }
 
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: modelName,
-      messages: groqMessages,
-      stream: false,
-      temperature: options.temperature ?? 0.2,
-      max_tokens: options.maxTokens,
-      ...(options.jsonMode ? { response_format: { type: 'json_object' } } : {}),
-    }),
-    signal,
-  });
+  const preferredModel = getGroqModel();
+  const modelsToTry = Array.from(
+    new Set([
+      preferredModel,
+      'qwen/qwen3.8-27b',
+      'openai/gpt-oss-120b',
+      'openai/gpt-oss-20b',
+      'llama-3.3-70b-versatile',
+      'llama-3.1-8b-instant',
+    ])
+  );
+  let lastError: any = null;
 
-  if (!res.ok) {
-    if (res.status === 429 || res.status >= 500) {
-      markProviderRateLimited('groq');
+  for (const modelName of modelsToTry) {
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: modelName,
+          messages: groqMessages,
+          stream: false,
+          temperature: options.temperature ?? 0.2,
+          max_tokens: options.maxTokens,
+          ...(options.jsonMode ? { response_format: { type: 'json_object' } } : {}),
+        }),
+        signal,
+      });
+
+      if (!res.ok) {
+        if (res.status === 429 || res.status >= 500) {
+          markProviderRateLimited('groq');
+        }
+        const errText = await res.text().catch(() => '');
+        devLog(`Groq generate model [${modelName}] HTTP error ${res.status}: ${errText}`);
+        lastError = new Error(`Groq HTTP error ${res.status}: ${errText}`);
+        continue;
+      }
+
+      const data = await res.json();
+      return data.choices?.[0]?.message?.content || '';
+    } catch (err: any) {
+      if (signal.aborted) throw err;
+      lastError = err;
+      devLog(`Groq generate model [${modelName}] failed:`, err?.message || err);
+      continue;
     }
-    const errText = await res.text().catch(() => '');
-    throw new Error(`Groq HTTP error ${res.status}: ${errText}`);
   }
 
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || '';
+  if (lastError) throw lastError;
+  return '';
 }
 
 // --- PUBLIC ABSTRACTION: STREAM ---
@@ -388,12 +513,12 @@ export async function stream(
         const primaryAbort = new AbortController();
         let primaryFirstTokenArrived = false;
 
-        const timeout5s = setTimeout(() => {
+        const timeout12s = setTimeout(() => {
           if (!primaryFirstTokenArrived) {
-            devLog(`Primary [${primary}] 5-second first token timeout. Aborting.`);
+            devLog(`Primary [${primary}] 12-second first token timeout. Aborting.`);
             primaryAbort.abort();
           }
-        }, 5000);
+        }, 12000);
 
         try {
           devLog(`Invoking Primary Provider: ${primary} (lang: ${options.language || 'default'})`);
@@ -404,7 +529,7 @@ export async function stream(
               primaryAbort.signal,
               () => {
                 primaryFirstTokenArrived = true;
-                clearTimeout(timeout5s);
+                clearTimeout(timeout12s);
               },
               (chunk) => sendText(chunk)
             );
@@ -415,17 +540,17 @@ export async function stream(
               primaryAbort.signal,
               () => {
                 primaryFirstTokenArrived = true;
-                clearTimeout(timeout5s);
+                clearTimeout(timeout12s);
               },
               (chunk) => sendText(chunk)
             );
           }
 
-          clearTimeout(timeout5s);
+          clearTimeout(timeout12s);
           primarySucceeded = true;
           devLog(`Primary Provider [${primary}] finished successfully.`);
         } catch (err: any) {
-          clearTimeout(timeout5s);
+          clearTimeout(timeout12s);
           if (err?.message?.includes('429') || err?.message?.includes('500') || err?.message?.includes('503')) {
             markProviderRateLimited(primary);
           }
@@ -449,12 +574,12 @@ export async function stream(
           const secondaryAbort = new AbortController();
           let secondaryFirstTokenArrived = false;
 
-          const secondaryTimeout5s = setTimeout(() => {
+          const secondaryTimeout12s = setTimeout(() => {
             if (!secondaryFirstTokenArrived) {
-              devLog(`Secondary [${secondary}] 5-second first token timeout. Aborting.`);
+              devLog(`Secondary [${secondary}] 12-second first token timeout. Aborting.`);
               secondaryAbort.abort();
             }
-          }, 5000);
+          }, 12000);
 
           try {
             devLog(`Invoking Secondary Fallback Provider: ${secondary}`);
@@ -465,7 +590,7 @@ export async function stream(
                 secondaryAbort.signal,
                 () => {
                   secondaryFirstTokenArrived = true;
-                  clearTimeout(secondaryTimeout5s);
+                  clearTimeout(secondaryTimeout12s);
                 },
                 (chunk) => sendText(chunk)
               );
@@ -476,16 +601,16 @@ export async function stream(
                 secondaryAbort.signal,
                 () => {
                   secondaryFirstTokenArrived = true;
-                  clearTimeout(secondaryTimeout5s);
+                  clearTimeout(secondaryTimeout12s);
                 },
                 (chunk) => sendText(chunk)
               );
             }
 
-            clearTimeout(secondaryTimeout5s);
+            clearTimeout(secondaryTimeout12s);
             devLog(`Secondary Fallback Provider [${secondary}] finished successfully.`);
           } catch (secErr: any) {
-            clearTimeout(secondaryTimeout5s);
+            clearTimeout(secondaryTimeout12s);
             if (secErr?.message?.includes('429') || secErr?.message?.includes('500') || secErr?.message?.includes('503')) {
               markProviderRateLimited(secondary);
             }
@@ -537,7 +662,7 @@ export async function generate(
   // 1. Primary Attempt
   if (!isProviderRateLimited(primary) && !isDebugForceFallback) {
     const abortCtrl = new AbortController();
-    const timeout = setTimeout(() => abortCtrl.abort(), 5000);
+    const timeout = setTimeout(() => abortCtrl.abort(), 12000);
 
     try {
       devLog(`Generate: Invoking Primary [${primary}] (lang: ${options.language || 'default'})`);
@@ -567,7 +692,7 @@ export async function generate(
 
   if (!isProviderRateLimited(secondary)) {
     const secAbortCtrl = new AbortController();
-    const secTimeout = setTimeout(() => secAbortCtrl.abort(), 5000);
+    const secTimeout = setTimeout(() => secAbortCtrl.abort(), 12000);
 
     try {
       devLog(`Generate: Invoking Secondary Fallback [${secondary}]`);
