@@ -79,9 +79,8 @@ export function LocationStep() {
   };
 
   return (
-    <div className="h-full min-h-screen min-h-[100dvh] max-h-screen max-h-[100dvh] max-w-lg mx-auto flex flex-col p-4 sm:p-8 select-none">
-      {/* Pinned Header & Controls */}
-      <div className="shrink-0">
+    <div className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-4 sm:p-8 select-none pb-28 sm:pb-32">
+      <div>
         <button
           onClick={() => setOnboardingStep('language')}
           className="mb-2 sm:mb-4 min-h-[44px] px-2 -ml-2 rounded-lg text-muted hover:text-foreground transition-colors flex items-center gap-1.5 text-sm cursor-pointer"
@@ -146,10 +145,9 @@ export function LocationStep() {
             </div>
           )}
         </div>
-      </div>
 
-      {/* Dedicated Scrollable Cities / Results Area */}
-      <div className="flex-1 min-h-0 my-3 sm:my-4 overflow-y-auto overscroll-contain touch-pan-y pr-1 -mr-1 [scrollbar-width:thin]">
+        {/* Cities / Results Area */}
+        <div className="my-4">
         {/* Search Results Dropdown or Chips */}
         {results.length > 0 ? (
           <div className="bg-card border border-card-border rounded-card shadow-soft divide-y divide-card-border overflow-hidden">
@@ -206,6 +204,7 @@ export function LocationStep() {
             </div>
           </div>
         )}
+        </div>
 
         {/* Selected City Indicator */}
         <div className="mt-4 p-3.5 rounded-card bg-card-subtle border border-card-border flex items-center gap-3">
@@ -222,18 +221,20 @@ export function LocationStep() {
       </div>
 
       {/* Pinned Bottom Continue Button */}
-      <div className="pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-card-border/60 shrink-0 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 mt-auto">
-        <button
-          onClick={() => setOnboardingStep('intake-choice')}
-          className={`w-full min-h-[48px] px-6 py-3.5 rounded-card font-medium shadow-soft transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 ${
-            profile.accentMode === 'mono'
-              ? 'bg-neutral-900 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950 hover:bg-neutral-800 focus-visible:ring-neutral-400'
-              : 'bg-teal-accent text-white hover:bg-teal-hover focus-visible:ring-teal-accent'
-          }`}
-        >
-          <Bi k="onboarding.continue" layout="inline" />
-          <ArrowRight className="w-4 h-4" strokeWidth={1.75} />
-        </button>
+      <div className="fixed bottom-0 inset-x-0 z-30 bg-background/95 backdrop-blur-md border-t border-card-border/60 p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-soft">
+        <div className="max-w-lg mx-auto">
+          <button
+            onClick={() => setOnboardingStep('intake-choice')}
+            className={`w-full min-h-[48px] px-6 py-3.5 rounded-card font-medium shadow-soft transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 ${
+              profile.accentMode === 'mono'
+                ? 'bg-neutral-900 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950 hover:bg-neutral-800 focus-visible:ring-neutral-400'
+                : 'bg-teal-accent text-white hover:bg-teal-hover focus-visible:ring-teal-accent'
+            }`}
+          >
+            <Bi k="onboarding.continue" layout="inline" />
+            <ArrowRight className="w-4 h-4" strokeWidth={1.75} />
+          </button>
+        </div>
       </div>
     </div>
   );

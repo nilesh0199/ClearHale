@@ -77,9 +77,8 @@ export function ThemeStep() {
   };
 
   return (
-    <div className="h-full min-h-screen min-h-[100dvh] max-h-screen max-h-[100dvh] max-w-lg mx-auto flex flex-col p-4 sm:p-8 select-none">
-      {/* Pinned Header */}
-      <div className="shrink-0">
+    <div className="min-h-screen min-h-[100dvh] max-w-lg mx-auto flex flex-col justify-between p-4 sm:p-8 select-none pb-36 sm:pb-40">
+      <div>
         {/* Back navigation */}
         <button
           onClick={() => setOnboardingStep('welcome')}
@@ -101,11 +100,9 @@ export function ThemeStep() {
             Clearhale adapts comfortably to day or night with tuned contrast.
           </p>
         </motion.div>
-      </div>
 
-      {/* Dedicated Scrollable Theme Preview Cards */}
-      <div className="flex-1 min-h-0 my-3 sm:my-4 overflow-y-auto overscroll-contain touch-pan-y pr-1 -mr-1 [scrollbar-width:thin]">
-        <div className="space-y-3 sm:space-y-3.5 pb-2">
+        {/* 3 Tappable Theme Preview Cards */}
+        <div className="my-4 sm:my-6 space-y-3 sm:space-y-3.5 pb-2">
           {themes.map((item, idx) => {
             const isSelected = theme === item.id;
             return (
@@ -184,27 +181,29 @@ export function ThemeStep() {
       </div>
 
       {/* Pinned Bottom Actions */}
-      <div className="pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-card-border/60 shrink-0 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-8 px-4 sm:px-8 mt-auto space-y-2">
-        <motion.button
-          whileHover={shouldReduceMotion ? undefined : { scale: 1.01 }}
-          whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}
-          onClick={handleContinue}
-          className={`w-full min-h-[48px] px-6 py-3.5 rounded-card font-medium shadow-soft transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 ${
-            profile.accentMode === 'mono'
-              ? 'bg-neutral-900 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950 hover:bg-neutral-800 focus-visible:ring-neutral-400'
-              : 'bg-teal-accent text-white hover:bg-teal-hover focus-visible:ring-teal-accent'
-          }`}
-        >
-          <span>Continue</span>
-          <ArrowRight className="w-4 h-4" strokeWidth={1.75} />
-        </motion.button>
+      <div className="fixed bottom-0 inset-x-0 z-30 bg-background/95 backdrop-blur-md border-t border-card-border/60 p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-soft">
+        <div className="max-w-lg mx-auto space-y-2">
+          <motion.button
+            whileHover={shouldReduceMotion ? undefined : { scale: 1.01 }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}
+            onClick={handleContinue}
+            className={`w-full min-h-[48px] px-6 py-3.5 rounded-card font-medium shadow-soft transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 ${
+              profile.accentMode === 'mono'
+                ? 'bg-neutral-900 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950 hover:bg-neutral-800 focus-visible:ring-neutral-400'
+                : 'bg-teal-accent text-white hover:bg-teal-hover focus-visible:ring-teal-accent'
+            }`}
+          >
+            <span>Continue</span>
+            <ArrowRight className="w-4 h-4" strokeWidth={1.75} />
+          </motion.button>
 
-        <button
-          onClick={handleSkip}
-          className="w-full min-h-[38px] py-1 text-center text-xs font-medium text-muted hover:text-foreground transition-colors cursor-pointer"
-        >
-          Skip (defaults to System)
-        </button>
+          <button
+            onClick={handleSkip}
+            className="w-full min-h-[38px] py-1 text-center text-xs font-medium text-muted hover:text-foreground transition-colors cursor-pointer"
+          >
+            Skip (defaults to System)
+          </button>
+        </div>
       </div>
     </div>
   );

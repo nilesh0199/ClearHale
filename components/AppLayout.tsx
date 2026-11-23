@@ -260,7 +260,7 @@ export function AppLayout() {
   // Handle Onboarding Steps (wrapped in a dedicated smooth container for any screen height)
   if (onboardingStep !== 'complete') {
     return (
-      <div className="h-full min-h-screen min-h-[100dvh] max-h-[100dvh] w-full bg-background text-foreground flex flex-col overflow-hidden">
+      <div className="min-h-screen min-h-[100dvh] w-full bg-background text-foreground flex flex-col overflow-y-auto overscroll-y-contain">
         {onboardingStep === 'welcome' && <WelcomeStep />}
         {onboardingStep === 'theme' && <ThemeStep />}
         {onboardingStep === 'language' && <LanguageStep />}
