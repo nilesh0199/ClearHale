@@ -1716,14 +1716,15 @@ export function AirQualityCard({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              padding: '10px 24px',
+              padding: '8px 20px',
               borderRadius: '9999px',
               backgroundColor: palette.pillBg,
               color: bandColor,
               border: `2px solid ${palette.borderHex}`,
-              fontSize: '26px',
+              fontSize: pillText.length > 22 ? '22px' : '24px',
               fontWeight: 800,
               letterSpacing: '-0.2px',
+              whiteSpace: 'nowrap',
             }}
           >
             {pillText}
@@ -1731,10 +1732,12 @@ export function AirQualityCard({
 
           <div
             style={{
-              fontSize: '21px',
+              fontSize: '20px',
               fontWeight: 500,
               color: '#64748B',
               marginTop: '4px',
+              lineHeight: 1.3,
+              whiteSpace: 'nowrap',
             }}
           >
             {isEn
@@ -1753,9 +1756,11 @@ export function AirQualityCard({
           </div>
           <div
             style={{
-              fontSize: '21px',
+              fontSize: '20px',
               color: '#475569',
               fontWeight: 600,
+              lineHeight: 1.3,
+              whiteSpace: 'nowrap',
             }}
           >
             {isEn
@@ -1919,18 +1924,27 @@ export function AirQualityCard({
                 backgroundColor: '#FFFFFF',
                 borderRadius: '22px',
                 border: '1.5px solid rgba(226, 232, 240, 0.85)',
-                padding: '16px 26px',
+                padding: '14px 22px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 boxShadow: '0 2px 8px rgba(15, 23, 42, 0.02)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '22px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px',
+                  flex: 1,
+                  minWidth: 0,
+                  marginRight: '14px',
+                }}
+              >
                 <div
                   style={{
-                    width: '52px',
-                    height: '52px',
+                    width: '46px',
+                    height: '46px',
                     borderRadius: '50%',
                     backgroundColor: '#ECFDF5',
                     color: '#059669',
@@ -1938,20 +1952,28 @@ export function AirQualityCard({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '26px',
+                    fontSize: '24px',
                     fontWeight: 800,
                     flexShrink: 0,
                   }}
                 >
                   {idx + 1}
                 </div>
-                <div>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
-                      fontSize: '30px',
+                      fontSize:
+                        shortTitles.native.length > 25
+                          ? '23px'
+                          : shortTitles.native.length > 18
+                          ? '25px'
+                          : '27px',
                       fontWeight: 700,
                       color: '#0F172A',
                       lineHeight: 1.25,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                     }}
                   >
                     {shortTitles.native}
@@ -1961,14 +1983,15 @@ export function AirQualityCard({
 
               <span
                 style={{
-                  padding: '8px 22px',
+                  padding: '6px 18px',
                   borderRadius: '9999px',
                   backgroundColor: costBadgeStyle.bg,
                   color: costBadgeStyle.color,
                   border: `1.5px solid ${costBadgeStyle.border}`,
-                  fontSize: '22px',
+                  fontSize: '20px',
                   fontWeight: 700,
                   whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
                 {costBadgeStyle.label}
