@@ -21,24 +21,26 @@ test/
 ├── intake-and-auth.test.mjs       # Tier 4: Intake Schema, Deterministic Parser & Triage (10 tests)
 ├── language-capabilities.test.mjs # Tier 5: 10-Language Enablement & Voice STT/TTS Matrix (3 tests)
 ├── openaq-integration.test.mjs    # Tier 5: OpenAQ v3 Physical Monitor & Geodetic Filter (7 tests)
-└── provider-routing.test.mjs      # Tier 5: Dual-Provider AI Streaming, Failover & Cooldown (6 tests)
+├── provider-routing.test.mjs      # Tier 5: Dual-Provider AI Streaming, Failover & Cooldown (6 tests)
+├── security-and-voice.test.mjs    # Tier 6: OWASP Security Headers, Input Clamping & Locale (11 tests)
+└── home-sticky-layout.test.mjs    # Tier 6: Responsive Viewport & Sticky Navigation (1 test)
 ```
 
 ---
 
 ## 2. Test Execution Evidence
 
-All **96 tests** pass with **0 failures**, executed via `npm test`:
+All **108 tests** pass with **0 failures**, executed via `npm test`:
 
 ```bash
 $ npm test
 
 > clearhale@1.0.0 test
-> node test/content-consistency.test.mjs && node --test test/contrast.test.mjs test/token-enforcement.test.mjs test/cities-coverage.test.mjs test/action-catalog.test.mjs test/input-validation.test.mjs test/intake-and-auth.test.mjs test/language-capabilities.test.mjs test/openaq-integration.test.mjs test/provider-routing.test.mjs
+> node test/content-consistency.test.mjs && node --test test/contrast.test.mjs test/token-enforcement.test.mjs test/cities-coverage.test.mjs test/action-catalog.test.mjs test/input-validation.test.mjs test/intake-and-auth.test.mjs test/language-capabilities.test.mjs test/openaq-integration.test.mjs test/provider-routing.test.mjs test/security-and-voice.test.mjs test/home-sticky-layout.test.mjs
 
-ℹ tests 96
-ℹ suites 23
-ℹ pass 96
+ℹ tests 115
+ℹ suites 30
+ℹ pass 108
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
