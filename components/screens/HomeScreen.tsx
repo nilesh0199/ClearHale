@@ -549,9 +549,11 @@ export function HomeScreen() {
 
   const [forecastSliderIndex, setForecastSliderIndex] = useState(0);
   const isDraggingSliderRef = useRef(false);
+  const [isDraggingSlider, setIsDraggingSlider] = useState(false);
+  const rafIdRef = useRef<number | null>(null);
 
   // Synchronize horizontal scroll container when slider changes
-  const scrollToHourIndex = (idx: number) => {
+  const scrollToHourIndex = (idx: number, immediate: boolean = false) => {
     if (!forecastScrollRef.current) return;
     const container = forecastScrollRef.current;
     const total = airData.hourly.length;
@@ -560,17 +562,31 @@ export function HomeScreen() {
     const targetChild = container.children[idx] as HTMLElement | undefined;
     if (targetChild) {
       const targetLeft = targetChild.offsetLeft - container.offsetLeft - 16;
-      container.scrollTo({
-        left: Math.max(0, targetLeft),
-        behavior: 'smooth',
-      });
+      if (immediate) {
+        if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = requestAnimationFrame(() => {
+          container.scrollLeft = Math.max(0, targetLeft);
+        });
+      } else {
+        container.scrollTo({
+          left: Math.max(0, targetLeft),
+          behavior: 'smooth',
+        });
+      }
     } else {
       const maxScroll = container.scrollWidth - container.clientWidth;
       const targetScroll = (idx / Math.max(1, total - 1)) * maxScroll;
-      container.scrollTo({
-        left: targetScroll,
-        behavior: 'smooth',
-      });
+      if (immediate) {
+        if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = requestAnimationFrame(() => {
+          container.scrollLeft = targetScroll;
+        });
+      } else {
+        container.scrollTo({
+          left: targetScroll,
+          behavior: 'smooth',
+        });
+      }
     }
   };
 
@@ -1809,7 +1825,9 @@ export function HomeScreen() {
         <div
           ref={forecastScrollRef}
           onScroll={handleForecastScroll}
-          className="flex gap-2.5 overflow-x-auto pb-2 no-scrollbar scroll-smooth"
+          className={`flex gap-2.5 overflow-x-auto pb-2 no-scrollbar ${
+            isDraggingSlider ? 'scroll-auto' : 'scroll-smooth'
+          }`}
         >
           {airData.hourly.map((h, i) => {
             const isSelected = i === forecastSliderIndex;
@@ -1819,7 +1837,7 @@ export function HomeScreen() {
                 ref={h.isBestHour ? bestHourCardRef : undefined}
                 onClick={() => {
                   setForecastSliderIndex(i);
-                  scrollToHourIndex(i);
+                  scrollToHourIndex(i, false);
                 }}
                 className={`shrink-0 w-20 p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                   h.isBestHour
@@ -1861,18 +1879,18 @@ export function HomeScreen() {
         </div>
 
         {/* Interactive Horizontal Hour Slider */}
-        <div className="mt-3.5 pt-3 border-t border-card-border/60">
-          <div className="flex items-center justify-between text-xs text-muted mb-2 px-0.5">
+        <div className="mt-4 pt-3.5 border-t border-card-border/60">
+          <div className="flex items-center justify-between text-xs text-muted mb-2.5 px-0.5">
             <button
               type="button"
               onClick={() => {
                 setForecastSliderIndex(0);
-                scrollToHourIndex(0);
+                scrollToHourIndex(0, false);
               }}
-              className={`font-medium transition-colors cursor-pointer flex items-center gap-1.5 py-0.5 px-1.5 rounded hover:bg-card-subtle ${
+              className={`font-medium transition-colors cursor-pointer flex items-center gap-1.5 py-1 px-2 rounded-lg hover:bg-card-subtle ${
                 forecastSliderIndex === 0
-                  ? 'text-teal-accent font-semibold bg-teal-accent/10'
-                  : 'hover:text-foreground text-muted'
+                  ? 'text-teal-accent font-semibold bg-teal-accent/10 border border-teal-accent/20'
+                  : 'hover:text-foreground text-muted border border-transparent'
               }`}
               title="Jump to current hour"
             >
@@ -1880,8 +1898,8 @@ export function HomeScreen() {
               <span>{airData.hourly[0]?.hour ? `${airData.hourly[0].hour} (Now)` : 'Current Hour'}</span>
             </button>
 
-            <div className="text-[11px] font-semibold text-foreground bg-card-subtle px-2.5 py-0.5 rounded-full border border-card-border flex items-center gap-1.5 shadow-2xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-teal-accent animate-pulse" />
+            <div className="text-xs font-semibold text-foreground bg-card-subtle px-3 py-1 rounded-full border border-card-border flex items-center gap-1.5 shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-teal-accent animate-pulse" />
               <span>
                 {forecastSliderIndex === 0
                   ? 'Current Hour'
@@ -1892,45 +1910,115 @@ export function HomeScreen() {
                   · {airData.hourly[forecastSliderIndex].pm2_5} µg/m³
                 </span>
               )}
+              {airData.hourly[forecastSliderIndex]?.isBestHour && (
+                <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded-full ml-0.5">
+                  Cleanest
+                </span>
+              )}
             </div>
 
-            <span className="text-[11px] text-muted font-medium">
-              {airData.hourly[airData.hourly.length - 1]?.hour
-                ? `${airData.hourly[airData.hourly.length - 1].hour} (+24h)`
-                : '+24h'}
-            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const lastIdx = Math.max(0, airData.hourly.length - 1);
+                setForecastSliderIndex(lastIdx);
+                scrollToHourIndex(lastIdx, false);
+              }}
+              className={`text-xs font-medium transition-colors cursor-pointer py-1 px-2 rounded-lg hover:bg-card-subtle ${
+                forecastSliderIndex === airData.hourly.length - 1
+                  ? 'text-teal-accent font-semibold bg-teal-accent/10 border border-teal-accent/20'
+                  : 'text-muted hover:text-foreground border border-transparent'
+              }`}
+              title="Jump to +24h forecast"
+            >
+              <span>
+                {airData.hourly[airData.hourly.length - 1]?.hour
+                  ? `${airData.hourly[airData.hourly.length - 1].hour} (+24h)`
+                  : '+24h'}
+              </span>
+            </button>
           </div>
 
-          <div className="relative flex items-center px-0.5">
+          {/* Slider Bar & Timeline Scrubber */}
+          <div className="relative py-1 flex flex-col gap-2">
             <input
               type="range"
               min={0}
               max={Math.max(0, airData.hourly.length - 1)}
               value={forecastSliderIndex}
-              onMouseDown={() => {
+              onPointerDown={() => {
                 isDraggingSliderRef.current = true;
+                setIsDraggingSlider(true);
               }}
-              onTouchStart={() => {
-                isDraggingSliderRef.current = true;
-              }}
-              onMouseUp={() => {
+              onPointerUp={() => {
                 setTimeout(() => {
                   isDraggingSliderRef.current = false;
+                  setIsDraggingSlider(false);
                 }, 50);
               }}
-              onTouchEnd={() => {
-                setTimeout(() => {
-                  isDraggingSliderRef.current = false;
-                }, 50);
+              onKeyDown={() => {
+                isDraggingSliderRef.current = false;
+                setIsDraggingSlider(false);
+              }}
+              onInput={(e) => {
+                const idx = Number((e.target as HTMLInputElement).value);
+                setForecastSliderIndex(idx);
+                scrollToHourIndex(idx, true);
               }}
               onChange={(e) => {
                 const idx = Number(e.target.value);
                 setForecastSliderIndex(idx);
-                scrollToHourIndex(idx);
+                scrollToHourIndex(idx, isDraggingSliderRef.current);
               }}
               aria-label="24-hour forecast timeline slider"
-              className="w-full h-2 bg-card-subtle border border-card-border rounded-lg appearance-none cursor-grab active:cursor-grabbing accent-teal-accent hover:border-teal-accent/50 transition-colors"
+              style={{
+                background: `linear-gradient(to right, #0D5C52 0%, #0D5C52 ${
+                  airData.hourly.length > 1
+                    ? (forecastSliderIndex / (airData.hourly.length - 1)) * 100
+                    : 0
+                }%, rgba(148, 163, 184, 0.25) ${
+                  airData.hourly.length > 1
+                    ? (forecastSliderIndex / (airData.hourly.length - 1)) * 100
+                    : 0
+                }%, rgba(148, 163, 184, 0.25) 100%)`,
+              }}
+              className="w-full h-2.5 rounded-full appearance-none cursor-grab active:cursor-grabbing border border-card-border/60 transition-all [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-teal-accent [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white dark:[&::-webkit-slider-thumb]:border-stone-900 [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-thumb]:active:scale-125 [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:active:cursor-grabbing [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-teal-accent [&::-moz-range-thumb]:shadow-md [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white dark:[&::-moz-range-thumb]:border-stone-900 [&::-moz-range-thumb]:cursor-grab"
             />
+
+            {/* Timeline Tick Markers (0h, 6h, 12h, 18h, 24h) */}
+            <div className="flex justify-between items-center px-1 text-[10px] text-muted font-medium select-none">
+              {[0, 6, 12, 18, Math.max(0, airData.hourly.length - 1)].map((targetIdx, mIdx) => {
+                const hourItem = airData.hourly[targetIdx];
+                const isCurrentActive = Math.abs(forecastSliderIndex - targetIdx) <= 2;
+                return (
+                  <button
+                    key={mIdx}
+                    type="button"
+                    onClick={() => {
+                      setForecastSliderIndex(targetIdx);
+                      scrollToHourIndex(targetIdx, false);
+                    }}
+                    className={`flex flex-col items-center gap-0.5 cursor-pointer transition-colors group ${
+                      isCurrentActive ? 'text-teal-accent font-semibold' : 'hover:text-foreground text-muted'
+                    }`}
+                    title={hourItem ? `Jump to ${hourItem.hour}` : undefined}
+                  >
+                    <span
+                      className={`w-1 h-1.5 rounded-full transition-all ${
+                        isCurrentActive
+                          ? 'bg-teal-accent scale-125'
+                          : 'bg-card-border group-hover:bg-muted'
+                      }`}
+                    />
+                    <span>
+                      {targetIdx === 0
+                        ? 'Now'
+                        : hourItem?.hour || `+${targetIdx}h`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </SpotlightCard>
