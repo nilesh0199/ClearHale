@@ -22,6 +22,8 @@ import {
   MaskType,
   CommuteTime,
   PriorityGoal,
+  AccentMode,
+  AppTheme,
 } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -371,7 +373,7 @@ export function ProfileScreen() {
             return (
               <button
                 key={mode.id}
-                onClick={() => setTheme(mode.id as any)}
+                onClick={() => setTheme(mode.id as AppTheme)}
                 className={`min-h-[38px] sm:min-h-[40px] py-2 px-3 rounded-xl border text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-2 ${
                   isSelected
                     ? profile.accentMode === 'mono'
@@ -437,7 +439,7 @@ export function ProfileScreen() {
                     <button
                       key={mode.id}
                       type="button"
-                      onClick={() => updateProfile({ accentMode: mode.id as any })}
+                      onClick={() => updateProfile({ accentMode: mode.id as AccentMode })}
                       className={`min-h-[44px] py-2.5 px-3 rounded-xl border text-xs sm:text-sm transition-all flex flex-col items-center justify-center cursor-pointer ${
                         isSelected
                           ? mode.id === 'teal'

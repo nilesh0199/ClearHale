@@ -1,4 +1,4 @@
-import { UserProfile, VoiceSettings } from '@/types';
+import { UserProfile, VoiceSettings, FamilyView, AccentMode } from '@/types';
 import { DEMO_PROFILE } from './demoData';
 import { findNearestCatalogCity } from './citiesData';
 
@@ -69,7 +69,7 @@ export function loadStoredProfile(): UserProfile {
     parsed.checkedActions = parsed.checkedActions || [];
     const storedFamily = localStorage.getItem('clearhale_family_view');
     if (storedFamily && ['whole_family', 'child', 'elderly', 'pregnant', 'outdoor_worker'].includes(storedFamily)) {
-      parsed.activeFamilyFilter = storedFamily as any;
+      parsed.activeFamilyFilter = storedFamily as FamilyView;
     } else if (parsed.household) {
       if (parsed.household.members?.includes('child')) {
         parsed.activeFamilyFilter = 'child';
@@ -86,7 +86,7 @@ export function loadStoredProfile(): UserProfile {
       ...DEFAULT_VOICE_SETTINGS,
       ...(parsed.voice || {}),
     };
-    parsed.accentMode = parsed.accentMode || (localStorage.getItem('clearhale_accent') as any) || 'teal';
+    parsed.accentMode = parsed.accentMode || (localStorage.getItem('clearhale_accent') as AccentMode) || 'teal';
     parsed.trueBlack = parsed.trueBlack ?? (localStorage.getItem('clearhale_true_black') === 'true');
     parsed.onboardingCompleted = Boolean(parsed.onboardingCompleted || localStorage.getItem('clearhale_onboarding_completed') === 'true');
     return parsed;

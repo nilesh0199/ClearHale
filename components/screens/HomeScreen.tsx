@@ -29,7 +29,7 @@ import {
   getLanguageOption,
   isIndianCity,
 } from '@/lib/languages';
-import { FamilyView } from '@/types';
+import { FamilyView, FamilyMember } from '@/types';
 import { getAQIBand } from '@/lib/aqi';
 import { findNearestCatalogCity } from '@/lib/citiesData';
 import { CostChip } from '../ui/NeutralChips';
@@ -653,7 +653,7 @@ export function HomeScreen() {
   const isPregnantSelected = profile.household?.members?.includes('pregnant') || false;
   const isAsthmaSelected =
     profile.household?.members?.includes('asthma_heart') ||
-    (profile.household?.members as any)?.includes('asthma') ||
+    (profile.household?.members as (FamilyMember | string)[])?.includes('asthma') ||
     profile.household?.respiratoryOrHeart === true ||
     false;
 
@@ -752,7 +752,7 @@ export function HomeScreen() {
 
   const getTabLabel = (tabId: FamilyView): string => {
     const filterKey = tabId === 'whole_family' ? 'all' : tabId === 'outdoor_worker' ? 'worker' : tabId;
-    return (t.home.familyFilter as any)?.[filterKey] || tabId;
+    return (t.home.familyFilter as Record<string, string>)?.[filterKey] || tabId;
   };
 
   const getTabShortLabel = (tab: (typeof familyTabs)[0]): string => {

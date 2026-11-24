@@ -114,7 +114,7 @@ export function Term({ k, children, className = '', noUnderline = false }: TermP
 
   const handleOpenAllTerms = () => {
     setIsOpen(false);
-    setActiveTab('care' as any);
+    setActiveTab('care');
     if (typeof window !== 'undefined') {
       window.location.hash = '#terms';
       try {

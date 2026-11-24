@@ -26,6 +26,22 @@ export interface UseVoiceInputReturn {
   isSupported: boolean;
 }
 
+interface ISpeechRecognition {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  maxAlternatives: number;
+  start: () => void;
+  stop: () => void;
+  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onerror: (() => void) | null;
+}
+
+interface SpeechWindow {
+  SpeechRecognition?: new () => ISpeechRecognition;
+  webkitSpeechRecognition?: new () => ISpeechRecognition;
+}
+
 export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInputReturn {
   const {
     language = 'en',
@@ -90,8 +106,8 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
   const startBrowserSpeechFallback = useCallback(() => {
     if (typeof window === 'undefined') return;
 
-    const SpeechRec =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const speechWin = window as unknown as SpeechWindow;
+    const SpeechRec = speechWin.SpeechRecognition || speechWin.webkitSpeechRecognition;
 
     if (!SpeechRec) {
       const msg = 'Voice transcription is temporarily unavailable. You can type your message in the box.';
@@ -107,7 +123,7 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => {
         const resultText = event.results[0]?.[0]?.transcript || '';
         if (resultText) {
           setHeardText(resultText);
@@ -122,7 +138,7 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
       };
 
       recognition.start();
-    } catch (e: any) {
+    } catch (e: unknown) {
       const msg = 'Speech recognition unavailable. Please use the text field.';
       setError(msg);
       onError?.(msg);
@@ -172,7 +188,7 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
         } else {
           setError('No clear speech detected. Please try speaking again.');
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.warn('[useVoiceInput] Network error during STT:', err);
         startBrowserSpeechFallback();
       } finally {
@@ -302,12 +318,14 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
       autoStopTimerRef.current = setTimeout(() => {
         stopRecording();
       }, maxDurationSeconds * 1000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.warn('[useVoiceInput] Microphone access error:', err);
-      const msg =
-        err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError'
-          ? 'Microphone permission denied. Please allow microphone access or type your question.'
-          : 'Could not access microphone. Falling back to text input.';
+      const isNotAllowed =
+        err instanceof Error &&
+        (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError');
+      const msg = isNotAllowed
+        ? 'Microphone permission denied. Please allow microphone access or type your question.'
+        : 'Could not access microphone. Falling back to text input.';
       setError(msg);
       onError?.(msg);
       startBrowserSpeechFallback();

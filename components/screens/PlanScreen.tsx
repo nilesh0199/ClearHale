@@ -499,7 +499,7 @@ export function PlanScreen() {
               ...(profile.household.members?.includes('child') ? [{ id: 'child' as FamilyView, label: 'Baby & Kids' }] : []),
               ...(profile.household.members?.includes('elderly') ? [{ id: 'elderly' as FamilyView, label: 'Elderly' }] : []),
               ...(profile.household.members?.includes('pregnant') ? [{ id: 'pregnant' as FamilyView, label: 'Pregnant Person' }] : []),
-              ...(profile.household.members?.includes('asthma_heart') || (profile.household.members as any)?.includes('asthma') || profile.household?.respiratoryOrHeart ? [{ id: 'asthma' as FamilyView, label: 'Asthma / Heart' }] : []),
+              ...(profile.household.members?.includes('asthma_heart') || (profile.household.members as (FamilyMember | string)[])?.includes('asthma') || profile.household?.respiratoryOrHeart ? [{ id: 'asthma' as FamilyView, label: 'Asthma / Heart' }] : []),
               { id: 'outdoor_worker' as FamilyView, label: 'Outdoor Worker' },
             ].map((p) => {
               const isFocused = activeFamilyView === p.id;

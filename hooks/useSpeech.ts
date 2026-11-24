@@ -269,8 +269,8 @@ export function useSpeech(defaultOptions: UseSpeechOptions = {}): UseSpeechRetur
           };
 
           await audio.play();
-        } catch (err: any) {
-          if (err.name === 'AbortError') return;
+        } catch (err: unknown) {
+          if (err instanceof Error && err.name === 'AbortError') return;
           console.warn('[useSpeech] /api/tts unavailable, falling back to browser synthesis:', err);
           speakWithBrowserSynthesis(sentenceList, idx, lang, rate, options);
         }

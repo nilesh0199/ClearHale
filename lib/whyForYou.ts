@@ -51,7 +51,7 @@ export function whyForYou(
   const walksOrCycles = commute.includes('walk') || commute.includes('cycle');
   const isOutdoorWorker = household.work === 'outdoor';
 
-  const rawBandKey = (liveData?.current as any)?.aqi_band;
+  const rawBandKey = (liveData?.current as { aqi_band?: string } | undefined)?.aqi_band;
   const bandKey: AQIBandKey | undefined = rawBandKey
     ? (rawBandKey as AQIBandKey)
     : liveData?.current?.pm2_5 !== undefined

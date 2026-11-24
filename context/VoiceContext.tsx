@@ -13,7 +13,29 @@ import { VOICE_LANGUAGE_LOCALES } from '@/lib/languages';
 import { VoiceSettings } from '@/types';
 import { hasEmergencySymptoms } from '@/lib/medicalSafety';
 
-export interface PendingAutoSend {
+export interface ISpeechRecognition {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  maxAlternatives: number;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+  onstart: (() => void) | null;
+  onresult: ((event: {
+    resultIndex: number;
+    results: ArrayLike<{ isFinal: boolean; 0: { transcript: string; confidence?: number } }>;
+  }) => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onend: (() => void) | null;
+}
+
+interface SpeechWindow {
+  SpeechRecognition?: new () => ISpeechRecognition;
+  webkitSpeechRecognition?: new () => ISpeechRecognition;
+}
+
+interface PendingAutoSend {
   text: string;
   countdown: number; // remaining seconds (e.g. 1.5)
 }
@@ -154,7 +176,7 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
   const [recognitionErrorCode, setRecognitionErrorCode] = useState<string | null>(null);
   const [pendingAutoSend, setPendingAutoSend] = useState<PendingAutoSend | null>(null);
 
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<ISpeechRecognition | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -449,9 +471,8 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const SpeechRec =
-        (window as any).SpeechRecognition ||
-        (window as any).webkitSpeechRecognition;
+      const speechWin = typeof window !== 'undefined' ? (window as unknown as SpeechWindow) : undefined;
+      const SpeechRec = speechWin?.SpeechRecognition || speechWin?.webkitSpeechRecognition;
 
       if (!SpeechRec) {
         useServerSttRef.current = true;

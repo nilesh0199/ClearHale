@@ -129,7 +129,7 @@ ${actionCatalogSummary}
       ? (history as unknown[])
           .filter(
             (h): h is { role: 'user' | 'assistant'; content: string } =>
-              Boolean(h && typeof h === 'object' && ('role' in h) && ('content' in h) && typeof (h as any).content === 'string')
+              Boolean(h && typeof h === 'object' && ('role' in h) && ('content' in h) && typeof (h as { content?: unknown }).content === 'string')
           )
           .slice(-6)
       : [];

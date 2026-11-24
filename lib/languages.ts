@@ -1347,12 +1347,13 @@ export function getBiString(
   }
 
   let native: string | undefined = undefined;
+  const customTranslations = UI_TRANSLATIONS as unknown as Record<string, typeof UI_TRANSLATIONS.en | undefined>;
   if (lang === 'hi') {
     native = getNestedValue(UI_TRANSLATIONS.hi, key);
   } else if (lang === 'mr') {
     native = getNestedValue(UI_TRANSLATIONS.mr, key);
-  } else if ((UI_TRANSLATIONS as any)[lang]) {
-    native = getNestedValue((UI_TRANSLATIONS as any)[lang], key);
+  } else if (customTranslations[lang]) {
+    native = getNestedValue(customTranslations[lang]!, key);
   }
 
   // Dynamic AI translation dictionary for other regional languages
@@ -1472,7 +1473,7 @@ export function getActionI18n(
     if (lang === 'en') {
       return { enTitle, nativeTitle: enTitle };
     }
-    const nativeTitle = (item as any)[lang] || item.en;
+    const nativeTitle = (item as Record<string, string | undefined>)[lang] || item.en;
     return { enTitle, nativeTitle };
   }
 

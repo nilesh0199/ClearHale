@@ -94,7 +94,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [activeTab, setActiveTab] = useState<AppTab>('home');
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>('welcome');
   const [isIntakeChatOpen, setIsIntakeChatOpen] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [dynamicDict, setDynamicDict] = useState<Record<string, string>>({});
 
@@ -266,7 +266,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
       navigator.serviceWorker
         .register('/sw.js')
-        .catch((err) => console.log('SW registration note:', err));
+        .catch((err) => console.debug('SW registration note:', err));
     }
 
     // Auto-refresh air data periodically (every 30 minutes) and on window focus
@@ -433,8 +433,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const t = useMemo(() => {
     if (profile.language === 'mr') return UI_TRANSLATIONS.mr;
     if (profile.language === 'hi') return UI_TRANSLATIONS.hi;
-    if (profile.language === 'ta' && (UI_TRANSLATIONS as any).ta) return (UI_TRANSLATIONS as any).ta;
-    if (profile.language === 'bn' && (UI_TRANSLATIONS as any).bn) return (UI_TRANSLATIONS as any).bn;
+    const translations = UI_TRANSLATIONS as unknown as Record<string, typeof UI_TRANSLATIONS.en | undefined>;
+    if (translations[profile.language]) return translations[profile.language]!;
     return UI_TRANSLATIONS.en;
   }, [profile.language]);
 
