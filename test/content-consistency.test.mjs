@@ -273,7 +273,7 @@ describe('Content Consistency & Single Source of Truth Test Suite', () => {
   // 4. CONTRADICTION MATRIX TEST
   describe('4. Contradiction Matrix Across Bands, Personas & Profiles', () => {
     const BANDS = ['good', 'satisfactory', 'moderate', 'poor', 'very_poor', 'severe'];
-    const PERSONAS = ['whole_family', 'child', 'elderly', 'pregnant', 'outdoor_worker'];
+    const PERSONAS = ['whole_family', 'child', 'elderly', 'pregnant', 'outdoor_worker', 'asthma'];
     const PROFILES = [
       { name: 'child profile', p: { members: ['child'], childAgeBand: 'toddler_under_2' } },
       { name: 'elderly profile', p: { members: ['elderly'] } },
@@ -394,7 +394,7 @@ describe('Content Consistency & Single Source of Truth Test Suite', () => {
   describe('6. Sentence-Length Test (<= 18 words per sentence)', () => {
     test('All generated outdoorGuidance advice sentences are <= 18 words', () => {
       const BANDS = ['good', 'satisfactory', 'moderate', 'poor', 'very_poor', 'severe'];
-      const PERSONAS = ['whole_family', 'child', 'elderly', 'pregnant', 'outdoor_worker'];
+      const PERSONAS = ['whole_family', 'child', 'elderly', 'pregnant', 'outdoor_worker', 'asthma'];
 
       const longSentences = [];
 

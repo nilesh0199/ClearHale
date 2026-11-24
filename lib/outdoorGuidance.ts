@@ -330,6 +330,11 @@ const FAMILY_GUIDANCE: Record<AQIBandKey, Record<FamilyView, CopySet>> = {
       hi: 'हवा शुद्ध और सेहतमंद है। बाहर टहलना और खिड़कियां खोलना सुरक्षित है।',
       mr: 'हवा शुद्ध आणि निरोगी आहे. बाहेर हलके फिरणे आणि खिडक्या उघडणे सुरक्षित आहे.',
     },
+    asthma: {
+      en: 'Clean air today. Safe for outdoor walks, exercise, and opening home windows.',
+      hi: 'आज हवा साफ है। बाहर टहलने, कसरत करने और खिड़कियां खोलने के लिए सुरक्षित है।',
+      mr: 'आज हवा स्वच्छ आहे. बाहेर चालणे, व्यायाम करणे आणि खिडक्या उघडणे पूर्णपणे सुरक्षित आहे.',
+    },
     outdoor_worker: {
       en: 'Air is clean across work sites. Outdoor work is comfortable today.',
       hi: 'कामकाज की जगहों पर हवा साफ है। बाहर काम करना आज सहज है।',
@@ -356,6 +361,11 @@ const FAMILY_GUIDANCE: Record<AQIBandKey, Record<FamilyView, CopySet>> = {
       en: 'Air is safe for daily routines. Drink water and avoid heavy traffic.',
       hi: 'दैनिक दिनचर्या के लिए हवा सुरक्षित है। पानी पिएं और भारी ट्रैफिक से बचें।',
       mr: 'दैनंदिन कामांसाठी हवा सुरक्षित आहे. भरपूर पाणी प्या आणि रहदारीचे रस्ते टाळा.',
+    },
+    asthma: {
+      en: 'Air quality is acceptable. Safe for daily walks; keep your rescue inhaler handy.',
+      hi: 'हवा का स्तर ठीक है। रोज की सैर सुरक्षित है; अपना इनहेलर साथ रखें।',
+      mr: 'हवेचा दर्जा समाधानकारक आहे. नियमित चालणे सुरक्षित आहे; आवश्यक इनहेलर सोबत ठेवा.',
     },
     outdoor_worker: {
       en: 'Work conditions are normal. Drink plenty of water during your shift.',
@@ -384,6 +394,11 @@ const FAMILY_GUIDANCE: Record<AQIBandKey, Record<FamilyView, CopySet>> = {
       hi: 'धुएं से गले में सूखापन और थकान हो सकती है। व्यस्त समय में घर पर आराम करें।',
       mr: 'धुरामुळे घसा कोरडा पडून थकवा येऊ शकतो. गर्दीच्या वेळी घरातच विश्रांती घ्या.',
     },
+    asthma: {
+      en: 'Dust can trigger coughing or chest tightness. Keep outdoor exertion light and carry your inhaler.',
+      hi: 'धूल से खांसी या सांस फूल सकती है। बाहर मेहनत हल्की रखें और इनहेलर साथ रखें।',
+      mr: 'धुळीमुळे खोकला किंवा छातीत त्रास होऊ शकतो. बाहेरील हालचाली हलक्या ठेवा आणि इनहेलर जवळ ठेवा.',
+    },
     outdoor_worker: {
       en: 'Dust can cause throat dryness. Take regular breaks in sheltered spots.',
       hi: 'धूल से गले में सूखापन आ सकता है। सुरक्षित जगहों पर बीच-बीच में आराम लें।',
@@ -410,6 +425,11 @@ const FAMILY_GUIDANCE: Record<AQIBandKey, Record<FamilyView, CopySet>> = {
       en: 'Smog harms maternal and baby health. Rest indoors with clean filtered air.',
       hi: 'स्मॉग मां और बच्चे दोनों के लिए हानिकारक है। साफ हवा में घर पर आराम करें।',
       mr: 'प्रदूषण आई आणि बाळ दोघांसाठी घातक आहे. घरात स्वच्छ हवेत विश्रांती घ्या.',
+    },
+    asthma: {
+      en: 'Unhealthy smog can irritate airways. Stay indoors, run air filtration, and avoid outdoor workouts.',
+      hi: 'खराब हवा सांस की नली में जलन कर सकती है। अंदर रहें, एयर फिल्टर चलाएं और बाहर कसरत न करें।',
+      mr: 'प्रदूषणामुळे श्वासनलिकेत जळजळ होऊ शकते. घरातच राहा, एअर फिल्टर चालवा आणि बाहेरील व्यायाम टाळा.',
     },
     outdoor_worker: {
       en: 'Smog levels are high. Wear a snug N95 mask and take indoor rest pauses.',
@@ -438,6 +458,11 @@ const FAMILY_GUIDANCE: Record<AQIBandKey, Record<FamilyView, CopySet>> = {
       hi: 'जहरीला धुआं बच्चे तक पहुंच सकता है। बंद कमरे में एयर फिल्टर के साथ रहें।',
       mr: 'विषारी धूर गर्भातील बाळासाठी घातक ठरतो. बंद खोलीत हवा स्वच्छ ठेवून विश्रांती घ्या.',
     },
+    asthma: {
+      en: 'Heavy smog can trigger asthma attacks. Stay indoors with sealed windows and keep medications nearby.',
+      hi: 'भारी स्मॉग से दमे का दौरा पड़ सकता है। खिड़कियां बंद रखकर अंदर रहें और दवाएं पास रखें।',
+      mr: 'दाट धुरामुळे दम्याचा त्रास वाढू शकतो. खिडक्या बंद ठेवून घरातच राहा आणि औषधे जवळ ठेवा.',
+    },
     outdoor_worker: {
       en: 'Heavy smog outside. Wear a tight N95 mask and rest in clean indoor rooms.',
       hi: 'बाहर भारी स्मॉग है। टाइट N95 मास्क पहनें और अंदर साफ कमरों में आराम लें।',
@@ -464,6 +489,11 @@ const FAMILY_GUIDANCE: Record<AQIBandKey, Record<FamilyView, CopySet>> = {
       en: 'Severe toxic smoke outside. Stay inside a sealed, filtered room and avoid travel.',
       hi: 'बाहर जहरीला धुआं है। साफ और बंद कमरे में रहें, बाहर का सफर बिल्कुल न करें।',
       mr: 'बाहेर अत्यंत विषारी धूर आहे. स्वच्छ बंद खोलीत राहा आणि प्रवास पूर्णपणे टाळा.',
+    },
+    asthma: {
+      en: 'Emergency toxic smog. Remain strictly indoors in a filtered room; seek emergency care for chest tightness.',
+      hi: 'आपातकालीन जहरीला स्मॉग। बिल्कुल साफ हवा वाले कमरे में रहें; सीने में जकड़न पर तुरंत डॉक्टर को दिखाएं।',
+      mr: 'धोकादायक विषारी हवा. एअर फिल्टर असलेल्या खोलीतच राहा; छातीत तीव्र त्रास जाणवल्यास त्वरित वैद्यकीय मदत घ्या.',
     },
     outdoor_worker: {
       en: 'Emergency toxic air. Halt heavy outdoor labor; wear a fitted N95 respirator.',
@@ -495,6 +525,11 @@ const NEXT_2_HOURS_DECISIONS: Record<AQIBandKey, Record<FamilyView, CopySet>> = 
       hi: 'हवा साफ और सुखद है। हल्की सैर करें और घर में ताज़ी हवा आने दें।',
       mr: 'हवा स्वच्छ आणि सुखद आहे. मोकळ्या हवेत हलके फिरा आणि खिडक्या उघड्या ठेवा.',
     },
+    asthma: {
+      en: 'Air is clean and soothing right now! Enjoy outdoor walks and open windows for natural airflow.',
+      hi: 'हवा इस समय बिल्कुल साफ और सुखद है! बाहर टहलने का आनंद लें और ताज़ी हवा के लिए खिड़कियां खोलें।',
+      mr: 'हवा आता अतिशय स्वच्छ आणि सुखद आहे! बाहेर फेरफटका मारा आणि घरामध्ये ताजी हवा येऊ द्या.',
+    },
     outdoor_worker: {
       en: 'Comfortable working conditions outdoors. No mask needed right now; keep yourself well hydrated.',
       hi: 'बाहर काम करने के लिए माहौल अच्छा है। मास्क की जरूरत नहीं है, बस पानी पीते रहें।',
@@ -521,6 +556,11 @@ const NEXT_2_HOURS_DECISIONS: Record<AQIBandKey, Record<FamilyView, CopySet>> = 
       en: 'Air is suitable for normal daily routines. Enjoy gentle walks and avoid congested road junctions.',
       hi: 'दिनचर्या के लिए हवा बिल्कुल ठीक है। हल्की सैर करें और भीड़-भाड़ वाले चौराहों से बचें।',
       mr: 'दैनंदिन कामांसाठी हवा अनुकूल आहे. शांतपणे फिरा आणि गर्दीचे रस्ते टाळा.',
+    },
+    asthma: {
+      en: 'Comfortable air for normal routines. Safe for gentle outdoor walks; keep your prescribed inhaler accessible.',
+      hi: 'सामान्य दिनचर्या के लिए हवा आरामदायक है। हल्की सैर सुरक्षित है; अपना इनहेलर हमेशा पास रखें।',
+      mr: 'दैनंदिन कामांसाठी हवा आरामदायक आहे. हलके फिरणे सुरक्षित आहे; आवश्यक इनहेलर सोबत ठेवा.',
     },
     outdoor_worker: {
       en: 'Manageable working conditions outdoors. Stay well hydrated throughout your shift.',
@@ -549,6 +589,11 @@ const NEXT_2_HOURS_DECISIONS: Record<AQIBandKey, Record<FamilyView, CopySet>> = 
       hi: 'सामान्य कामों के लिए ठीक है। धूल भरे समय में खिड़की बंद रखें और अंदर आराम करें।',
       mr: 'सामान्य कामांसाठी ठीक आहे. धुराच्या वेळी खिडक्या बंद ठेवा आणि आत विश्रांती घ्या.',
     },
+    asthma: {
+      en: 'Mild haze is present. Pace your outdoor activities, avoid cold morning drafts, and keep inhalers handy.',
+      hi: 'हवा में हल्की धुंध है। बाहर की गतिविधि धीमी रखें, सुबह की ठंडी हवा से बचें और इनहेलर पास रखें।',
+      mr: 'हवेत थोडी धुंध आहे. बाहेरील कामे सावकाश करा, सकाळच्या थंड हवेपासून दूर राहा आणि इनहेलर जवळ ठेवा.',
+    },
     outdoor_worker: {
       en: 'Manageable conditions. Wear a snug N95 mask near traffic and take short rest breaks in shade.',
       hi: 'हालात ठीक हैं। ट्रैफिक के पास N95 मास्क लगाएं और छांव में छोटे ब्रेक लेते रहें।',
@@ -575,6 +620,11 @@ const NEXT_2_HOURS_DECISIONS: Record<AQIBandKey, Record<FamilyView, CopySet>> = 
       en: 'Rest inside a closed room with air filtration. Postpone non-urgent outdoor travel for your safety.',
       hi: 'एयर फिल्टर वाले कमरे में आराम करें। अपनी सुरक्षा के लिए गैर-जरूरी सफर टालें।',
       mr: 'एअर फिल्टर असलेल्या खोलीत विश्रांती घ्या. सुरक्षिततेसाठी अनावश्यक प्रवास पुढे ढकला.',
+    },
+    asthma: {
+      en: 'Smog can trigger bronchospasm. Rest inside a closed room with air cleaning running, and avoid outdoor travel.',
+      hi: 'प्रदूषण से सांस फूल सकती है। एयर प्यूरीफायर चलाकर बंद कमरे में आराम करें और बाहर जाने से बचें।',
+      mr: 'प्रदूषणामुळे श्वास घेण्यास त्रास होऊ शकतो. एअर फिल्टर चालू असलेल्या बंद खोलीत राहा आणि बाहेर जाणे टाळा.',
     },
     outdoor_worker: {
       en: 'Unhealthy air outside. Put on your fitted N95 respirator and take breaks inside sheltered rooms.',
@@ -603,6 +653,11 @@ const NEXT_2_HOURS_DECISIONS: Record<AQIBandKey, Record<FamilyView, CopySet>> = 
       hi: 'एयर प्यूरीफायर चालू रखकर अंदर रहें। डॉक्टर के पास जाते समय टाइट N95 मास्क पहनें।',
       mr: 'एअर प्युरिफायर चालू ठेवून घरातच राहा. डॉक्टरकडे जाताना घट्ट N95 वापरा.',
     },
+    asthma: {
+      en: 'Dangerous smog for airways. Stay strictly in a filtered sanctuary room and take prescribed preventer medicines.',
+      hi: 'फेफड़ों के लिए हवा खतरनाक है। पूरी तरह साफ हवा वाले कमरे में रहें और नियमित दवाएं समय पर लें।',
+      mr: 'श्वसनासाठी हवा अतिशय धोकादायक आहे. स्वच्छ बंद खोलीतच राहा आणि डॉक्टरांनी दिलेली औषधे वेळेवर घ्या.',
+    },
     outdoor_worker: {
       en: 'Hazardous air outside. Wear your fitted N95 respirator and move heavy tasks to sheltered spaces.',
       hi: 'बाहर हवा खतरनाक है। फिटेड N95 मास्क पहनें और भारी काम शेड या अंदर करें।',
@@ -629,6 +684,11 @@ const NEXT_2_HOURS_DECISIONS: Record<AQIBandKey, Record<FamilyView, CopySet>> = 
       en: 'Remain inside a closed room with air cleaning running. Avoid all outdoor travel.',
       hi: 'एयर फिल्टर वाले बंद कमरे में रहें। बाहर का कोई सफर न करें।',
       mr: 'एअर फिल्टर असलेल्या बंद खोलीत राहा. बाहेरचा कोणताही प्रवास टाळा.',
+    },
+    asthma: {
+      en: 'Severe emergency smog. Remain sealed in a filtered room; call emergency help immediately if breathing becomes difficult.',
+      hi: 'अत्यंत गंभीर आपातकालीन स्मॉग। बंद साफ कमरे में रहें; सांस लेने में तकलीफ हो तो तुरंत आपातकालीन मदद लें।',
+      mr: 'अतिधोकादायक विषारी स्मॉग. एअर फिल्टर असलेल्या खोलीतच राहा; श्वास घेण्यास अडचण आल्यास त्वरित वैद्यकीय मदत घ्या.',
     },
     outdoor_worker: {
       en: 'Stop heavy outdoor work. Wear a fitted N95 respirator and rest in filtered air.',

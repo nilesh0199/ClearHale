@@ -18,6 +18,7 @@ import {
   Baby,
   HeartPulse,
   Heart,
+  Activity,
   Briefcase,
 } from 'lucide-react';
 
@@ -91,6 +92,10 @@ export function ShareModal({
   }, [isOpen]);
 
   const isPregnantSelected = profile.household.members.includes('pregnant');
+  const isAsthmaSelected =
+    profile.household.members.includes('asthma_heart') ||
+    (profile.household.members as any).includes('asthma') ||
+    profile.household?.respiratoryOrHeart === true;
 
   const audienceOptions: {
     id: ShareAudience;
@@ -106,6 +111,15 @@ export function ShareModal({
             id: 'pregnant' as ShareAudience,
             icon: Heart,
             labelEn: 'Pregnant Person',
+          },
+        ]
+      : []),
+    ...(isAsthmaSelected
+      ? [
+          {
+            id: 'asthma' as ShareAudience,
+            icon: Activity,
+            labelEn: 'Asthma / Heart',
           },
         ]
       : []),

@@ -21,7 +21,7 @@ export function getBandPersonaAdvice(
 
 // Band persona advice dictionary derived directly from outdoorGuidance
 const BANDS: AQIBandKey[] = ['good', 'satisfactory', 'moderate', 'poor', 'very_poor', 'severe'];
-const VIEWS: FamilyView[] = ['whole_family', 'child', 'elderly', 'pregnant', 'outdoor_worker'];
+const VIEWS: FamilyView[] = ['whole_family', 'child', 'elderly', 'pregnant', 'outdoor_worker', 'asthma'];
 
 export const BAND_PERSONA_ADVICE: Record<AQIBandKey, Record<FamilyView, AdviceEntry>> = (() => {
   const map: Partial<Record<AQIBandKey, Record<FamilyView, AdviceEntry>>> = {};

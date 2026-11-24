@@ -48,6 +48,7 @@ import {
   Baby,
   HeartPulse,
   Heart,
+  Activity,
   Briefcase,
   HardHat,
   AlertTriangle,
@@ -626,6 +627,11 @@ export function HomeScreen() {
   const thinFactor = Math.min(0.75, (profile.checkedActions?.length || 0) * 0.18);
 
   const isPregnantSelected = profile.household?.members?.includes('pregnant') || false;
+  const isAsthmaSelected =
+    profile.household?.members?.includes('asthma_heart') ||
+    (profile.household?.members as any)?.includes('asthma') ||
+    profile.household?.respiratoryOrHeart === true ||
+    false;
 
   const [showDataCreditModal, setShowDataCreditModal] = useState(false);
 
@@ -691,6 +697,20 @@ export function HomeScreen() {
             shortMr: 'गरोदर',
             shortBn: 'গর্ভবতী',
             fullLabelEn: 'Pregnant Person',
+          },
+        ]
+      : []),
+    ...(isAsthmaSelected
+      ? [
+          {
+            id: 'asthma' as FamilyView,
+            key: 'home.familyFilter.asthma',
+            icon: Activity,
+            shortEn: 'Asthma',
+            shortHi: 'दमा',
+            shortMr: 'दमा',
+            shortBn: 'অ্যাজমা',
+            fullLabelEn: 'Asthma / Heart',
           },
         ]
       : []),
@@ -786,6 +806,7 @@ export function HomeScreen() {
         child: 'शिशु और बच्चों के लिए',
         elderly: 'बुजुर्गों के लिए',
         pregnant: 'गर्भवती माताओं के लिए',
+        asthma: 'दमा और हृदय रोगियों के लिए',
         outdoor_worker: 'बाहर काम करने वालों के लिए',
       },
       mr: {
@@ -793,6 +814,7 @@ export function HomeScreen() {
         child: 'लहान मुलांसाठी',
         elderly: 'ज्येष्ठ नागरिकांसाठी',
         pregnant: 'गर्भवती मातांसाठी',
+        asthma: 'दमा आणि हृदयविकार असणाऱ्यांसाठी',
         outdoor_worker: 'बाहेर काम करणाऱ्यांसाठी',
       },
       bn: {
@@ -800,6 +822,7 @@ export function HomeScreen() {
         child: 'শিশু ও বাচ্চাদের জন্য',
         elderly: 'প্রবীণদের জন্য',
         pregnant: 'গর্ভবতী মায়েদের জন্য',
+        asthma: 'অ্যাজমা ও হৃদরোগীদের জন্য',
         outdoor_worker: 'বাইরে কর্মরতদের জন্য',
       },
       ta: {
@@ -807,6 +830,7 @@ export function HomeScreen() {
         child: 'குழந்தைகளுக்கான',
         elderly: 'முதியவர்களுக்கான',
         pregnant: 'கர்ப்பிணிப் பெண்களுக்கு',
+        asthma: 'ஆஸ்துமா மற்றும் இதய நோயாளிகளுக்கு',
         outdoor_worker: 'வெளியில் வேலை செய்வோருக்கு',
       },
       te: {
@@ -814,6 +838,7 @@ export function HomeScreen() {
         child: 'పిల్లల కోసం',
         elderly: 'పెద్దల కోసం',
         pregnant: 'గర్భిణుల కోసం',
+        asthma: 'ఆస్తమా మరియు గుండె రోగుల కోసం',
         outdoor_worker: 'బయట పనిచేసేవారి కోసం',
       },
       en: {
@@ -821,6 +846,7 @@ export function HomeScreen() {
         child: 'Baby & Kids',
         elderly: 'Elderly Members',
         pregnant: 'Expecting Mothers',
+        asthma: 'Asthma & Heart Patients',
         outdoor_worker: 'Outdoor Workers',
       },
     };
@@ -1133,79 +1159,84 @@ export function HomeScreen() {
           <div
             ref={tabListRef}
             role="tablist"
-        aria-label="Family filter perspective"
-        className={`bg-card-subtle p-1 rounded-2xl sm:rounded-card relative select-none w-full border border-card-border/60 ${
-          familyTabs.length === 5 ? 'grid grid-cols-5' : 'grid grid-cols-4'
-        } sm:flex sm:gap-1`}
-      >
-        {familyTabs.map((tab, idx) => {
-          const isActive = activeFamilyView === tab.id;
-          return (
-            <button
-              key={tab.id}
-              role="tab"
-              id={`family-tab-${tab.id}`}
-              aria-selected={isActive}
-              aria-controls={`family-tabpanel-${tab.id}`}
-              tabIndex={isActive ? 0 : -1}
-              onClick={() => handleFamilyChange(tab.id)}
-              onKeyDown={(e) => handleTabKeyDown(e, idx)}
-              title={tab.fullLabelEn}
-              aria-label={`Filter by ${tab.fullLabelEn}`}
-              className={`relative z-10 min-h-[48px] h-14 sm:h-auto sm:min-h-[48px] sm:flex-1 py-1.5 px-1 sm:px-3.5 sm:py-2.5 rounded-xl transition-colors flex flex-col sm:flex-row items-center justify-center focus-visible:outline-none focus-visible:ring-2 cursor-pointer ${
-                isActive
-                  ? profile.accentMode === 'mono'
-                    ? 'text-neutral-50 font-semibold'
-                    : 'text-teal-accent font-semibold'
-                  : 'text-muted hover:text-foreground'
-              }`}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="active-family-pill"
-                  className={`absolute inset-0.5 rounded-xl ${
-                    profile.accentMode === 'mono'
-                      ? 'bg-neutral-900 shadow-sm border border-neutral-800'
-                      : 'bg-card shadow-soft border border-card-border'
+            aria-label="Family filter perspective"
+            className={`bg-card-subtle p-1 rounded-2xl sm:rounded-card relative select-none w-full border border-card-border/60 ${
+              familyTabs.length >= 5
+                ? 'flex items-stretch gap-1 overflow-x-hidden'
+                : 'grid grid-cols-4 sm:flex sm:gap-1'
+            }`}
+          >
+            {familyTabs.map((tab, idx) => {
+              const isActive = activeFamilyView === tab.id;
+              const hasManyTabs = familyTabs.length >= 5;
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  id={`family-tab-${tab.id}`}
+                  aria-selected={isActive}
+                  aria-controls={`family-tabpanel-${tab.id}`}
+                  tabIndex={isActive ? 0 : -1}
+                  onClick={() => handleFamilyChange(tab.id)}
+                  onKeyDown={(e) => handleTabKeyDown(e, idx)}
+                  title={tab.fullLabelEn}
+                  aria-label={`Filter by ${tab.fullLabelEn}`}
+                  className={`relative z-10 min-h-[48px] h-14 sm:h-auto sm:min-h-[48px] py-1.5 px-1 sm:py-2.5 rounded-xl transition-all duration-300 ease-out flex flex-col sm:flex-row items-center justify-center focus-visible:outline-none focus-visible:ring-2 cursor-pointer ${
+                    hasManyTabs
+                      ? isActive
+                        ? 'flex-[1.45] sm:flex-[1.35] sm:px-3 text-teal-accent font-semibold shadow-2xs'
+                        : 'flex-[0.82] sm:flex-[0.88] sm:px-2 text-muted hover:text-foreground opacity-85 hover:opacity-100'
+                      : 'sm:flex-1 sm:px-3.5 ' + (isActive ? 'text-teal-accent font-semibold' : 'text-muted hover:text-foreground')
+                  } ${
+                    isActive && profile.accentMode === 'mono' ? '!text-neutral-50' : ''
                   }`}
-                  transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-                />
-              )}
-              {/* Icon: on top on mobile, on left on tablet/desktop */}
-              <tab.icon className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0 relative z-10" />
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="active-family-pill"
+                      className={`absolute inset-0.5 rounded-xl ${
+                        profile.accentMode === 'mono'
+                          ? 'bg-neutral-900 shadow-sm border border-neutral-800'
+                          : 'bg-card shadow-soft border border-card-border'
+                      }`}
+                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    />
+                  )}
+                  {/* Icon: on top on mobile, on left on tablet/desktop */}
+                  <tab.icon className={`w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0 relative z-10 transition-transform duration-300 ${isActive ? 'scale-105' : 'scale-100'}`} />
 
-              {/* Mobile (< 640px): Compact stacked label with bilingual caption */}
-              <div className="sm:hidden flex flex-col items-center justify-center leading-none mt-1 relative z-10 w-full px-0.5">
-                {profile.language === 'en' ? (
-                  <span className="text-[11px] font-semibold tracking-tight truncate max-w-full">
-                    {tab.shortEn}
+                  {/* Mobile (< 640px): Compact stacked label with bilingual caption */}
+                  <div className="sm:hidden flex flex-col items-center justify-center leading-none mt-1 relative z-10 w-full px-0.5">
+                    {profile.language === 'en' ? (
+                      <span className={`text-[11px] tracking-tight truncate max-w-full ${isActive ? 'font-semibold' : 'font-medium'}`}>
+                        {tab.shortEn}
+                      </span>
+                    ) : (
+                      <>
+                        <span className={`text-[10px] tracking-tight leading-tight truncate max-w-full ${isActive ? 'font-semibold' : 'font-medium'}`}>
+                          {profile.language === 'hi'
+                            ? tab.shortHi
+                            : profile.language === 'mr'
+                            ? tab.shortMr
+                            : profile.language === 'bn'
+                            ? tab.shortBn
+                            : tab.shortEn}
+                        </span>
+                        <span className="text-[8px] opacity-75 font-normal leading-none mt-0.5 uppercase tracking-wider truncate max-w-full">
+                          {tab.shortEn}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Tablet & Desktop (>= 640px): Full horizontal label with Bi component */}
+                  <span className={`hidden sm:inline relative z-10 ml-1.5 text-xs whitespace-nowrap truncate ${isActive ? 'font-semibold' : 'font-medium'}`}>
+                    <Bi k={tab.key} layout="inline" />
                   </span>
-                ) : (
-                  <>
-                    <span className="text-[10px] font-semibold tracking-tight leading-tight truncate max-w-full">
-                      {profile.language === 'hi'
-                        ? tab.shortHi
-                        : profile.language === 'mr'
-                        ? tab.shortMr
-                        : profile.language === 'bn'
-                        ? tab.shortBn
-                        : tab.shortEn}
-                    </span>
-                    <span className="text-[8px] opacity-75 font-normal leading-none mt-0.5 uppercase tracking-wider truncate max-w-full">
-                      {tab.shortEn}
-                    </span>
-                  </>
-                )}
-              </div>
-
-              {/* Tablet & Desktop (>= 640px): Full horizontal label with Bi component */}
-              <span className="hidden sm:inline relative z-10 ml-1.5 text-xs font-medium whitespace-nowrap">
-                <Bi k={tab.key} layout="inline" />
-              </span>
-            </button>
-          );
-        })}
-      </div>
+                </button>
+              );
+            })}
+          </div>
 
       {/* Daily Dismissible Nudge: "Warn your family group?" when Poor or worse */}
       {!warnNudgeDismissed &&
@@ -1387,6 +1418,8 @@ export function HomeScreen() {
                           ? 'home.seniorVuln'
                           : activeFamilyView === 'pregnant'
                           ? 'home.pregnantVuln'
+                          : activeFamilyView === 'asthma'
+                          ? 'home.asthmaVuln'
                           : activeFamilyView === 'outdoor_worker'
                           ? 'home.workerVuln'
                           : 'home.familyVuln'
@@ -1520,6 +1553,8 @@ export function HomeScreen() {
                     <HeartPulse className="w-5 h-5" strokeWidth={1.75} />
                   ) : activeFamilyView === 'pregnant' ? (
                     <Heart className="w-5 h-5" strokeWidth={1.75} />
+                  ) : activeFamilyView === 'asthma' ? (
+                    <Activity className="w-5 h-5" strokeWidth={1.75} />
                   ) : activeFamilyView === 'outdoor_worker' ? (
                     <HardHat className="w-5 h-5" strokeWidth={1.75} />
                   ) : (
@@ -1616,6 +1651,10 @@ export function HomeScreen() {
                 ? 'child'
                 : activeFamilyView === 'elderly'
                 ? 'elderly'
+                : activeFamilyView === 'pregnant'
+                ? 'pregnant'
+                : activeFamilyView === 'asthma'
+                ? 'asthma'
                 : 'whole_family'
             )
           }
@@ -1640,6 +1679,8 @@ export function HomeScreen() {
                 ? (profile.language === 'mr' ? 'ज्येष्ठांसाठी विशेष' : profile.language === 'hi' ? 'बुजुर्गों के लिए विशेष' : 'Ranked for Elderly')
                 : activeFamilyView === 'pregnant'
                 ? (profile.language === 'mr' ? 'गर्भवतींसाठी विशेष' : profile.language === 'hi' ? 'गर्भवती महिलाओं के लिए' : 'Ranked for Pregnancy')
+                : activeFamilyView === 'asthma'
+                ? (profile.language === 'mr' ? 'दमा व हृदयविकारासाठी विशेष' : profile.language === 'hi' ? 'दमा व हृदय रोगियों के लिए' : 'Ranked for Asthma & Heart')
                 : activeFamilyView === 'outdoor_worker'
                 ? (profile.language === 'mr' ? 'कामगारांसाठी विशेष' : profile.language === 'hi' ? 'कर्मियों के लिए विशेष' : 'Ranked for Worker')
                 : (profile.language === 'mr' ? 'संपूर्ण कुटुंबासाठी' : profile.language === 'hi' ? 'पूरे परिवार के लिए' : 'Balanced for Family')}

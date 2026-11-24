@@ -15,6 +15,7 @@ export type ShareAudience =
   | 'child'
   | 'elderly'
   | 'pregnant'
+  | 'asthma'
   | 'outdoor_worker';
 
 export interface AirQualityCardProps {
@@ -442,6 +443,54 @@ function getPlainActionTitle(
         hi: 'डॉक्टर के पास जाते समय N95 पहनें',
         mr: 'दवाखान्यात जाताना N95 वापरा',
         bn: 'ডাক্তারের কাছে গেলে N95 পরুন',
+      };
+      const native = lang === 'hi' ? item.hi : lang === 'mr' ? item.mr : lang === 'bn' ? item.bn : item.en;
+      return { native, en: item.en };
+    }
+  } else if (audience === 'asthma') {
+    if (action.id === 'move_exercise_indoors') {
+      const item = isCleanAir
+        ? {
+            en: 'Safe for gentle outdoor exercise',
+            hi: 'हल्की कसरत के लिए सुरक्षित',
+            mr: 'हलक्या व्यायामासाठी सुरक्षित',
+            bn: 'হালকা ব্যায়ামের জন্য নিরাপদ',
+          }
+        : {
+            en: 'Shift exercise indoors & protect lungs',
+            hi: 'कसरत घर के अंदर करें और फेफड़े बचाएं',
+            mr: 'घरात व्यायाम करा व फुप्फुसे सांभाळा',
+            bn: 'ঘরে ব্যায়াম করুন ও ফুসফুস বাঁচান',
+          };
+      const native = lang === 'hi' ? item.hi : lang === 'mr' ? item.mr : lang === 'bn' ? item.bn : item.en;
+      return { native, en: item.en };
+    }
+    if (action.id === 'good_day_outdoor_workout') {
+      const item = {
+        en: 'Safe for outdoor walks with inhaler',
+        hi: 'इनहेलर साथ रखकर सैर सुरक्षित',
+        mr: 'इनहेलर सोबत ठेवून चालणे सुरक्षित',
+        bn: 'ইনহেলার সাথে রেখে হাঁটা নিরাপদ',
+      };
+      const native = lang === 'hi' ? item.hi : lang === 'mr' ? item.mr : lang === 'bn' ? item.bn : item.en;
+      return { native, en: item.en };
+    }
+    if (action.id === 'bedroom_sanctuary') {
+      const item = {
+        en: 'Maintain clean-air bedroom sanctuary',
+        hi: 'बेडरूम को साफ हवा का सुरक्षित कमरा बनाएं',
+        mr: 'बेडरूम स्वच्छ हवेची सुरक्षित जागा ठेवा',
+        bn: 'শোবার ঘরটি পরিচ্ছন্ন রাখুন',
+      };
+      const native = lang === 'hi' ? item.hi : lang === 'mr' ? item.mr : lang === 'bn' ? item.bn : item.en;
+      return { native, en: item.en };
+    }
+    if (action.id === 'n95_respirator') {
+      const item = {
+        en: 'Wear fitted N95 mask to block triggers',
+        hi: 'धुएं व धूल से बचने N95 मास्क पहनें',
+        mr: 'धुरापासून बचावासाठी N95 मास्क वापरा',
+        bn: 'ধোঁয়া ও ধুলো এড়াতে N95 পরুন',
       };
       const native = lang === 'hi' ? item.hi : lang === 'mr' ? item.mr : lang === 'bn' ? item.bn : item.en;
       return { native, en: item.en };

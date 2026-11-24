@@ -77,7 +77,7 @@ export interface HouseholdProfile {
   intakeCompleted?: boolean;
 }
 
-export type FamilyView = 'whole_family' | 'child' | 'elderly' | 'pregnant' | 'outdoor_worker';
+export type FamilyView = 'whole_family' | 'child' | 'elderly' | 'pregnant' | 'outdoor_worker' | 'asthma';
 
 export type AppTheme = 'light' | 'dark' | 'system';
 

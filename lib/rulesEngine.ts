@@ -136,6 +136,12 @@ export function actionMatchesAudience(action: ActionItem, familyView: FamilyView
   ) {
     return true;
   }
+  if (
+    familyView === 'asthma' &&
+    (action.suits.includes('asthma') || action.suits.includes('asthma_heart'))
+  ) {
+    return true;
+  }
   return false;
 }
 
@@ -208,7 +214,7 @@ export function getFilteredAndRankedActions(
         if (b.id === 'good_day_outdoor_workout' || b.id === 'move_exercise_indoors') scoreB += 38;
         if (a.id === 'air_out_cleanest_hour') scoreA += 30;
         if (b.id === 'air_out_cleanest_hour') scoreB += 30;
-      } else if (familyView === 'pregnant') {
+      } else if (familyView === 'pregnant' || familyView === 'asthma') {
         if (a.id === 'good_day_outdoor_workout' || a.id === 'move_exercise_indoors') scoreA += 38;
         if (b.id === 'good_day_outdoor_workout' || b.id === 'move_exercise_indoors') scoreB += 38;
         if (a.id === 'air_out_cleanest_hour') scoreA += 30;
@@ -248,7 +254,7 @@ export function getFilteredAndRankedActions(
         if (b.id === 'move_exercise_indoors') scoreB += 32;
         if (a.id === 'bedroom_door_towel') scoreA += 28;
         if (b.id === 'bedroom_door_towel') scoreB += 28;
-      } else if (familyView === 'pregnant') {
+      } else if (familyView === 'pregnant' || familyView === 'asthma') {
         if (a.id === 'bedroom_sanctuary') scoreA += 42;
         if (b.id === 'bedroom_sanctuary') scoreB += 42;
         if (a.id === 'shift_outdoor_offpeak') scoreA += 36;
@@ -398,8 +404,8 @@ export function getActionsForGroup(
 
     // 1. Direct active persona match
     if (familyView !== 'whole_family') {
-      const aMatches = a.suits.includes(familyView);
-      const bMatches = b.suits.includes(familyView);
+      const aMatches = actionMatchesAudience(a, familyView);
+      const bMatches = actionMatchesAudience(b, familyView);
       if (aMatches) scoreA += 40;
       if (bMatches) scoreB += 40;
     }
@@ -419,6 +425,9 @@ export function getActionsForGroup(
       } else if (familyView === 'pregnant') {
         if (a.id === 'pregnant_avoid_smog_errands' || a.id === 'pregnant_sanctuary_filtration') scoreA += 40;
         if (b.id === 'pregnant_avoid_smog_errands' || b.id === 'pregnant_sanctuary_filtration') scoreB += 40;
+      } else if (familyView === 'asthma') {
+        if (a.suits?.includes('asthma') || a.id.includes('purifier') || a.id.includes('clean_room')) scoreA += 40;
+        if (b.suits?.includes('asthma') || b.id.includes('purifier') || b.id.includes('clean_room')) scoreB += 40;
       }
     } else {
       // 2. Household vulnerable members prioritization (if selected in Settings)
