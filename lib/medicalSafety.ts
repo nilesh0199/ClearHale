@@ -15,6 +15,8 @@ export const EMERGENCY_RED_FLAG_PATTERNS = [
   /fainting/i,
   /loss\s*of\s*consciousness/i,
   /wheezing\s*severely/i,
+  /stridor/i,
+  /respiratory\s*distress/i,
   // Hindi transliterations & devanagari
   /सांस\s*लेने\s*में\s*(तकलीफ|दिक्कत|कठिनाई)/i,
   /छाती\s*में\s*दर्द/i,

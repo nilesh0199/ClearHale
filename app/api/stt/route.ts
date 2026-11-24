@@ -150,10 +150,11 @@ export async function POST(req: NextRequest) {
         text: transcribedText,
         language: data.language || languageHint || 'en',
       });
-    } catch (fetchErr: any) {
+    } catch (fetchErr: unknown) {
       clearTimeout(timeout);
-      const isTimeout = fetchErr.name === 'AbortError' || abortCtrl.signal.aborted;
-      console.warn(`[STT] Fetch error: ${isTimeout ? 'Request timed out after 8s' : fetchErr.message}`);
+      const isTimeout = (fetchErr instanceof Error && fetchErr.name === 'AbortError') || abortCtrl.signal.aborted;
+      const errMsg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+      console.warn(`[STT] Fetch error: ${isTimeout ? 'Request timed out after 8s' : errMsg}`);
       return NextResponse.json(
         {
           error: isTimeout ? 'Speech-to-text timed out after 8s' : 'Network error reaching transcription service',
@@ -162,8 +163,9 @@ export async function POST(req: NextRequest) {
         { status: isTimeout ? 504 : 502 }
       );
     }
-  } catch (err: any) {
-    console.error('[STT] Unhandled error:', err);
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error('[STT] Unhandled error:', errMsg);
     return NextResponse.json(
       { error: 'Internal server error processing speech', fallbackToBrowser: true },
       { status: 500 }

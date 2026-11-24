@@ -8,7 +8,13 @@ import {
   UserProfile,
   FamilyView,
   AppTheme,
+  AccentMode,
 } from '@/types';
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
 import { getAQIBand } from '@/lib/aqi';
 import {
   SUPPORTED_LANGUAGES,
@@ -73,7 +79,7 @@ interface AppContextType {
   clearChatHistory: () => void;
   isInstallable: boolean;
   triggerInstall: () => Promise<void>;
-  installPrompt: any;
+  installPrompt: BeforeInstallPromptEvent | null;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -146,7 +152,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [profile.language]);
 
   // Apply theme to DOM with 200ms smooth transition
-  const applyThemeToDOM = (nextTheme: AppTheme, nextAccent?: any, nextTrueBlack?: boolean) => {
+  const applyThemeToDOM = (nextTheme: AppTheme, nextAccent?: AccentMode, nextTrueBlack?: boolean) => {
     if (typeof window === 'undefined') return;
     const root = document.documentElement;
     const isDark =
@@ -248,9 +254,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       });
 
     // PWA BeforeInstallPrompt handler
-    const handleBeforeInstall = (e: any) => {
+    const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
-      setInstallPrompt(e);
+      setInstallPrompt(e as BeforeInstallPromptEvent);
       setIsInstallable(true);
     };
 
@@ -337,8 +343,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await fetchAirQuality(targetLat, targetLon, { isCurrentLocation: isCurrent });
       setAirData(data);
-    } catch (err: any) {
-      setAirError(err?.message || 'Could not refresh air data');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Could not refresh air data';
+      setAirError(msg);
     } finally {
       setLoadingAir(false);
     }

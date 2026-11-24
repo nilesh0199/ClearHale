@@ -311,9 +311,10 @@ export async function GET(req: NextRequest) {
         'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
       },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : 'Failed to fetch combined air quality data';
     return NextResponse.json(
-      { error: err?.message || 'Failed to fetch combined air quality data' },
+      { error: errorMsg },
       { status: 500 }
     );
   }
@@ -332,9 +333,10 @@ export async function POST(req: NextRequest) {
 
     const airData = await handleAirQualityRequest(lat, lon, mode);
     return NextResponse.json(airData);
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : 'Failed to fetch combined air quality data';
     return NextResponse.json(
-      { error: err?.message || 'Failed to fetch combined air quality data' },
+      { error: errorMsg },
       { status: 500 }
     );
   }

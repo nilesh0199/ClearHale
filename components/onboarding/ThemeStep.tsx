@@ -5,13 +5,13 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { useApp } from '@/context/AppContext';
 import { AppTheme } from '@/types';
 import { SpotlightCard } from '../ui/rb/SpotlightCard';
-import { ArrowLeft, ArrowRight, Check, Sun, Moon, Laptop, MousePointerClick } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Sun, Moon, Laptop, MousePointerClick, LucideIcon } from 'lucide-react';
 
 interface ThemeOption {
   id: AppTheme;
   title: string;
   description: string;
-  icon: any;
+  icon: LucideIcon;
   preview: {
     bg: string;
     card: string;

@@ -142,8 +142,9 @@ Turn Count: ${turnCount}`,
       followUpQuestion: null,
       usedFallback: true,
     });
-  } catch (err: any) {
-    console.error('[Intake API] Unexpected error:', err);
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error('[Intake API] Unexpected error:', errorMsg);
     return NextResponse.json({ error: 'Failed to process intake' }, { status: 500 });
   }
 }

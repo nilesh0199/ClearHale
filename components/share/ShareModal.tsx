@@ -20,6 +20,7 @@ import {
   Heart,
   Activity,
   Briefcase,
+  LucideIcon,
 } from 'lucide-react';
 
 interface ShareModalProps {
@@ -94,12 +95,12 @@ export function ShareModal({
   const isPregnantSelected = profile.household.members.includes('pregnant');
   const isAsthmaSelected =
     profile.household.members.includes('asthma_heart') ||
-    (profile.household.members as any).includes('asthma') ||
+    (profile.household.members as string[]).includes('asthma') ||
     profile.household?.respiratoryOrHeart === true;
 
   const audienceOptions: {
     id: ShareAudience;
-    icon: any;
+    icon: LucideIcon;
     labelEn: string;
   }[] = [
     { id: 'whole_family', icon: Users, labelEn: 'Everyone' },
@@ -213,7 +214,7 @@ export function ShareModal({
         setPreviewDataUrl(dataUrl);
         setPreviewBlob(blob);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to generate air quality poster:', err);
       setGenerationError(
         'Card generation was blocked by the browser. You can still download or share via link.'
@@ -260,8 +261,8 @@ export function ShareModal({
           triggerToast('Ready! Shared successfully');
           return;
         }
-      } catch (err: any) {
-        if (err.name === 'AbortError') return;
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === 'AbortError') return;
         console.warn('Native share failed, using fallback', err);
       }
     }

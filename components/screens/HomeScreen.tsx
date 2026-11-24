@@ -60,6 +60,7 @@ import {
   ArrowRight,
   ArrowUp,
   ChevronDown,
+  LucideIcon,
 } from 'lucide-react';
 
 function renderHighlightedSentences(
@@ -672,7 +673,7 @@ export function HomeScreen() {
   const familyTabs: {
     id: FamilyView;
     key: string;
-    icon: any;
+    icon: LucideIcon;
     shortEn: string;
     shortHi: string;
     shortMr: string;

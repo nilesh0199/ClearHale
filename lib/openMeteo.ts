@@ -73,7 +73,14 @@ export async function searchCities(query: string): Promise<CityLocation[]> {
     if (res.ok) {
       const data = await res.json();
       if (data.results && Array.isArray(data.results)) {
-        const remoteHits: CityLocation[] = data.results.map((item: any) => ({
+        const remoteHits: CityLocation[] = (data.results as Array<{
+          name: string;
+          latitude: number;
+          longitude: number;
+          admin1?: string;
+          admin2?: string;
+          country?: string;
+        }>).map((item) => ({
           name: item.name,
           lat: item.latitude,
           lon: item.longitude,

@@ -76,8 +76,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setLoading(false);
       return { success: true };
-    } catch (err: any) {
-      const msg = err?.message || 'Sign in failed';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Sign in failed';
       setError(msg);
       setLoading(false);
       return { success: false, error: msg };
@@ -88,8 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signOutUser();
       setUser(null);
-    } catch (err: any) {
-      setError(err?.message || 'Sign out failed');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Sign out failed';
+      setError(msg);
     }
   }, []);
 

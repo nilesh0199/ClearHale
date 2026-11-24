@@ -6,6 +6,15 @@ import { SUPPORTED_LANGUAGES } from '@/lib/languages';
 import actionsData from '@/data/actions.json';
 import { getIndiaBandKey, outdoorGuidance, sanitizeChatOutdoorAdvice } from '@/lib/outdoorGuidance';
 
+interface ActionItemCatalog {
+  id?: string;
+  title: string;
+  group?: string;
+  doThis?: string;
+  whyItWorks?: string;
+  why?: string;
+}
+
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
@@ -47,8 +56,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
+    // Input sanitization and bounding
+    const cleanMessage = message.trim().slice(0, 2000);
+    const safePm25 = typeof pm2_5 === 'number' && !isNaN(pm2_5) && pm2_5 >= 0 && pm2_5 <= 2000 ? pm2_5 : 180;
+
     // 2. Critical Red-Flag Safety Check
-    if (hasEmergencySymptoms(message)) {
+    if (hasEmergencySymptoms(cleanMessage)) {
       return NextResponse.json({
         emergency: true,
         text: 'EMERGENCY_RED_FLAG_DETECTED',
@@ -56,7 +69,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Grounded System Prompt
-        const bandKey = getIndiaBandKey(pm2_5);
+    const bandKey = getIndiaBandKey(safePm25);
     const outdoorInfo = outdoorGuidance(bandKey, null, 'whole_family', household, language);
     const outdoorLevel = outdoorInfo.level;
 
@@ -82,9 +95,9 @@ Never omit either part. The delimiter line must be exactly "---EN---" on its own
         ? `Measured physical reading from government monitoring station "${stationName || 'Nearby Station'}" (${timestamp || 'recent reading'})`
         : `Forecast model estimate from Open-Meteo (${timestamp || 'current hour'})`;
 
-    const actionCatalogSummary = (actionsData as any[])
+    const actionCatalogSummary = (actionsData as unknown as ActionItemCatalog[])
       .map(
-        (a: any) =>
+        (a: ActionItemCatalog) =>
           `- ${a.title} (${a.group || 'Indoors'}): ${a.doThis || ''} Why: ${a.whyItWorks || a.why || ''}`
       )
       .join('\n');
@@ -92,7 +105,7 @@ Never omit either part. The delimiter line must be exactly "---EN---" on its own
     const systemPrompt = `You are Clearhale, an empathetic, scientifically rigorous air-quality and smog advisor for families in India navigating severe winter smog.
 Current Context:
 - User Location: ${city}
-- Current PM2.5: ${pm2_5} µg/m³
+- Current PM2.5: ${safePm25} µg/m³
 - Data Type: ${dataType} (${dataSourceDesc})
 - Household Profile: ${JSON.stringify(household)}
 
@@ -113,19 +126,22 @@ ${actionCatalogSummary}
 7. Structure your answer with clear bullet points, actionable tips, and a caring, protective tone. Ensure your response is fully complete and never cuts off mid-sentence. Always conclude with an encouraging closing sentence.`;
 
     const conversationHistory: AIMessage[] = Array.isArray(history)
-      ? (history as any[])
-          .filter((h) => h && (h.role === 'user' || h.role === 'assistant') && typeof h.content === 'string')
+      ? (history as unknown[])
+          .filter(
+            (h): h is { role: 'user' | 'assistant'; content: string } =>
+              Boolean(h && typeof h === 'object' && ('role' in h) && ('content' in h) && typeof (h as any).content === 'string')
+          )
           .slice(-6)
       : [];
 
     const messages: AIMessage[] = [
       { role: 'system', content: systemPrompt },
       ...conversationHistory,
-      { role: 'user', content: message },
+      { role: 'user', content: cleanMessage },
     ];
 
     const fallbackTemplateText = sanitizeChatOutdoorAdvice(
-      getOfflineChatReply(message, language, pm2_5),
+      getOfflineChatReply(cleanMessage, language, safePm25),
       outdoorLevel,
       language
     );
@@ -147,8 +163,9 @@ ${actionCatalogSummary}
         'Transfer-Encoding': 'chunked',
       },
     });
-  } catch (err: any) {
-    console.error('Chat route error:', err);
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error('Chat route error:', errorMsg);
     return new Response(
       'Keep windows closed, run indoor filtration (True HEPA or DIY MERV-13), and wear an N95 respirator if stepping outdoors.',
       { headers: { 'Content-Type': 'text/plain; charset=utf-8' } }

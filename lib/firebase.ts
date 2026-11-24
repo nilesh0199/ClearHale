@@ -88,18 +88,20 @@ export async function signInWithGoogle(): Promise<{ user: User | null; error?: s
   try {
     const cred = await signInWithPopup(auth, provider);
     return { user: cred.user };
-  } catch (err: any) {
-    console.warn('[Firebase Auth] Popup error, checking fallback:', err?.code, err?.message);
+  } catch (err: unknown) {
+    const errCode = (err as { code?: string })?.code;
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.warn('[Firebase Auth] Popup error, checking fallback:', errCode, errMsg);
 
     // If popup was blocked by browser or mobile WebKit, fall back to redirect
     if (
-      err?.code === 'auth/popup-blocked' ||
-      err?.code === 'auth/cancelled-popup-request'
+      errCode === 'auth/popup-blocked' ||
+      errCode === 'auth/cancelled-popup-request'
     ) {
       try {
         await signInWithRedirect(auth, provider);
         return { user: null };
-      } catch (redirectErr: any) {
+      } catch (redirectErr: unknown) {
         return {
           user: null,
           error: 'Sign-in window was blocked. Please allow popups for this site.',
@@ -107,14 +109,14 @@ export async function signInWithGoogle(): Promise<{ user: User | null; error?: s
       }
     }
 
-    if (err?.code === 'auth/popup-closed-by-user') {
+    if (errCode === 'auth/popup-closed-by-user') {
       return {
         user: null,
         error: 'Sign-in was cancelled.',
       };
     }
 
-    if (err?.code === 'auth/network-request-failed') {
+    if (errCode === 'auth/network-request-failed') {
       return {
         user: null,
         error: 'Network error. Please check your connection and try again.',
@@ -123,7 +125,7 @@ export async function signInWithGoogle(): Promise<{ user: User | null; error?: s
 
     return {
       user: null,
-      error: err?.message || 'Could not sign in with Google.',
+      error: errMsg || 'Could not sign in with Google.',
     };
   }
 }
@@ -175,9 +177,10 @@ export async function saveProfileToCloud(
     const profileRef = doc(db, 'users', uid, 'profile', 'data');
     await setDoc(profileRef, payload, { merge: true });
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Firebase Firestore] Failed to save profile:', err);
-    return { success: false, error: err?.message || 'Failed to save to cloud' };
+    const msg = err instanceof Error ? err.message : 'Failed to save to cloud';
+    return { success: false, error: msg };
   }
 }
 

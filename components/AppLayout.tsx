@@ -27,6 +27,7 @@ import {
   Settings,
   Download,
   Wind,
+  LucideIcon,
 } from 'lucide-react';
 
 export function AppLayout() {
@@ -44,7 +45,7 @@ export function AppLayout() {
     t,
   } = useApp();
 
-  const navigationItems: { id: AppTab; key: string; enShort: string; icon: any }[] = [
+  const navigationItems: { id: AppTab; key: string; enShort: string; icon: LucideIcon }[] = [
     { id: 'home', key: 'tabs.home', enShort: 'Home', icon: Home },
     { id: 'plan', key: 'tabs.plan', enShort: 'Plan', icon: ClipboardList },
     { id: 'ask', key: 'tabs.ask', enShort: 'Ask', icon: MessageSquare },

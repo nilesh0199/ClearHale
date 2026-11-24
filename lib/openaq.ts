@@ -22,6 +22,69 @@ export interface NearbyStationItem {
   pm10?: number | null;
 }
 
+export interface OpenAQSensor {
+  id: number;
+  name?: string;
+  parameter?: {
+    id?: number;
+    name?: string;
+    units?: string;
+    displayName?: string;
+  };
+}
+
+export interface OpenAQCoordinates {
+  latitude: number;
+  longitude: number;
+}
+
+export interface OpenAQLocation {
+  id: number;
+  name: string;
+  locality?: string;
+  timezone?: string;
+  country?: {
+    id?: number;
+    code?: string;
+    name?: string;
+  };
+  coordinates?: OpenAQCoordinates;
+  sensors?: OpenAQSensor[];
+  datetimeLast?: {
+    utc?: string;
+    local?: string;
+  };
+  provider?: {
+    id?: number;
+    name?: string;
+  };
+  owner?: {
+    id?: number;
+    name?: string;
+  };
+}
+
+export interface OpenAQMeasurement {
+  period?: {
+    datetimeTo?: {
+      utc?: string;
+      local?: string;
+    };
+  };
+  datetime?:
+    | {
+        utc?: string;
+        local?: string;
+      }
+    | string;
+  value?: number;
+  parameter?: {
+    id?: number;
+    name?: string;
+  };
+  sensorsId?: number;
+}
+
 export interface OpenAQStationResult {
   id: number;
   name: string;
@@ -90,7 +153,7 @@ export function calculateDistanceKm(
  * Validates whether a PM measurement value is physically plausible.
  * Discards negative values or values above 1500 µg/m³.
  */
-export function isValidPMValue(val: any): boolean {
+export function isValidPMValue(val: unknown): boolean {
   if (typeof val !== 'number' || isNaN(val)) return false;
   return val >= 0 && val <= 1500;
 }
@@ -127,8 +190,8 @@ export function clearOpenAQCache(): void {
 export function selectBestStation(
   userLat: number,
   userLon: number,
-  locations: any[],
-  latestMap: Map<number, any[]>,
+  locations: OpenAQLocation[],
+  latestMap: Map<number, OpenAQMeasurement[]>,
   options?: { maxRadiusKm?: number; maxAgeHours?: number; nowMs?: number }
 ): OpenAQStationResult | null {
   const maxRadius = options?.maxRadiusKm ?? DEFAULT_MAX_RADIUS_KM;
@@ -141,7 +204,7 @@ export function selectBestStation(
 
   // Calculate distance and filter out stations beyond maxRadius
   const candidates: {
-    location: any;
+    location: OpenAQLocation;
     distanceKm: number;
   }[] = [];
 
@@ -159,7 +222,7 @@ export function selectBestStation(
 
     // Must have PM2.5 sensor capability (parameter id = 2 or name = 'pm25')
     const hasPM25Sensor = Array.isArray(loc.sensors) && loc.sensors.some(
-      (s: any) => s.parameter?.id === 2 || s.parameter?.name?.toLowerCase() === 'pm25'
+      (s: OpenAQSensor) => s.parameter?.id === 2 || s.parameter?.name?.toLowerCase() === 'pm25'
     );
     if (!hasPM25Sensor && Array.isArray(loc.sensors) && loc.sensors.length > 0) {
       continue;
@@ -184,9 +247,9 @@ export function selectBestStation(
     }
 
     // Create sensor lookup
-    const sensorMap = new Map<number, any>();
+    const sensorMap = new Map<number, OpenAQSensor>();
     if (Array.isArray(location.sensors)) {
-      location.sensors.forEach((s: any) => sensorMap.set(s.id, s));
+      location.sensors.forEach((s: OpenAQSensor) => sensorMap.set(s.id, s));
     }
 
     let pm25Val: number | null = null;
@@ -195,24 +258,32 @@ export function selectBestStation(
     let measurementLocal: string | null = null;
 
     for (const m of measurements) {
-      const sensor = sensorMap.get(m.sensorsId);
+      const sensor = m.sensorsId !== undefined ? sensorMap.get(m.sensorsId) : undefined;
       const paramId = sensor?.parameter?.id ?? m.parameter?.id;
       const paramName = (sensor?.parameter?.name ?? m.parameter?.name ?? '').toLowerCase();
 
       // Check timestamp freshness
-      const mUtc = m.datetime?.utc || (typeof m.datetime === 'string' ? m.datetime : null);
+      const mUtc =
+        typeof m.datetime === 'object' && m.datetime !== null
+          ? m.datetime.utc
+          : typeof m.datetime === 'string'
+          ? m.datetime
+          : null;
       if (!isReadingFresh(mUtc, maxAge, nowMs)) {
         continue;
       }
 
       if (paramId === 2 || paramName === 'pm25' || paramName === 'pm2_5') {
-        if (isValidPMValue(m.value)) {
+        if (isValidPMValue(m.value) && typeof m.value === 'number') {
           pm25Val = Math.round(m.value);
-          measurementUtc = mUtc;
-          measurementLocal = m.datetime?.local || mUtc;
+          measurementUtc = mUtc ?? null;
+          measurementLocal =
+            (typeof m.datetime === 'object' && m.datetime?.local
+              ? m.datetime.local
+              : mUtc) ?? null;
         }
       } else if (paramId === 1 || paramName === 'pm10') {
-        if (isValidPMValue(m.value)) {
+        if (isValidPMValue(m.value) && typeof m.value === 'number') {
           pm10Val = Math.round(m.value);
         }
       }
@@ -267,8 +338,8 @@ export function selectBestStation(
 export function selectStationConsensus(
   userLat: number,
   userLon: number,
-  locations: any[],
-  latestMap: Map<number, any[]>,
+  locations: OpenAQLocation[],
+  latestMap: Map<number, OpenAQMeasurement[]>,
   options?: { maxRadiusKm?: number; maxAgeHours?: number; nowMs?: number; maxStations?: number }
 ): OpenAQStationResult | null {
   const maxRadius = options?.maxRadiusKm ?? DEFAULT_MAX_RADIUS_KM;
@@ -308,9 +379,9 @@ export function selectStationConsensus(
       continue;
     }
 
-    const sensorMap = new Map<number, any>();
+    const sensorMap = new Map<number, OpenAQSensor>();
     if (Array.isArray(loc.sensors)) {
-      loc.sensors.forEach((s: any) => sensorMap.set(s.id, s));
+      loc.sensors.forEach((s: OpenAQSensor) => sensorMap.set(s.id, s));
     }
 
     let bestPm25: number | null = null;
@@ -320,27 +391,35 @@ export function selectStationConsensus(
     let latestTimestampMs = 0;
 
     for (const m of measurements) {
-      const sensor = sensorMap.get(m.sensorsId);
+      const sensor = m.sensorsId !== undefined ? sensorMap.get(m.sensorsId) : undefined;
       const paramId = sensor?.parameter?.id ?? m.parameter?.id;
       const paramName = (sensor?.parameter?.name ?? m.parameter?.name ?? '').toLowerCase();
 
-      const mUtc = m.datetime?.utc || (typeof m.datetime === 'string' ? m.datetime : null);
+      const mUtc =
+        typeof m.datetime === 'object' && m.datetime !== null
+          ? m.datetime.utc
+          : typeof m.datetime === 'string'
+          ? m.datetime
+          : null;
       if (!isReadingFresh(mUtc, maxAge, nowMs)) {
         continue;
       }
 
       if (paramId === 2 || paramName === 'pm25' || paramName === 'pm2_5') {
-        if (isValidPMValue(m.value)) {
+        if (isValidPMValue(m.value) && typeof m.value === 'number') {
           const tMs = new Date(mUtc!).getTime();
           if (tMs >= latestTimestampMs) {
             bestPm25 = Math.round(m.value);
             bestUtc = mUtc!;
-            bestLocal = m.datetime?.local || mUtc!;
+            bestLocal =
+              typeof m.datetime === 'object' && m.datetime?.local
+                ? m.datetime.local
+                : mUtc!;
             latestTimestampMs = tMs;
           }
         }
       } else if (paramId === 1 || paramName === 'pm10') {
-        if (isValidPMValue(m.value)) {
+        if (isValidPMValue(m.value) && typeof m.value === 'number') {
           bestPm10 = Math.round(m.value);
         }
       }
@@ -533,8 +612,8 @@ export async function getNearestOpenAQStation(
 
     // 2. Filter locations within maxRadiusKm and filter out historical dormant stations (where datetimeLast is too old)
     const nowMs = Date.now();
-    const sortedLocs = locations
-      .map((l: any) => ({
+    const sortedLocs = (locations as OpenAQLocation[])
+      .map((l: OpenAQLocation) => ({
         loc: l,
         dist: calculateDistanceKm(
           userLat,
@@ -543,7 +622,7 @@ export async function getNearestOpenAQStation(
           l.coordinates?.longitude || 0
         ),
       }))
-      .filter((item: any) => {
+      .filter((item: { loc: OpenAQLocation; dist: number }) => {
         if (item.dist > maxRadiusKm) return false;
         // If datetimeLast is provided on location, filter out dormant stations (> maxAgeHours old)
         if (item.loc?.datetimeLast?.utc && !isReadingFresh(item.loc.datetimeLast.utc, maxAgeHours, nowMs)) {
@@ -551,7 +630,7 @@ export async function getNearestOpenAQStation(
         }
         return true;
       })
-      .sort((a: any, b: any) => a.dist - b.dist)
+      .sort((a: { dist: number }, b: { dist: number }) => a.dist - b.dist)
       .slice(0, 5); // Take up to top 5 nearest active stations
 
     if (sortedLocs.length === 0) {
@@ -559,10 +638,10 @@ export async function getNearestOpenAQStation(
       return null;
     }
 
-    const latestMap = new Map<number, any[]>();
+    const latestMap = new Map<number, OpenAQMeasurement[]>();
 
     await Promise.all(
-      sortedLocs.map(async ({ loc }: { loc: any }) => {
+      sortedLocs.map(async ({ loc }: { loc: OpenAQLocation }) => {
         try {
           const latestUrl = `${OPENAQ_BASE_URL}/locations/${loc.id}/latest`;
           const latestCtrl = new AbortController();
@@ -608,8 +687,9 @@ export async function getNearestOpenAQStation(
     // Cache the result (or null if none found) for 10 minutes
     serverCache.set(cacheKey, { result: stationResult, timestamp: Date.now() });
     return stationResult;
-  } catch (err: any) {
-    if (err?.name === 'AbortError') {
+  } catch (err: unknown) {
+    const isAbort = err instanceof Error && err.name === 'AbortError';
+    if (isAbort) {
       // Timeout hit (6s), fallback smoothly
       return null;
     }

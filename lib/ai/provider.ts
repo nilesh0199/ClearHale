@@ -35,7 +35,7 @@ export function isProviderRateLimited(provider: ProviderName): boolean {
 }
 
 // Development logger
-function devLog(message: string, ...args: any[]): void {
+function devLog(message: string, ...args: unknown[]): void {
   if (process.env.NODE_ENV !== 'production') {
     console.log(`[AI Provider] ${message}`, ...args);
   }
@@ -119,13 +119,13 @@ async function callGeminiStream(
       'gemini-flash-latest',
     ])
   );
-  let lastError: any = null;
+  let lastError: Error | null = null;
 
   for (const modelName of modelsToTry) {
     let emittedInThisModel = false;
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:streamGenerateContent?alt=sse&key=${apiKey}`;
-      const requestBody: any = {
+      const requestBody: Record<string, unknown> = {
         contents: [{ parts: [{ text: conversationText }] }],
         generationConfig: {
           temperature: options.temperature ?? 0.2,
@@ -188,10 +188,11 @@ async function callGeminiStream(
         }
       }
       return; // Succeeded!
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (signal.aborted) throw err;
-      lastError = err;
-      devLog(`Gemini stream model [${modelName}] failed:`, err?.message || err);
+      const errObj = err instanceof Error ? err : new Error(String(err));
+      lastError = errObj;
+      devLog(`Gemini stream model [${modelName}] failed:`, errObj.message);
       if (emittedInThisModel) {
         throw err;
       }
@@ -231,12 +232,12 @@ async function callGeminiGenerate(
       'gemini-flash-latest',
     ])
   );
-  let lastError: any = null;
+  let lastError: Error | null = null;
 
   for (const modelName of modelsToTry) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-      const requestBody: any = {
+      const requestBody: Record<string, unknown> = {
         contents: [{ parts: [{ text: conversationText }] }],
         generationConfig: {
           temperature: options.temperature ?? 0.2,
@@ -265,10 +266,11 @@ async function callGeminiGenerate(
       const data = await res.json();
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (text) return text;
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (signal.aborted) throw err;
-      lastError = err;
-      devLog(`Gemini generate model [${modelName}] failed:`, err?.message || err);
+      const errObj = err instanceof Error ? err : new Error(String(err));
+      lastError = errObj;
+      devLog(`Gemini generate model [${modelName}] failed:`, errObj.message);
       continue;
     }
   }
@@ -311,7 +313,7 @@ async function callGroqStream(
       'openai/gpt-oss-20b',
     ])
   );
-  let lastError: any = null;
+  let lastError: Error | null = null;
 
   for (const modelName of modelsToTry) {
     let emittedInThisModel = false;
@@ -377,10 +379,11 @@ async function callGroqStream(
         }
       }
       return; // Succeeded!
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (signal.aborted) throw err;
-      lastError = err;
-      devLog(`Groq stream model [${modelName}] failed:`, err?.message || err);
+      const errObj = err instanceof Error ? err : new Error(String(err));
+      lastError = errObj;
+      devLog(`Groq stream model [${modelName}] failed:`, errObj.message);
       if (emittedInThisModel) {
         throw err;
       }
@@ -421,7 +424,7 @@ async function callGroqGenerate(
       'openai/gpt-oss-20b',
     ])
   );
-  let lastError: any = null;
+  let lastError: Error | null = null;
 
   for (const modelName of modelsToTry) {
     try {
@@ -451,10 +454,11 @@ async function callGroqGenerate(
 
       const data = await res.json();
       return data.choices?.[0]?.message?.content || '';
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (signal.aborted) throw err;
-      lastError = err;
-      devLog(`Groq generate model [${modelName}] failed:`, err?.message || err);
+      const errObj = err instanceof Error ? err : new Error(String(err));
+      lastError = errObj;
+      devLog(`Groq generate model [${modelName}] failed:`, errObj.message);
       continue;
     }
   }
@@ -535,12 +539,13 @@ export async function stream(
           clearTimeout(timeout12s);
           primarySucceeded = true;
           devLog(`Primary Provider [${primary}] finished successfully.`);
-        } catch (err: any) {
+        } catch (err: unknown) {
           clearTimeout(timeout12s);
-          if (err?.message?.includes('429') || err?.message?.includes('500') || err?.message?.includes('503')) {
+          const errMsg = err instanceof Error ? err.message : String(err);
+          if (errMsg.includes('429') || errMsg.includes('500') || errMsg.includes('503')) {
             markProviderRateLimited(primary);
           }
-          devLog(`Primary Provider [${primary}] failed:`, err?.message || err);
+          devLog(`Primary Provider [${primary}] failed:`, errMsg);
           if (tokensEmitted > 0) {
             sendText('\n\n*Note: Keep prescribed rescue inhalers accessible, monitor symptoms closely, and consult your physician for individualized medical advice.*');
           }
@@ -598,12 +603,13 @@ export async function stream(
 
             clearTimeout(secondaryTimeout12s);
             devLog(`Secondary Fallback Provider [${secondary}] finished successfully.`);
-          } catch (secErr: any) {
+          } catch (secErr: unknown) {
             clearTimeout(secondaryTimeout12s);
-            if (secErr?.message?.includes('429') || secErr?.message?.includes('500') || secErr?.message?.includes('503')) {
+            const errMsg = secErr instanceof Error ? secErr.message : String(secErr);
+            if (errMsg.includes('429') || errMsg.includes('500') || errMsg.includes('503')) {
               markProviderRateLimited(secondary);
             }
-            devLog(`Secondary Provider [${secondary}] failed:`, secErr?.message || secErr);
+            devLog(`Secondary Provider [${secondary}] failed:`, errMsg);
             if (tokensEmitted > 0) {
               sendText('\n\n*Note: Keep prescribed rescue inhalers accessible, monitor symptoms closely, and consult your physician for individualized medical advice.*');
             }
@@ -669,12 +675,13 @@ export async function generate(
         const text = result.trim();
         return options.transformText ? options.transformText(text) : text;
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       clearTimeout(timeout);
-      if (err?.message?.includes('429') || err?.message?.includes('500') || err?.message?.includes('503')) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (errMsg.includes('429') || errMsg.includes('500') || errMsg.includes('503')) {
         markProviderRateLimited(primary);
       }
-      devLog(`Generate: Primary [${primary}] failed:`, err?.message || err);
+      devLog(`Generate: Primary [${primary}] failed:`, errMsg);
     }
   }
 
@@ -701,12 +708,13 @@ export async function generate(
         if (tip) output += tip;
         return options.transformText ? options.transformText(output) : output;
       }
-    } catch (secErr: any) {
+    } catch (secErr: unknown) {
       clearTimeout(secTimeout);
-      if (secErr?.message?.includes('429') || secErr?.message?.includes('500') || secErr?.message?.includes('503')) {
+      const errMsg = secErr instanceof Error ? secErr.message : String(secErr);
+      if (errMsg.includes('429') || errMsg.includes('500') || errMsg.includes('503')) {
         markProviderRateLimited(secondary);
       }
-      devLog(`Generate: Secondary [${secondary}] failed:`, secErr?.message || secErr);
+      devLog(`Generate: Secondary [${secondary}] failed:`, errMsg);
     }
   }
 

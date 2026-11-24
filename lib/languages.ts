@@ -1322,13 +1322,13 @@ export const ACTIONS_I18N: Record<string, Record<string, { title: string; why?: 
 };
 
 // Safe property path resolver
-export function getNestedValue(obj: any, path: string): string | undefined {
+export function getNestedValue(obj: unknown, path: string): string | undefined {
   if (!obj || !path) return undefined;
   const parts = path.split('.');
-  let curr = obj;
+  let curr: unknown = obj;
   for (const part of parts) {
     if (curr === null || curr === undefined || typeof curr !== 'object') return undefined;
-    curr = curr[part];
+    curr = (curr as Record<string, unknown>)[part];
   }
   return typeof curr === 'string' ? curr : undefined;
 }
@@ -1499,13 +1499,14 @@ export function getActionI18n(
 export function getFlatEnglishDictionary(): Record<string, string> {
   const flat: Record<string, string> = {};
 
-  function traverse(obj: any, prefix = '') {
+  function traverse(obj: Record<string, unknown>, prefix = '') {
     for (const k in obj) {
-      if (typeof obj[k] === 'string') {
+      const val = obj[k];
+      if (typeof val === 'string') {
         const fullKey = prefix ? `${prefix}.${k}` : k;
-        flat[fullKey] = obj[k];
-      } else if (typeof obj[k] === 'object' && obj[k] !== null && !Array.isArray(obj[k])) {
-        traverse(obj[k], prefix ? `${prefix}.${k}` : k);
+        flat[fullKey] = val;
+      } else if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
+        traverse(val as Record<string, unknown>, prefix ? `${prefix}.${k}` : k);
       }
     }
   }

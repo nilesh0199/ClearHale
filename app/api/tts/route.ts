@@ -134,7 +134,14 @@ export async function POST(req: NextRequest) {
       },
     };
 
-    let audioPart: any = null;
+    interface InlineAudioPart {
+      inlineData?: {
+        mimeType?: string;
+        data?: string;
+      };
+    }
+
+    let audioPart: InlineAudioPart | null = null;
     let lastError = '';
     let lastStatus = 502;
 
@@ -166,14 +173,16 @@ export async function POST(req: NextRequest) {
 
         const data = await res.json();
         const candidate = data.candidates?.[0];
-        const part = candidate?.content?.parts?.find((p: any) => p.inlineData?.data);
+        const part = (candidate?.content?.parts as InlineAudioPart[] | undefined)?.find(
+          (p) => p.inlineData?.data
+        );
         if (part?.inlineData?.data) {
           audioPart = part;
           break; // successfully got audio
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         clearTimeout(timeout);
-        lastError = err?.message || 'Network error';
+        lastError = err instanceof Error ? err.message : 'Network error';
         console.warn(`[TTS] Exception on ${model}: ${lastError}`);
       }
     }
@@ -212,8 +221,9 @@ export async function POST(req: NextRequest) {
           'Cache-Control': 'public, max-age=86400, immutable',
         },
       });
-  } catch (err: any) {
-    console.error('[TTS] Unhandled error:', err);
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error('[TTS] Unhandled error:', errMsg);
     return NextResponse.json(
       { error: 'Internal server error generating speech', fallbackToBrowser: true },
       { status: 500 }

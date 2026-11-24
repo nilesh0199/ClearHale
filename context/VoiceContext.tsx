@@ -304,11 +304,12 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
               });
             }
           }, 100);
-        } catch (sttErr: any) {
+        } catch (sttErr: unknown) {
           console.warn('[VoiceContext] /api/stt transcription error:', sttErr);
           setListeningState('error');
           setRecognitionErrorCode('stt-failed');
-          setRecognitionError(sttErr.message || 'Voice transcription failed. Tap mic to retry.');
+          const msg = sttErr instanceof Error ? sttErr.message : 'Voice transcription failed. Tap mic to retry.';
+          setRecognitionError(msg);
         }
       };
 
@@ -402,9 +403,9 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
             stopListening();
           }
         }, 25000);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.warn('[VoiceContext] getUserMedia error:', err);
-        const name = err?.name || '';
+        const name = err instanceof Error ? err.name : '';
         if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
           setRecognitionErrorCode('not-allowed');
           setRecognitionError(
@@ -482,7 +483,10 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
           setListeningState('listening');
         };
 
-        recognition.onresult = (event: any) => {
+        recognition.onresult = (event: {
+          resultIndex: number;
+          results: ArrayLike<{ isFinal: boolean; 0: { transcript: string; confidence?: number } }>;
+        }) => {
           let finalAccumulated = '';
           let interimAccumulated = '';
 
@@ -514,7 +518,7 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
           }
         };
 
-        recognition.onerror = (event: any) => {
+        recognition.onerror = (event: { error: string }) => {
           console.warn('SpeechRecognition error:', event.error);
           const err = event.error;
 
@@ -619,7 +623,7 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
         };
 
         recognition.start();
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Failed to start SpeechRecognition:', err);
         // Fallback to MediaRecorder + /api/stt
         useServerSttRef.current = true;

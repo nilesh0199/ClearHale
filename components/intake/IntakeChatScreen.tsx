@@ -420,8 +420,9 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
       } else {
         setAuthError(res.error || 'Sign-in was not completed.');
       }
-    } catch (e: any) {
-      setAuthError(e?.message || 'Could not connect to Google.');
+    } catch (e: unknown) {
+      const errorMsg = e instanceof Error ? e.message : 'Could not connect to Google.';
+      setAuthError(errorMsg);
     } finally {
       setIsSigningIn(false);
     }
