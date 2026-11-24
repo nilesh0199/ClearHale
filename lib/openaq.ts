@@ -43,6 +43,7 @@ export interface OpenAQFetchOptions {
   maxAgeHours?: number;
   timeoutMs?: number;
   fetchFn?: typeof fetch;
+  useConsensus?: boolean;
 }
 
 const OPENAQ_BASE_URL = 'https://api.openaq.org/v3';
@@ -239,6 +240,17 @@ export function selectBestStation(
         measuredAtUtc: measurementUtc,
         measuredAtLocal: measurementLocal || measurementUtc,
         minutesAgo,
+        isAverage: false,
+        stationCount: 1,
+        nearbyStations: [
+          {
+            id: location.id,
+            name: location.name || `Station #${location.id}`,
+            distanceKm,
+            pm2_5: pm25Val,
+            pm10: pm10Val,
+          },
+        ],
       };
     }
   }
@@ -475,9 +487,10 @@ export async function getNearestOpenAQStation(
   const maxAgeHours = options?.maxAgeHours ?? DEFAULT_MAX_AGE_HOURS;
   const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const customFetch = options?.fetchFn || fetch;
+  const useConsensus = options?.useConsensus ?? true;
 
-  // Check server cache (rounded to 3 decimal places ~110m)
-  const cacheKey = `${userLat.toFixed(3)}_${userLon.toFixed(3)}`;
+  // Check server cache (rounded to 3 decimal places ~110m, separated by consensus mode)
+  const cacheKey = `${userLat.toFixed(3)}_${userLon.toFixed(3)}_${useConsensus ? 'cons' : 'single'}`;
   const cached = serverCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
     return cached.result;
@@ -576,17 +589,25 @@ export async function getNearestOpenAQStation(
       })
     );
 
-    const consensusStation = selectStationConsensus(
-      userLat,
-      userLon,
-      sortedLocs.map((s) => s.loc),
-      latestMap,
-      { maxRadiusKm, maxAgeHours, nowMs: Date.now(), maxStations: 5 }
-    );
+    const stationResult = useConsensus
+      ? selectStationConsensus(
+          userLat,
+          userLon,
+          sortedLocs.map((s) => s.loc),
+          latestMap,
+          { maxRadiusKm, maxAgeHours, nowMs: Date.now(), maxStations: 5 }
+        )
+      : selectBestStation(
+          userLat,
+          userLon,
+          sortedLocs.map((s) => s.loc),
+          latestMap,
+          { maxRadiusKm, maxAgeHours, nowMs: Date.now() }
+        );
 
     // Cache the result (or null if none found) for 10 minutes
-    serverCache.set(cacheKey, { result: consensusStation, timestamp: Date.now() });
-    return consensusStation;
+    serverCache.set(cacheKey, { result: stationResult, timestamp: Date.now() });
+    return stationResult;
   } catch (err: any) {
     if (err?.name === 'AbortError') {
       // Timeout hit (6s), fallback smoothly

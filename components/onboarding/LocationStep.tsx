@@ -51,17 +51,19 @@ export function LocationStep() {
       lastClickedCity.current.name === city.name &&
       now - lastClickedCity.current.time < 500;
 
+    const chosenCity: CityLocation = { ...city, isCurrentLocation: false };
+
     // Double tap or clicking already selected city advances immediately
     if (isDoubleTap || profile.city.name.startsWith(city.name)) {
-      updateProfile({ city });
-      refreshAirData(city.lat, city.lon);
+      updateProfile({ city: chosenCity });
+      refreshAirData(city.lat, city.lon, false);
       setOnboardingStep('intake-choice');
       return;
     }
 
     lastClickedCity.current = { name: city.name, time: now };
-    updateProfile({ city });
-    refreshAirData(city.lat, city.lon);
+    updateProfile({ city: chosenCity });
+    refreshAirData(city.lat, city.lon, false);
   };
 
   const handleUseLocation = () => {
@@ -82,8 +84,9 @@ export function LocationStep() {
 
         try {
           const autoCity = await reverseGeocodeLocation(lat, lon);
-          updateProfile({ city: autoCity });
-          refreshAirData(autoCity.lat, autoCity.lon);
+          const currentCity: CityLocation = { ...autoCity, isCurrentLocation: true };
+          updateProfile({ city: currentCity });
+          refreshAirData(currentCity.lat, currentCity.lon, true);
           setDetectedStatus(`Detected: ${autoCity.name}`);
 
           // Give user a brief visual confirmation of their detected city, then automatically continue
@@ -102,9 +105,10 @@ export function LocationStep() {
             lon,
             admin: nearest.admin,
             country: nearest.country || 'India',
+            isCurrentLocation: true,
           };
           updateProfile({ city: autoCity });
-          refreshAirData(lat, lon);
+          refreshAirData(lat, lon, true);
           setDetectedStatus(`Detected: ${autoCity.name}`);
           setTimeout(() => {
             setOnboardingStep('intake-choice');

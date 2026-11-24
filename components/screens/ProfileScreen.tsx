@@ -118,8 +118,9 @@ export function ProfileScreen() {
   };
 
   const handleSelectCity = (c: CityLocation) => {
-    updateProfile({ city: c });
-    refreshAirData(c.lat, c.lon);
+    const chosen: CityLocation = { ...c, isCurrentLocation: false };
+    updateProfile({ city: chosen });
+    refreshAirData(c.lat, c.lon, false);
     setIsSearchingCity(false);
     setCityQuery('');
     setCityResults([]);
@@ -143,8 +144,9 @@ export function ProfileScreen() {
 
         try {
           const autoCity = await reverseGeocodeLocation(lat, lon);
-          updateProfile({ city: autoCity });
-          refreshAirData(autoCity.lat, autoCity.lon);
+          const currentCity: CityLocation = { ...autoCity, isCurrentLocation: true };
+          updateProfile({ city: currentCity });
+          refreshAirData(currentCity.lat, currentCity.lon, true);
           setDetectedStatus(`Detected: ${autoCity.name}`);
 
           setTimeout(() => {
@@ -164,9 +166,10 @@ export function ProfileScreen() {
             lon,
             admin: nearest.admin,
             country: nearest.country || 'India',
+            isCurrentLocation: true,
           };
           updateProfile({ city: autoCity });
-          refreshAirData(lat, lon);
+          refreshAirData(lat, lon, true);
           setDetectedStatus(`Detected: ${autoCity.name}`);
           setTimeout(() => {
             setIsSearchingCity(false);

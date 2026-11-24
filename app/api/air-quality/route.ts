@@ -163,11 +163,15 @@ async function fetchOpenMeteoModel(lat: number, lon: number): Promise<{
   };
 }
 
-async function handleAirQualityRequest(lat: number, lon: number): Promise<AirData> {
+async function handleAirQualityRequest(lat: number, lon: number, mode?: string): Promise<AirData> {
+  const isCurrentLocation = mode === 'current' || mode === 'gps';
+
   // 1. Fetch Open-Meteo model forecast in parallel with OpenAQ
+  // When mode is 'current' (user GPS), fetch the hyper-local single nearest station (useConsensus: false)
+  // When mode is city selection (default), fetch inverse-distance city average consensus (useConsensus: true)
   const [modelResult, openaqResult] = await Promise.allSettled([
     fetchOpenMeteoModel(lat, lon),
-    getNearestOpenAQStation(lat, lon),
+    getNearestOpenAQStation(lat, lon, { useConsensus: !isCurrentLocation }),
   ]);
 
   if (modelResult.status === 'rejected') {
@@ -245,8 +249,8 @@ async function handleAirQualityRequest(lat: number, lon: number): Promise<AirDat
       },
       hourly: harmonizedHourly,
       source:
-        station.isAverage && station.stationCount && station.stationCount > 1
-          ? `Area average of ${station.stationCount} stations (${station.name})`
+        !isCurrentLocation && station.isAverage && station.stationCount && station.stationCount > 1
+          ? `City average of ${station.stationCount} stations (${station.name})`
           : `Measured at ${station.name}, ${station.distanceKm} km away`,
       updatedAt: Date.now(),
       isCached: false,
@@ -288,6 +292,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const latStr = searchParams.get('lat');
     const lonStr = searchParams.get('lon');
+    const mode = searchParams.get('mode') || undefined;
 
     if (!latStr || !lonStr) {
       return NextResponse.json({ error: 'lat and lon query parameters required' }, { status: 400 });
@@ -300,7 +305,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid coordinate bounds' }, { status: 400 });
     }
 
-    const airData = await handleAirQualityRequest(lat, lon);
+    const airData = await handleAirQualityRequest(lat, lon, mode);
     return NextResponse.json(airData, {
       headers: {
         'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
@@ -319,12 +324,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const lat = parseFloat(body.lat);
     const lon = parseFloat(body.lon);
+    const mode = body.mode || undefined;
 
     if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
       return NextResponse.json({ error: 'Invalid coordinate bounds' }, { status: 400 });
     }
 
-    const airData = await handleAirQualityRequest(lat, lon);
+    const airData = await handleAirQualityRequest(lat, lon, mode);
     return NextResponse.json(airData);
   } catch (err: any) {
     return NextResponse.json(

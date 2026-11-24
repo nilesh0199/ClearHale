@@ -1427,7 +1427,7 @@ export function HomeScreen() {
                   <span className="line-clamp-2 leading-snug sm:leading-normal">
                     {airData.dataType === 'measured' && airData.station
                       ? airData.station.isAverage && (airData.station.stationCount ?? 1) > 1
-                        ? `Area average of ${airData.station.stationCount} stations (${airData.station.name}), ${
+                        ? `City average of ${airData.station.stationCount} stations (${airData.station.name}), ${
                             airData.station.minutesAgo ??
                             Math.max(
                               1,
@@ -2265,7 +2265,7 @@ export function HomeScreen() {
                           </span>
                           <span className="font-semibold text-foreground text-right truncate max-w-[200px]">
                             {airData.station.isAverage && (airData.station.stationCount ?? 1) > 1
-                              ? `Inverse-Distance Area Average (${airData.station.stationCount} Stations)`
+                              ? `City-wide Inverse-Distance Average (${airData.station.stationCount} Stations)`
                               : airData.station.name}
                           </span>
                         </div>
@@ -2284,7 +2284,7 @@ export function HomeScreen() {
                         {/* Area Reporting Stations Breakdown */}
                         {airData.station.nearbyStations && airData.station.nearbyStations.length > 1 && (
                           <div className="mt-2 pt-2 border-t border-card-border/60">
-                            <div className="text-[11px] text-muted mb-1.5 font-medium">Reporting Stations in Area:</div>
+                            <div className="text-[11px] text-muted mb-1.5 font-medium">Reporting Stations in City:</div>
                             <div className="space-y-1">
                               {airData.station.nearbyStations.map((st, idx) => (
                                 <div key={idx} className="flex items-center justify-between text-[11px]">

@@ -116,6 +116,17 @@ function selectBestStation(userLat, userLon, locations, latestMap, options = {})
         measuredAtUtc: measurementUtc,
         measuredAtLocal: measurementLocal || measurementUtc,
         minutesAgo,
+        isAverage: false,
+        stationCount: 1,
+        nearbyStations: [
+          {
+            id: location.id,
+            name: location.name || `Station #${location.id}`,
+            distanceKm,
+            pm2_5: pm25Val,
+            pm10: pm10Val,
+          },
+        ],
       };
     }
   }
@@ -599,6 +610,42 @@ describe('OpenAQ v3 Live Data Integration', () => {
       assert.equal(result.stationCount, 1);
       assert.equal(result.measuredPM2_5, 58);
       assert.equal(result.name, 'Mahal, Nagpur - MPCB');
+    });
+
+    test('Current location mode selects single nearest station without averaging', () => {
+      const userLat = 28.6139;
+      const userLon = 77.2090;
+
+      const loc1 = {
+        id: 5613,
+        name: 'ITO, New Delhi - CPCB',
+        provider: { name: 'CPCB' },
+        coordinates: { latitude: 28.628, longitude: 77.241 }, // ~3.5 km
+        sensors: [{ id: 101, parameter: { id: 2, name: 'pm25' } }],
+        datetimeLast: { utc: freshIso },
+      };
+
+      const loc2 = {
+        id: 5586,
+        name: 'Sirifort, Delhi - CPCB',
+        provider: { name: 'CPCB' },
+        coordinates: { latitude: 28.553, longitude: 77.218 }, // ~7.1 km
+        sensors: [{ id: 102, parameter: { id: 2, name: 'pm25' } }],
+        datetimeLast: { utc: freshIso },
+      };
+
+      const latestMap = new Map();
+      latestMap.set(5613, [{ sensorsId: 101, value: 73, datetime: { utc: freshIso } }]);
+      latestMap.set(5586, [{ sensorsId: 102, value: 80, datetime: { utc: freshIso } }]);
+
+      // In current location mode (useConsensus: false), single nearest station is chosen
+      const result = selectBestStation(userLat, userLon, [loc1, loc2], latestMap, { nowMs });
+
+      assert.ok(result);
+      assert.equal(result.isAverage, false);
+      assert.equal(result.stationCount, 1);
+      assert.equal(result.id, 5613);
+      assert.equal(result.measuredPM2_5, 73);
     });
   });
 });

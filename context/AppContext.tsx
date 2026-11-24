@@ -50,7 +50,7 @@ interface AppContextType {
   airData: AirData;
   loadingAir: boolean;
   airError: string | null;
-  refreshAirData: (lat?: number, lon?: number) => Promise<void>;
+  refreshAirData: (lat?: number, lon?: number, isCurrentLocation?: boolean) => Promise<void>;
   currentBand: AQIBandInfo;
   t: typeof UI_TRANSLATIONS['en'];
   tBi: (key: string, defaultEn?: string) => { en: string; native: string };
@@ -240,7 +240,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch {}
 
     // Initial fetch of air quality
-    fetchAirQuality(stored.city.lat, stored.city.lon)
+    fetchAirQuality(stored.city.lat, stored.city.lon, { isCurrentLocation: stored.city?.isCurrentLocation })
       .then((data) => setAirData(data))
       .catch((err) => {
         console.warn('Initial air fetch error, using stored baseline:', err);
@@ -265,7 +265,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // Auto-refresh air data periodically (every 30 minutes) and on window focus
     const autoRefreshInterval = setInterval(() => {
-      fetchAirQuality(stored.city.lat, stored.city.lon)
+      fetchAirQuality(stored.city.lat, stored.city.lon, { isCurrentLocation: stored.city?.isCurrentLocation })
         .then((data) => setAirData(data))
         .catch(() => {});
     }, 30 * 60 * 1000);
@@ -273,7 +273,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const handleWindowFocus = () => {
       setAirData((prev) => {
         if (Date.now() - prev.updatedAt >= 25 * 60 * 1000) {
-          fetchAirQuality(stored.city.lat, stored.city.lon)
+          fetchAirQuality(stored.city.lat, stored.city.lon, { isCurrentLocation: stored.city?.isCurrentLocation })
             .then((data) => setAirData(data))
             .catch(() => {});
         }
@@ -317,6 +317,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             lon: partial.city.lon,
             admin: resolved.admin,
             country: resolved.country || 'India',
+            isCurrentLocation: true,
           },
         };
       }
@@ -326,14 +327,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const refreshAirData = async (lat?: number, lon?: number) => {
+  const refreshAirData = async (lat?: number, lon?: number, isCurrentLocation?: boolean) => {
     setLoadingAir(true);
     setAirError(null);
     const targetLat = lat ?? profile.city.lat;
     const targetLon = lon ?? profile.city.lon;
+    const isCurrent = isCurrentLocation ?? profile.city?.isCurrentLocation ?? false;
 
     try {
-      const data = await fetchAirQuality(targetLat, targetLon);
+      const data = await fetchAirQuality(targetLat, targetLon, { isCurrentLocation: isCurrent });
       setAirData(data);
     } catch (err: any) {
       setAirError(err?.message || 'Could not refresh air data');

@@ -44,6 +44,7 @@ export interface CityLocation {
   lon: number;
   admin?: string;
   country?: string;
+  isCurrentLocation?: boolean;
 }
 
 export type FamilyMember = 'child' | 'elderly' | 'pregnant' | 'asthma_heart';

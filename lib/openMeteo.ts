@@ -111,11 +111,16 @@ export async function searchCities(query: string): Promise<CityLocation[]> {
   return localHits;
 }
 
-export async function fetchAirQuality(lat: number, lon: number): Promise<AirData> {
+export async function fetchAirQuality(
+  lat: number,
+  lon: number,
+  options?: { isCurrentLocation?: boolean }
+): Promise<AirData> {
   // 1. Try server-side integrated route (OpenAQ live measurements + Open-Meteo forecast)
   if (typeof window !== 'undefined') {
     try {
-      const serverUrl = `/api/air-quality?lat=${lat}&lon=${lon}`;
+      const modeParam = options?.isCurrentLocation ? '&mode=current' : '';
+      const serverUrl = `/api/air-quality?lat=${lat}&lon=${lon}${modeParam}`;
       const ctrl = new AbortController();
       const serverTimer = setTimeout(() => ctrl.abort(), 7000);
 
