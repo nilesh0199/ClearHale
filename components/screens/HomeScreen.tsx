@@ -2082,18 +2082,7 @@ export function HomeScreen() {
                 scrollToHourIndex(idx, isDraggingSliderRef.current);
               }}
               aria-label="24-hour forecast timeline slider"
-              style={{
-                background: `linear-gradient(to right, #0D5C52 0%, #0D5C52 ${
-                  airData.hourly.length > 1
-                    ? (forecastSliderIndex / (airData.hourly.length - 1)) * 100
-                    : 0
-                }%, rgba(148, 163, 184, 0.25) ${
-                  airData.hourly.length > 1
-                    ? (forecastSliderIndex / (airData.hourly.length - 1)) * 100
-                    : 0
-                }%, rgba(148, 163, 184, 0.25) 100%)`,
-              }}
-              className="w-full h-2.5 rounded-full appearance-none cursor-grab active:cursor-grabbing border border-card-border/60 transition-all [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-teal-accent [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white dark:[&::-webkit-slider-thumb]:border-stone-900 [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-thumb]:active:scale-125 [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:active:cursor-grabbing [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-teal-accent [&::-moz-range-thumb]:shadow-md [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white dark:[&::-moz-range-thumb]:border-stone-900 [&::-moz-range-thumb]:cursor-grab"
+              className="w-full h-2.5 rounded-full appearance-none cursor-grab active:cursor-grabbing bg-card-subtle border border-card-border dark:border-card-border/80 outline-none focus:outline-none focus-visible:outline-none focus:ring-0 transition-all [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-8 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-teal-accent [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white dark:[&::-webkit-slider-thumb]:border-stone-900 [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-105 [&::-webkit-slider-thumb]:active:scale-110 [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:active:cursor-grabbing [&::-moz-range-thumb]:w-8 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-teal-accent [&::-moz-range-thumb]:shadow-md [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white dark:[&::-moz-range-thumb]:border-stone-900 [&::-moz-range-thumb]:cursor-grab [&::-moz-range-track]:bg-transparent"
             />
 
             {/* Timeline Tick Markers (0h, 6h, 12h, 18h, 24h) */}
