@@ -548,6 +548,30 @@ export function HomeScreen() {
     return () => clearTimeout(timer);
   }, [airData.hourly]);
 
+  const activeFamilyView = profile.activeFamilyFilter || 'whole_family';
+
+  // Auto-scroll the active family tab into center view on mobile whenever activeFamilyView changes
+  useEffect(() => {
+    const container = tabListRef.current;
+    if (!container) return;
+    const activeBtn = container.querySelector<HTMLButtonElement>(`#family-tab-${activeFamilyView}`);
+    if (!activeBtn) return;
+
+    const timer = setTimeout(() => {
+      const cRect = container.getBoundingClientRect();
+      const bRect = activeBtn.getBoundingClientRect();
+      if (bRect.left < cRect.left + 8 || bRect.right > cRect.right - 8) {
+        const desiredLeft =
+          activeBtn.offsetLeft - container.clientWidth / 2 + activeBtn.clientWidth / 2;
+        container.scrollTo({
+          left: Math.max(0, desiredLeft),
+          behavior: shouldReduceMotion ? 'auto' : 'smooth',
+        });
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [activeFamilyView, shouldReduceMotion]);
+
   const [forecastSliderIndex, setForecastSliderIndex] = useState(0);
   const isDraggingSliderRef = useRef(false);
   const [isDraggingSlider, setIsDraggingSlider] = useState(false);
@@ -621,7 +645,6 @@ export function HomeScreen() {
     }
   };
 
-  const activeFamilyView = profile.activeFamilyFilter || 'whole_family';
   const topActions = getTop3Actions(profile, currentBand.key, activeFamilyView);
   const particleDensity = Math.min(7, Math.max(1.2, airData.current.pm2_5 / 35));
   const thinFactor = Math.min(0.75, (profile.checkedActions?.length || 0) * 0.18);
@@ -725,6 +748,30 @@ export function HomeScreen() {
       fullLabelEn: 'Outdoor Worker',
     },
   ];
+
+  const getTabLabel = (tabId: FamilyView): string => {
+    const filterKey = tabId === 'whole_family' ? 'all' : tabId === 'outdoor_worker' ? 'worker' : tabId;
+    return (t.home.familyFilter as any)?.[filterKey] || tabId;
+  };
+
+  const getTabShortLabel = (tab: (typeof familyTabs)[0]): string => {
+    const lang = profile.language;
+    if (lang === 'hi') return tab.shortHi;
+    if (lang === 'mr') return tab.shortMr;
+    if (lang === 'bn') return tab.shortBn;
+    if (lang === 'ta') {
+      const taMap: Record<FamilyView, string> = {
+        whole_family: 'குடும்பம்',
+        child: 'குழந்தை',
+        elderly: 'பெரியவர்',
+        pregnant: 'கர்ப்பிணி',
+        asthma: 'ஆஸ்துமா',
+        outdoor_worker: 'பணியாளர்',
+      };
+      return taMap[tab.id] || tab.shortEn;
+    }
+    return tab.shortEn;
+  };
 
   const handleFamilyChange = (view: FamilyView) => {
     updateProfile({ activeFamilyFilter: view });
@@ -1155,14 +1202,14 @@ export function HomeScreen() {
       {/* Row 2: Family Tabs (fixed on desktop, never scrolls, with page background & hairline bottom border) */}
       <div className="w-full bg-background lg:border-b lg:border-card-border/60 relative z-10 py-0 lg:py-2.5 px-0 lg:px-8 shrink-0">
         <div className="w-full max-w-5xl mx-auto space-y-2">
-          {/* Family View Segmented Switcher (Mobile: Compact 4-column control, Desktop: Full pills) */}
+          {/* Family View Segmented Switcher (Mobile: Dynamic pill switcher with smooth expansion & scrolling, Desktop: Full pills) */}
           <div
             ref={tabListRef}
             role="tablist"
             aria-label="Family filter perspective"
             className={`bg-card-subtle p-1 rounded-2xl sm:rounded-card relative select-none w-full border border-card-border/60 ${
               familyTabs.length >= 5
-                ? 'flex items-stretch gap-1 overflow-x-hidden'
+                ? 'flex items-stretch gap-1 overflow-x-auto scrollbar-none [scrollbar-width:none] [-webkit-overflow-scrolling:touch]'
                 : 'grid grid-cols-4 sm:flex sm:gap-1'
             }`}
           >
@@ -1181,12 +1228,12 @@ export function HomeScreen() {
                   onKeyDown={(e) => handleTabKeyDown(e, idx)}
                   title={tab.fullLabelEn}
                   aria-label={`Filter by ${tab.fullLabelEn}`}
-                  className={`relative z-10 min-h-[48px] h-14 sm:h-auto sm:min-h-[48px] py-1.5 px-1 sm:py-2.5 rounded-xl transition-all duration-300 ease-out flex flex-col sm:flex-row items-center justify-center focus-visible:outline-none focus-visible:ring-2 cursor-pointer ${
+                  className={`relative z-10 min-h-[44px] sm:min-h-[46px] py-1.5 px-2 rounded-xl transition-all duration-300 ease-out flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 cursor-pointer ${
                     hasManyTabs
                       ? isActive
-                        ? 'flex-[1.45] sm:flex-[1.35] sm:px-3 text-teal-accent font-semibold shadow-2xs'
-                        : 'flex-[0.82] sm:flex-[0.88] sm:px-2 text-muted hover:text-foreground opacity-85 hover:opacity-100'
-                      : 'sm:flex-1 sm:px-3.5 ' + (isActive ? 'text-teal-accent font-semibold' : 'text-muted hover:text-foreground')
+                        ? 'flex-[1.6] min-w-[96px] sm:min-w-[120px] lg:flex-[1.3] text-teal-accent font-semibold shadow-2xs'
+                        : 'flex-none w-10 sm:w-11 lg:flex-1 lg:w-auto text-muted hover:text-foreground opacity-80 hover:opacity-100'
+                      : 'flex-1 sm:px-3.5 ' + (isActive ? 'text-teal-accent font-semibold' : 'text-muted hover:text-foreground')
                   } ${
                     isActive && profile.accentMode === 'mono' ? '!text-neutral-50' : ''
                   }`}
@@ -1202,37 +1249,34 @@ export function HomeScreen() {
                       transition={{ type: 'spring', stiffness: 420, damping: 32 }}
                     />
                   )}
-                  {/* Icon: on top on mobile, on left on tablet/desktop */}
-                  <tab.icon className={`w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0 relative z-10 transition-transform duration-300 ${isActive ? 'scale-105' : 'scale-100'}`} />
+                  {/* Icon */}
+                  <tab.icon
+                    className={`w-4 h-4 shrink-0 relative z-10 transition-transform duration-300 ${
+                      isActive ? 'scale-105' : 'scale-100'
+                    }`}
+                  />
 
-                  {/* Mobile (< 640px): Compact stacked label with bilingual caption */}
-                  <div className="sm:hidden flex flex-col items-center justify-center leading-none mt-1 relative z-10 w-full px-0.5">
-                    {profile.language === 'en' ? (
-                      <span className={`text-[11px] tracking-tight truncate max-w-full ${isActive ? 'font-semibold' : 'font-medium'}`}>
+                  {/* Label: Always visible when active; on desktop (lg:), visible on all tabs */}
+                  <div
+                    className={`relative z-10 ml-1.5 flex flex-col items-start leading-none min-w-0 ${
+                      hasManyTabs
+                        ? isActive
+                          ? 'flex'
+                          : 'hidden lg:flex'
+                        : 'flex'
+                    }`}
+                  >
+                    <span className={`text-xs tracking-tight whitespace-nowrap truncate max-w-full ${isActive ? 'font-semibold' : 'font-medium'}`}>
+                      {/* On desktop (lg:), show full localized label; on mobile/tablet, show concise label */}
+                      <span className="hidden lg:inline">{getTabLabel(tab.id)}</span>
+                      <span className="lg:hidden">{getTabShortLabel(tab)}</span>
+                    </span>
+                    {profile.language !== 'en' && isActive && (
+                      <span className="text-[7.5px] opacity-75 font-normal leading-none mt-0.5 uppercase tracking-wider truncate max-w-full lg:hidden">
                         {tab.shortEn}
                       </span>
-                    ) : (
-                      <>
-                        <span className={`text-[10px] tracking-tight leading-tight truncate max-w-full ${isActive ? 'font-semibold' : 'font-medium'}`}>
-                          {profile.language === 'hi'
-                            ? tab.shortHi
-                            : profile.language === 'mr'
-                            ? tab.shortMr
-                            : profile.language === 'bn'
-                            ? tab.shortBn
-                            : tab.shortEn}
-                        </span>
-                        <span className="text-[8px] opacity-75 font-normal leading-none mt-0.5 uppercase tracking-wider truncate max-w-full">
-                          {tab.shortEn}
-                        </span>
-                      </>
                     )}
                   </div>
-
-                  {/* Tablet & Desktop (>= 640px): Full horizontal label with Bi component */}
-                  <span className={`hidden sm:inline relative z-10 ml-1.5 text-xs whitespace-nowrap truncate ${isActive ? 'font-semibold' : 'font-medium'}`}>
-                    <Bi k={tab.key} layout="inline" />
-                  </span>
                 </button>
               );
             })}
