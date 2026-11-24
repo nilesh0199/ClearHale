@@ -122,9 +122,22 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       const hasSR =
         'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
+      const hasMedia = Boolean(
+        typeof navigator !== 'undefined' &&
+          navigator.mediaDevices &&
+          typeof navigator.mediaDevices.getUserMedia === 'function' &&
+          typeof window.MediaRecorder !== 'undefined'
+      );
+      setIsSpeechRecognitionSupported(hasSR || hasMedia);
       const hasSS = 'speechSynthesis' in window;
-      setIsSpeechRecognitionSupported(hasSR);
       setIsSpeechSynthesisSupported(hasSS);
+
+      // Check if server-side Whisper STT was previously flagged for this session
+      try {
+        if (sessionStorage.getItem('clearhale_voice_use_server_stt') === 'true') {
+          useServerSttRef.current = true;
+        }
+      } catch (e) {}
     }
   }, []);
 
@@ -142,17 +155,36 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
   const [pendingAutoSend, setPendingAutoSend] = useState<PendingAutoSend | null>(null);
 
   const recognitionRef = useRef<any>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const useServerSttRef = useRef<boolean>(false);
+  const autoStopRecordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const onFinalCallbackRef = useRef<((text: string) => void) | null>(null);
   const onInterimCallbackRef = useRef<((text: string) => void) | null>(null);
   const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null);
   const currentConfidenceRef = useRef<number>(1.0);
   const isIntentionalStopRef = useRef(false);
 
+  const stopMediaTracks = useCallback(() => {
+    if (mediaStreamRef.current) {
+      try {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      } catch (e) {}
+      mediaStreamRef.current = null;
+    }
+    if (autoStopRecordingTimerRef.current) {
+      clearTimeout(autoStopRecordingTimerRef.current);
+      autoStopRecordingTimerRef.current = null;
+    }
+  }, []);
+
   // Stop recognition and clear auto-send when switching tabs
   useEffect(() => {
     stopListening();
     cancelAutoSend();
     stopSpeech();
+    stopMediaTracks();
   }, [activeTab]);
 
   const clearRecognitionError = useCallback(() => {
@@ -181,6 +213,14 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
 
   const stopListening = useCallback(() => {
     isIntentionalStopRef.current = true;
+    setIsListening(false);
+
+    if (autoStopRecordingTimerRef.current) {
+      clearTimeout(autoStopRecordingTimerRef.current);
+      autoStopRecordingTimerRef.current = null;
+    }
+
+    // 1. If Web Speech API recognition active, stop it
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -188,11 +228,198 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
         // Ignore if already stopped
       }
     }
-    setIsListening(false);
+
+    // 2. If MediaRecorder (Server Whisper STT) active, finalize audio and POST to /api/stt
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      setListeningState('processing');
+      const recorder = mediaRecorderRef.current;
+
+      recorder.onstop = async () => {
+        const mimeType = recorder.mimeType || 'audio/webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        audioChunksRef.current = [];
+        stopMediaTracks();
+
+        if (audioBlob.size < 500) {
+          setListeningState('idle');
+          setRecognitionErrorCode('no-speech');
+          setRecognitionError('No speech was heard. Please speak again.');
+          return;
+        }
+
+        try {
+          const formData = new FormData();
+          const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('wav') ? 'wav' : 'webm';
+          formData.append('file', audioBlob, `voice.${ext}`);
+          if (profile.language) {
+            formData.append('language', profile.language);
+          }
+
+          const res = await fetch('/api/stt', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!res.ok) {
+            const errJson = await res.json().catch(() => ({}));
+            throw new Error(errJson.error || `Server transcription failed (${res.status})`);
+          }
+
+          const data = await res.json();
+          const cleanText = (data.text || '').trim();
+
+          if (!cleanText) {
+            setListeningState('idle');
+            setRecognitionErrorCode('no-speech');
+            setRecognitionError('No clear speech was heard. Please speak again.');
+            return;
+          }
+
+          setTranscript(cleanText);
+          setListeningState('idle');
+
+          if (!voiceSettings.autoSend) {
+            if (onFinalCallbackRef.current) {
+              onFinalCallbackRef.current(cleanText);
+            }
+            return;
+          }
+
+          setPendingAutoSend({ text: cleanText, countdown: 1.5 });
+          let remaining = 1.5;
+          if (autoSendTimerRef.current) clearInterval(autoSendTimerRef.current);
+          autoSendTimerRef.current = setInterval(() => {
+            remaining -= 0.1;
+            if (remaining <= 0.05) {
+              clearInterval(autoSendTimerRef.current!);
+              autoSendTimerRef.current = null;
+              setPendingAutoSend(null);
+              if (onFinalCallbackRef.current) {
+                onFinalCallbackRef.current(cleanText);
+              }
+            } else {
+              setPendingAutoSend({
+                text: cleanText,
+                countdown: Math.max(0, parseFloat(remaining.toFixed(1))),
+              });
+            }
+          }, 100);
+        } catch (sttErr: any) {
+          console.warn('[VoiceContext] /api/stt transcription error:', sttErr);
+          setListeningState('error');
+          setRecognitionErrorCode('stt-failed');
+          setRecognitionError(sttErr.message || 'Voice transcription failed. Tap mic to retry.');
+        }
+      };
+
+      try {
+        recorder.stop();
+      } catch (e) {
+        setListeningState('idle');
+        stopMediaTracks();
+      }
+      return;
+    }
+
     if (listeningState === 'listening') {
       setListeningState('processing');
     }
-  }, [listeningState]);
+  }, [listeningState, profile.language, voiceSettings.autoSend, stopMediaTracks]);
+
+  const startMediaRecorderListening = useCallback(
+    async (options?: {
+      onFinal?: (text: string) => void;
+      onInterim?: (text: string) => void;
+    }) => {
+      onFinalCallbackRef.current = options?.onFinal || null;
+      onInterimCallbackRef.current = options?.onInterim || null;
+      isIntentionalStopRef.current = false;
+      setTranscript('');
+      setInterimTranscript('');
+      clearRecognitionError();
+
+      if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+        setRecognitionErrorCode('not-supported');
+        setRecognitionError('Microphone input is not supported in this browser.');
+        setListeningState('error');
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+        mediaStreamRef.current = stream;
+        audioChunksRef.current = [];
+
+        let mimeType = 'audio/webm;codecs=opus';
+        if (typeof MediaRecorder !== 'undefined') {
+          if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+            mimeType = 'audio/webm;codecs=opus';
+          } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+            mimeType = 'audio/webm';
+          } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+            mimeType = 'audio/mp4';
+          } else if (MediaRecorder.isTypeSupported('audio/wav')) {
+            mimeType = 'audio/wav';
+          } else {
+            mimeType = '';
+          }
+        }
+
+        const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+        mediaRecorderRef.current = recorder;
+
+        recorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) {
+            audioChunksRef.current.push(e.data);
+          }
+        };
+
+        recorder.onstart = () => {
+          setIsListening(true);
+          setListeningState('listening');
+        };
+
+        recorder.onerror = (e) => {
+          console.warn('[VoiceContext] MediaRecorder error:', e);
+          setRecognitionErrorCode('recorder-error');
+          setRecognitionError('Audio recording issue. Tap mic to retry.');
+          setListeningState('error');
+          setIsListening(false);
+          stopMediaTracks();
+        };
+
+        recorder.start(250);
+
+        if (autoStopRecordingTimerRef.current) clearTimeout(autoStopRecordingTimerRef.current);
+        autoStopRecordingTimerRef.current = setTimeout(() => {
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+            stopListening();
+          }
+        }, 25000);
+      } catch (err: any) {
+        console.warn('[VoiceContext] getUserMedia error:', err);
+        const name = err?.name || '';
+        if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+          setRecognitionErrorCode('not-allowed');
+          setRecognitionError(
+            'Microphone permission denied. Tap the lock icon in your address bar and set Microphone to Allow.'
+          );
+        } else {
+          setRecognitionErrorCode('media-error');
+          setRecognitionError('Could not access microphone on this PC. Please check your system settings.');
+        }
+        setListeningState('error');
+        setIsListening(false);
+      }
+    },
+    [clearRecognitionError, stopMediaTracks, stopListening]
+  );
 
   const startListening = useCallback(
     (options?: {
@@ -215,14 +442,19 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
       setInterimTranscript('');
       clearRecognitionError();
 
+      // If server Whisper STT was previously flagged (e.g. on PC where Google speech API is blocked), use it directly
+      if (useServerSttRef.current) {
+        startMediaRecorderListening(options);
+        return;
+      }
+
       const SpeechRec =
         (window as any).SpeechRecognition ||
         (window as any).webkitSpeechRecognition;
 
       if (!SpeechRec) {
-        setRecognitionErrorCode('not-supported');
-        setRecognitionError('Voice typing is not supported in this browser.');
-        setListeningState('error');
+        useServerSttRef.current = true;
+        startMediaRecorderListening(options);
         return;
       }
 
@@ -241,8 +473,9 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
         recognition.lang = targetLocale;
         recognition.interimResults = true;
         recognition.maxAlternatives = 1;
-        // continuous: true gives smoother dictation on desktop and Android
-        recognition.continuous = true;
+        // On desktop PC, continuous=false prevents immediate WebSocket timeout; mobile uses continuous
+        const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        recognition.continuous = isMobile;
 
         recognition.onstart = () => {
           setIsListening(true);
@@ -289,16 +522,28 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
             setRecognitionErrorCode('no-speech');
             setRecognitionError('No speech was heard. Please speak again.');
             setListeningState('error');
+            setIsListening(false);
           } else if (err === 'not-allowed' || err === 'service-not-allowed') {
             setRecognitionErrorCode('not-allowed');
             setRecognitionError(
               'Microphone permission denied. Tap the lock icon in your address bar and set Microphone to Allow.'
             );
             setListeningState('error');
+            setIsListening(false);
           } else if (err === 'network') {
-            setRecognitionErrorCode('network');
-            setRecognitionError('Voice network error. Please check your internet connection.');
-            setListeningState('error');
+            console.warn('[VoiceContext] Web Speech API network error on PC. Switching to Clearhale Whisper STT...');
+            useServerSttRef.current = true;
+            if (typeof window !== 'undefined') {
+              try { sessionStorage.setItem('clearhale_voice_use_server_stt', 'true'); } catch (e) {}
+            }
+            // Seamlessly fall back to MediaRecorder + /api/stt
+            startMediaRecorderListening(options).catch((recErr) => {
+              console.warn('[VoiceContext] MediaRecorder fallback error:', recErr);
+              setRecognitionErrorCode('network-fallback');
+              setRecognitionError('Switched to Clearhale Voice (Whisper STT). Tap mic to speak.');
+              setListeningState('idle');
+              setIsListening(false);
+            });
           } else if (err === 'language-not-supported') {
             // Regional locale failed: automatically fallback to en-IN
             console.warn(`Locale ${targetLocale} unsupported, falling back to en-IN`);
@@ -314,9 +559,8 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
             setRecognitionErrorCode(err || 'unknown');
             setRecognitionError(`Recognition issue (${err}). Tap mic to retry.`);
             setListeningState('error');
+            setIsListening(false);
           }
-
-          setIsListening(false);
         };
 
         recognition.onend = () => {
@@ -377,10 +621,9 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
         recognition.start();
       } catch (err: any) {
         console.error('Failed to start SpeechRecognition:', err);
-        setRecognitionErrorCode('failed-start');
-        setRecognitionError('Could not start microphone. Tap to retry.');
-        setListeningState('error');
-        setIsListening(false);
+        // Fallback to MediaRecorder + /api/stt
+        useServerSttRef.current = true;
+        startMediaRecorderListening(options);
       }
     },
     [
@@ -390,6 +633,7 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
       profile.language,
       clearRecognitionError,
       cancelAutoSend,
+      startMediaRecorderListening,
     ]
   );
 
