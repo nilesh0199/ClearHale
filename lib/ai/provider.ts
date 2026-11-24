@@ -114,15 +114,15 @@ async function callGeminiStream(
     new Set([
       preferredModel,
       'gemini-3.5-flash-lite',
+      'gemini-3.5-flash',
+      'gemini-3.6-flash',
       'gemini-flash-latest',
-      'gemini-3.8-flash',
-      'gemini-3.7-flash',
-      'gemini-flash-lite-latest',
     ])
   );
   let lastError: any = null;
 
   for (const modelName of modelsToTry) {
+    let emittedInThisModel = false;
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:streamGenerateContent?alt=sse&key=${apiKey}`;
       const requestBody: any = {
@@ -179,6 +179,7 @@ async function callGeminiStream(
                 hasEmittedFirst = true;
                 onFirstToken();
               }
+              emittedInThisModel = true;
               onChunk(text);
             }
           } catch (e) {
@@ -191,6 +192,9 @@ async function callGeminiStream(
       if (signal.aborted) throw err;
       lastError = err;
       devLog(`Gemini stream model [${modelName}] failed:`, err?.message || err);
+      if (emittedInThisModel) {
+        throw err;
+      }
       continue;
     }
   }
@@ -222,10 +226,9 @@ async function callGeminiGenerate(
     new Set([
       preferredModel,
       'gemini-3.5-flash-lite',
+      'gemini-3.5-flash',
+      'gemini-3.6-flash',
       'gemini-flash-latest',
-      'gemini-3.8-flash',
-      'gemini-3.7-flash',
-      'gemini-flash-lite-latest',
     ])
   );
   let lastError: any = null;
@@ -306,13 +309,12 @@ async function callGroqStream(
       'qwen/qwen3.8-27b',
       'openai/gpt-oss-120b',
       'openai/gpt-oss-20b',
-      'llama-3.3-70b-versatile',
-      'llama-3.1-8b-instant',
     ])
   );
   let lastError: any = null;
 
   for (const modelName of modelsToTry) {
+    let emittedInThisModel = false;
     try {
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -366,6 +368,7 @@ async function callGroqStream(
                 hasEmittedFirst = true;
                 onFirstToken();
               }
+              emittedInThisModel = true;
               onChunk(delta);
             }
           } catch (e) {
@@ -378,6 +381,9 @@ async function callGroqStream(
       if (signal.aborted) throw err;
       lastError = err;
       devLog(`Groq stream model [${modelName}] failed:`, err?.message || err);
+      if (emittedInThisModel) {
+        throw err;
+      }
       continue;
     }
   }
@@ -413,8 +419,6 @@ async function callGroqGenerate(
       'qwen/qwen3.8-27b',
       'openai/gpt-oss-120b',
       'openai/gpt-oss-20b',
-      'llama-3.3-70b-versatile',
-      'llama-3.1-8b-instant',
     ])
   );
   let lastError: any = null;
@@ -537,6 +541,9 @@ export async function stream(
             markProviderRateLimited(primary);
           }
           devLog(`Primary Provider [${primary}] failed:`, err?.message || err);
+          if (tokensEmitted > 0) {
+            sendText('\n\n*Note: Keep prescribed rescue inhalers accessible, monitor symptoms closely, and consult your physician for individualized medical advice.*');
+          }
         }
       } else {
         if (primaryRateLimited) {
@@ -546,8 +553,8 @@ export async function stream(
         }
       }
 
-      // 2. Secondary Attempt if primary did not finish
-      if (!primarySucceeded) {
+      // 2. Secondary Attempt if primary did not finish and no tokens were emitted yet
+      if (!primarySucceeded && tokensEmitted === 0) {
         usedFallback = true;
         activeProvider = secondary;
         const secondaryRateLimited = isProviderRateLimited(secondary);
@@ -597,6 +604,9 @@ export async function stream(
               markProviderRateLimited(secondary);
             }
             devLog(`Secondary Provider [${secondary}] failed:`, secErr?.message || secErr);
+            if (tokensEmitted > 0) {
+              sendText('\n\n*Note: Keep prescribed rescue inhalers accessible, monitor symptoms closely, and consult your physician for individualized medical advice.*');
+            }
           }
         }
       }

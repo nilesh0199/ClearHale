@@ -7,6 +7,7 @@ import actionsData from '@/data/actions.json';
 import { getIndiaBandKey, outdoorGuidance, sanitizeChatOutdoorAdvice } from '@/lib/outdoorGuidance';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
@@ -81,6 +82,13 @@ Never omit either part. The delimiter line must be exactly "---EN---" on its own
         ? `Measured physical reading from government monitoring station "${stationName || 'Nearby Station'}" (${timestamp || 'recent reading'})`
         : `Forecast model estimate from Open-Meteo (${timestamp || 'current hour'})`;
 
+    const actionCatalogSummary = (actionsData as any[])
+      .map(
+        (a: any) =>
+          `- ${a.title} (${a.group || 'Indoors'}): ${a.doThis || ''} Why: ${a.whyItWorks || a.why || ''}`
+      )
+      .join('\n');
+
     const systemPrompt = `You are Clearhale, an empathetic, scientifically rigorous air-quality and smog advisor for families in India navigating severe winter smog.
 Current Context:
 - User Location: ${city}
@@ -94,15 +102,15 @@ STRICT DATA INTEGRITY & SCIENTIFIC GUARDRAILS:
 1. NEVER invent, hallucinate, or alter any PM2.5 or AQI number. Use ONLY the exact numbers provided in the context above. Never state any air-quality value not in the context.
 2. If the data type is an estimate ("estimate"), explicitly refer to the numbers as a "forecast estimate" or "model estimate" if referencing the current reading.
 3. NEVER diagnose or prescribe medications, inhaler doses, steroids, or syrups.
-4. Ground all home air improvement recommendations STRICTLY in the following Action Catalog:
-${JSON.stringify(actionsData, null, 2)}
+4. Ground all home air improvement recommendations in these approved interventions:
+${actionCatalogSummary}
 5. Only use these verified numeric claims:
    - Portable HEPA purifier in the main room: may cut indoor PM2.5 by about 50-80% when run continuously with doors and windows closed.
    - DIY box-fan filter with MERV-13 filters: about 40-70% reduction in studies; include electrical and fire safety notes, never leave it running unattended while sleeping.
    - Keeping windows and doors closed during a smog episode: indoor PM2.5 still tends to be about 55-60% of outdoor levels, so pair it with filtration.
    - A well-fitted N95 respirator: reduces fine-particle exposure when outdoors is unavoidable; fit matters; not for children under 2.
-6. Houseplants and cloth masks/scarves are scientifically verified MYTHS for PM2.5 smog protection. Explicitly clarify this if asked.
-7. Keep answers calm, concise, actionable, and structured with bullet points. Tone should be reassuring and protective.`;
+6. Houseplants, cloth masks/scarves, salt lamps, open water bowls, and detox drinks are scientifically verified MYTHS for PM2.5 smog protection. Explicitly clarify this if asked.
+7. Structure your answer with clear bullet points, actionable tips, and a caring, protective tone. Ensure your response is fully complete and never cuts off mid-sentence. Always conclude with an encouraging closing sentence.`;
 
     const conversationHistory: AIMessage[] = Array.isArray(history)
       ? (history as any[])
@@ -127,7 +135,7 @@ ${JSON.stringify(actionsData, null, 2)}
       systemPrompt,
       language,
       temperature: 0.2,
-      maxTokens: 550,
+      maxTokens: 1000,
       fallbackTemplateText,
       sessionHadTip,
     });
