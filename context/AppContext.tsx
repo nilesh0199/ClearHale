@@ -228,12 +228,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
     setIsClientLoaded(true);
 
+    // Hydrate immediately from cache if available so UI doesn't flash placeholder data
+    try {
+      const cachedRaw = localStorage.getItem('clearhale_last_reading_cache') || localStorage.getItem('vayu_last_reading_cache');
+      if (cachedRaw) {
+        const cached = JSON.parse(cachedRaw);
+        if (cached && cached.current && Array.isArray(cached.hourly) && cached.hourly.length > 0) {
+          setAirData(cached);
+        }
+      }
+    } catch {}
+
     // Initial fetch of air quality
     fetchAirQuality(stored.city.lat, stored.city.lon)
       .then((data) => setAirData(data))
       .catch((err) => {
         console.warn('Initial air fetch error, using stored baseline:', err);
-        setAirData(generateDemoAirData());
+        setAirData(generateDemoAirData(stored.city));
       });
 
     // PWA BeforeInstallPrompt handler

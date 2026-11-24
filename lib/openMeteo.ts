@@ -1,6 +1,7 @@
 import type { AirData, CityLocation, HourlyReading } from '../types';
 import { generateDemoAirData } from './demoData';
 import { searchLocalCities } from './citiesData';
+import { calculateAQIFromPM25 } from './aqi';
 
 const CACHE_KEY = 'clearhale_last_reading_cache';
 const LEGACY_CACHE_KEY = 'vayu_last_reading_cache';
@@ -249,7 +250,7 @@ export async function fetchAirQuality(lat: number, lon: number): Promise<AirData
         ? timeStr.split('T')[1].slice(0, 5)
         : `${new Date(timeStr).getHours().toString().padStart(2, '0')}:00`;
       const pm = i === currentIndex ? currentPM2_5 : Math.round(pm25s[i] ?? 0);
-      const usAqi = i === currentIndex ? currentAQI : Math.round(aqiList[i] ?? Math.round(pm * 1.2));
+      const usAqi = calculateAQIFromPM25(pm);
       const pm10 = i === currentIndex ? currentPM10 : Math.round(pm10s[i] ?? Math.round(pm * 1.5));
 
       hourly24.push({

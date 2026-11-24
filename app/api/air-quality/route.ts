@@ -47,6 +47,41 @@ function getTargetISOHour(now: Date, timeZone?: string, utcOffsetSeconds?: numbe
   return `${y}-${m}-${d}T${h}`;
 }
 
+function selectBestHourIndex(readings: { hour: string; pm2_5: number }[]): number {
+  let minPM = Infinity;
+  let bestIdx = -1;
+  let todayBestIdx = -1;
+  let todayMinPM = Infinity;
+
+  const currentHourNum = parseInt(readings[0]?.hour?.split(':')[0] || '12', 10);
+
+  readings.forEach((r, idx) => {
+    const hNum = parseInt(r.hour.split(':')[0] || '0', 10);
+    const isWaking = hNum >= 7 && hNum < 23; // strictly 7 AM to 11 PM waking hours
+    const isToday = idx < Math.max(1, 24 - currentHourNum);
+
+    if (isWaking) {
+      if (isToday && r.pm2_5 <= 60 && r.pm2_5 < todayMinPM) {
+        todayMinPM = r.pm2_5;
+        todayBestIdx = idx;
+      }
+      if (r.pm2_5 < minPM) {
+        minPM = r.pm2_5;
+        bestIdx = idx;
+      }
+    }
+  });
+
+  if (todayBestIdx !== -1) return todayBestIdx;
+  if (bestIdx !== -1) return bestIdx;
+
+  const firstWaking = readings.findIndex((r) => {
+    const h = parseInt(r.hour.split(':')[0] || '0', 10);
+    return h >= 7 && h < 23;
+  });
+  return firstWaking !== -1 ? firstWaking : 0;
+}
+
 async function fetchOpenMeteoModel(lat: number, lon: number): Promise<{
   currentPM2_5: number;
   currentPM10: number;
@@ -98,17 +133,6 @@ async function fetchOpenMeteoModel(lat: number, lon: number): Promise<{
 
   const hourly24: HourlyReading[] = [];
   const sliceEnd = Math.min(times.length, currentIndex + 24);
-  let minPM = Infinity;
-  let bestIdx = 0;
-
-  for (let i = currentIndex; i < sliceEnd; i++) {
-    const pm = Math.round(pm25s[i] ?? 0);
-    if (pm < minPM) {
-      minPM = pm;
-      bestIdx = i - currentIndex;
-    }
-  }
-
   for (let i = currentIndex; i < sliceEnd; i++) {
     const timeStr = times[i];
     const hourLabel = timeStr.includes('T')
@@ -121,9 +145,14 @@ async function fetchOpenMeteoModel(lat: number, lon: number): Promise<{
       hour: hourLabel,
       pm2_5: pm,
       pm10: Math.round(pm10s[i] ?? Math.round(pm * 1.5)),
-      us_aqi: Math.round(aqiList[i] ?? Math.round(pm * 1.2)),
-      isBestHour: i - currentIndex === bestIdx,
+      us_aqi: calculateAQIFromPM25(pm),
+      isBestHour: false,
     });
+  }
+
+  const bestHourIndex = selectBestHourIndex(hourly24);
+  if (hourly24[bestHourIndex]) {
+    hourly24[bestHourIndex].isBestHour = true;
   }
 
   return {
@@ -161,11 +190,12 @@ async function handleAirQualityRequest(lat: number, lon: number): Promise<AirDat
     const diffPercent = modelPM2_5 > 0 ? (diff / modelPM2_5) * 100 : 0;
     const differenceNoted = diffPercent > 40;
 
-    // Harmonize hourly forecast: anchor index 0 ("Now") to ground measurement,
-    // and smoothly decay measurement bias over 8 hours so the timeline is continuous.
-    const deltaPM = measuredPM - modelPM2_5;
-    const deltaPM10 = measuredPM10 - modelPM10;
-    const blendHours = 8;
+    // Atmospheric data assimilation: anchor index 0 ("Now") to ground measurement,
+    // and smoothly relax local emission ratio over a 12-hour meteorological horizon.
+    // This preserves real physical diurnal peaks (rush hours, sun convection) while eliminating artificial steps.
+    const r0_pm25 = Math.min(5.0, Math.max(0.2, measuredPM / Math.max(5, modelPM2_5)));
+    const r0_pm10 = Math.min(5.0, Math.max(0.2, measuredPM10 / Math.max(8, modelPM10)));
+    const blendHours = 12;
 
     const harmonizedHourly: HourlyReading[] = hourly24.map((h, idx) => {
       if (idx === 0) {
@@ -174,34 +204,36 @@ async function handleAirQualityRequest(lat: number, lon: number): Promise<AirDat
           pm2_5: measuredPM,
           pm10: measuredPM10,
           us_aqi: measuredAQI,
+          isBestHour: false,
         };
       }
       if (idx < blendHours) {
-        const decayWeight = (blendHours - idx) / blendHours;
-        const blendedPM = Math.max(5, Math.round(h.pm2_5 + deltaPM * decayWeight));
-        const blendedPM10 = Math.max(8, Math.round(h.pm10 + deltaPM10 * decayWeight));
+        // Smooth S-curve (cosine relaxation) from ground anomaly back to regional weather forecast
+        const w = 0.5 * (1 + Math.cos((Math.PI * idx) / blendHours));
+        const rt_pm25 = 1.0 + (r0_pm25 - 1.0) * w;
+        const rt_pm10 = 1.0 + (r0_pm10 - 1.0) * w;
+        const blendedPM = Math.max(5, Math.round(h.pm2_5 * rt_pm25));
+        const blendedPM10 = Math.max(8, Math.round(h.pm10 * rt_pm10));
         return {
           ...h,
           pm2_5: blendedPM,
           pm10: blendedPM10,
           us_aqi: calculateAQIFromPM25(blendedPM),
+          isBestHour: false,
         };
       }
-      return h;
+      return {
+        ...h,
+        us_aqi: calculateAQIFromPM25(h.pm2_5),
+        isBestHour: false,
+      };
     });
 
-    // Recompute best hour on the harmonized timeline
-    let minPM = Infinity;
-    let bestIdx = 0;
-    harmonizedHourly.forEach((h, idx) => {
-      if (h.pm2_5 < minPM) {
-        minPM = h.pm2_5;
-        bestIdx = idx;
-      }
-    });
-    harmonizedHourly.forEach((h, idx) => {
-      h.isBestHour = idx === bestIdx;
-    });
+    // Recompute best hour strictly within waking hours on the harmonized curve
+    const bestIdx = selectBestHourIndex(harmonizedHourly);
+    if (harmonizedHourly[bestIdx]) {
+      harmonizedHourly[bestIdx].isBestHour = true;
+    }
 
     return {
       current: {
