@@ -999,8 +999,26 @@ export function HomeScreen() {
           if (!isCancelled) setNext2HoursText(accumulated);
         }
 
-        if (accumulated.trim()) {
-          decisionCache.current[cacheKey] = accumulated.trim();
+        const trimmed = accumulated.trim();
+        if (trimmed) {
+          let finalText = trimmed;
+          if (profile.language !== 'en') {
+            const hasDelimiter = trimmed.includes('---EN---');
+            const parts = trimmed.split('---EN---');
+            const nativePart = parts[0]?.trim() || '';
+            const enPart = parts[1]?.trim() || '';
+            const isDangling = /[\s\u00A0](आणि|आणि\s*$|किंवा|व|तर|पण|और|एवं|तथा|and|or|but)$/i.test(nativePart);
+            const isTruncated = !hasDelimiter || !enPart || nativePart.length < 15 || isDangling;
+
+            if (isTruncated) {
+              console.warn('[HomeScreen] 2-hour AI text was incomplete, resolving to verified rules baseline:', trimmed);
+              finalText = instantFallback;
+            }
+          }
+          if (!isCancelled) {
+            setNext2HoursText(finalText);
+            decisionCache.current[cacheKey] = finalText;
+          }
         }
       } catch (err) {
         if (!isCancelled) {
@@ -1667,15 +1685,26 @@ export function HomeScreen() {
               transition={{ duration: 0.2 }}
             >
               {(() => {
-                const fullText =
-                  next2HoursText ||
-                  getFallbackNext2Hours(
-                    currentBand.key,
-                    activeFamilyView,
-                    profile.language,
-                    profile,
-                    new Date().getHours()
-                  );
+                const fallbackText = getFallbackNext2Hours(
+                  currentBand.key,
+                  activeFamilyView,
+                  profile.language,
+                  profile,
+                  new Date().getHours()
+                );
+                let fullText = next2HoursText || fallbackText;
+
+                // Guard against partial or truncated regional responses
+                if (profile.language !== 'en') {
+                  const rawParts = fullText.split('---EN---');
+                  const rawNative = rawParts[0]?.trim() || '';
+                  const rawEn = rawParts[1]?.trim() || '';
+                  const isDangling = /[\s\u00A0](आणि|आणि\s*$|किंवा|व|तर|पण|और|एवं|तथा|and|or|but)$/i.test(rawNative);
+                  if (!rawEn || isDangling || rawNative.length < 15) {
+                    fullText = fallbackText;
+                  }
+                }
+
                 const isCurrentSpeaking = activeSpeakingId === 'next_2_hours';
                 const parts = fullText.split('---EN---');
                 const nativePart = parts[0]?.trim();

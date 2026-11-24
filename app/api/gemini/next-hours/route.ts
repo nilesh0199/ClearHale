@@ -7,6 +7,7 @@ import { SUPPORTED_LANGUAGES } from '@/lib/languages';
 import { AQIBandKey, FamilyView } from '@/types';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
@@ -122,11 +123,13 @@ export async function POST(req: NextRequest) {
     let languageRule = '';
     if (isRegional) {
       languageRule = `BILINGUAL DELIMITER INSTRUCTION (STRICT REQUIREMENT):
-For regional languages, return the decision in ${langName} (${langInfo?.nativeName || ''}), then a newline, then EXACTLY the line:
+Write the complete decision in ${langName} (${langInfo?.nativeName || ''}) in 1 or 2 complete, well-formed sentences. You MUST conclude the regional sentence with a terminal punctuation mark (full stop or exclamation mark).
+Then output a newline followed by EXACTLY:
 ---EN---
-then a short 1-sentence English version. Both must be present.`;
+Then output the exact English version in 1 complete sentence.
+Both the ${langName} portion and English portion MUST be fully completed sentences. DO NOT cut off mid-sentence.`;
     } else {
-      languageRule = `Output language: English only. DO NOT output any ---EN--- delimiter.`;
+      languageRule = `Output language: English only. Write 1 or 2 short, complete sentences. DO NOT output any ---EN--- delimiter.`;
     }
 
     const sourceContext =
@@ -152,7 +155,7 @@ ${familyView === 'asthma' ? '- CRITICAL ASTHMA RULE: Always remind asthma patien
     const streamResponse = await stream(messages, {
       language,
       temperature: 0.2,
-      maxTokens: 120,
+      maxTokens: 500,
       fallbackTemplateText: fallback,
     });
 
