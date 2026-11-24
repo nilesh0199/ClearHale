@@ -14,6 +14,14 @@
  * - 429 rate limit backoff cooldown
  */
 
+export interface NearbyStationItem {
+  id?: number;
+  name: string;
+  distanceKm: number;
+  pm2_5: number;
+  pm10?: number | null;
+}
+
 export interface OpenAQStationResult {
   id: number;
   name: string;
@@ -24,6 +32,9 @@ export interface OpenAQStationResult {
   measuredAtUtc: string;
   measuredAtLocal: string;
   minutesAgo: number;
+  isAverage?: boolean;
+  stationCount?: number;
+  nearbyStations?: NearbyStationItem[];
 }
 
 export interface OpenAQFetchOptions {
@@ -236,7 +247,212 @@ export function selectBestStation(
 }
 
 /**
- * Fetches the nearest fresh government station reading from OpenAQ v3.
+ * Calculates inverse-distance weighted consensus across nearby active stations.
+ * If only 1 station is in range, returns the single station measurement.
+ * When multiple stations report fresh data (e.g. in major metropolitan areas),
+ * synthesizes an inverse-distance weighted consensus to guard against single-station anomalies.
+ */
+export function selectStationConsensus(
+  userLat: number,
+  userLon: number,
+  locations: any[],
+  latestMap: Map<number, any[]>,
+  options?: { maxRadiusKm?: number; maxAgeHours?: number; nowMs?: number; maxStations?: number }
+): OpenAQStationResult | null {
+  const maxRadius = options?.maxRadiusKm ?? DEFAULT_MAX_RADIUS_KM;
+  const maxAge = options?.maxAgeHours ?? DEFAULT_MAX_AGE_HOURS;
+  const nowMs = options?.nowMs ?? Date.now();
+  const maxStations = options?.maxStations ?? 5;
+
+  if (!Array.isArray(locations) || locations.length === 0) {
+    return null;
+  }
+
+  const validStations: Array<{
+    id: number;
+    name: string;
+    provider: string;
+    distanceKm: number;
+    pm25: number;
+    pm10: number | null;
+    utc: string;
+    local: string;
+    minutesAgo: number;
+  }> = [];
+
+  for (const loc of locations) {
+    const coords = loc.coordinates;
+    if (!coords || typeof coords.latitude !== 'number' || typeof coords.longitude !== 'number') {
+      continue;
+    }
+
+    const dist = calculateDistanceKm(userLat, userLon, coords.latitude, coords.longitude);
+    if (dist > maxRadius) {
+      continue;
+    }
+
+    const measurements = latestMap.get(loc.id) || [];
+    if (!Array.isArray(measurements) || measurements.length === 0) {
+      continue;
+    }
+
+    const sensorMap = new Map<number, any>();
+    if (Array.isArray(loc.sensors)) {
+      loc.sensors.forEach((s: any) => sensorMap.set(s.id, s));
+    }
+
+    let bestPm25: number | null = null;
+    let bestPm10: number | null = null;
+    let bestUtc: string | null = null;
+    let bestLocal: string | null = null;
+    let latestTimestampMs = 0;
+
+    for (const m of measurements) {
+      const sensor = sensorMap.get(m.sensorsId);
+      const paramId = sensor?.parameter?.id ?? m.parameter?.id;
+      const paramName = (sensor?.parameter?.name ?? m.parameter?.name ?? '').toLowerCase();
+
+      const mUtc = m.datetime?.utc || (typeof m.datetime === 'string' ? m.datetime : null);
+      if (!isReadingFresh(mUtc, maxAge, nowMs)) {
+        continue;
+      }
+
+      if (paramId === 2 || paramName === 'pm25' || paramName === 'pm2_5') {
+        if (isValidPMValue(m.value)) {
+          const tMs = new Date(mUtc!).getTime();
+          if (tMs >= latestTimestampMs) {
+            bestPm25 = Math.round(m.value);
+            bestUtc = mUtc!;
+            bestLocal = m.datetime?.local || mUtc!;
+            latestTimestampMs = tMs;
+          }
+        }
+      } else if (paramId === 1 || paramName === 'pm10') {
+        if (isValidPMValue(m.value)) {
+          bestPm10 = Math.round(m.value);
+        }
+      }
+    }
+
+    if (bestPm25 !== null && bestUtc) {
+      const providerName =
+        loc.provider?.name ||
+        loc.owner?.name ||
+        'Government Monitoring Station';
+
+      const minutesAgo = Math.max(
+        1,
+        Math.round((nowMs - new Date(bestUtc).getTime()) / 60000)
+      );
+
+      validStations.push({
+        id: loc.id,
+        name: loc.name || `Station #${loc.id}`,
+        provider: providerName,
+        distanceKm: dist,
+        pm25: bestPm25,
+        pm10: bestPm10,
+        utc: bestUtc,
+        local: bestLocal || bestUtc,
+        minutesAgo,
+      });
+    }
+  }
+
+  if (validStations.length === 0) {
+    return null;
+  }
+
+  // Sort candidates by proximity to user
+  validStations.sort((a, b) => a.distanceKm - b.distanceKm);
+
+  // Pick top N closest active stations
+  const activeSlice = validStations.slice(0, maxStations);
+
+  // If exactly 1 station is in range, return single-station format
+  if (activeSlice.length === 1) {
+    const s = activeSlice[0];
+    return {
+      id: s.id,
+      name: s.name,
+      provider: s.provider,
+      distanceKm: s.distanceKm,
+      measuredPM2_5: s.pm25,
+      measuredPM10: s.pm10,
+      measuredAtUtc: s.utc,
+      measuredAtLocal: s.local,
+      minutesAgo: s.minutesAgo,
+      isAverage: false,
+      stationCount: 1,
+      nearbyStations: [
+        {
+          id: s.id,
+          name: s.name,
+          distanceKm: s.distanceKm,
+          pm2_5: s.pm25,
+          pm10: s.pm10,
+        },
+      ],
+    };
+  }
+
+  // Inverse distance weighted consensus: w_i = 1 / max(1.0, distanceKm_i)
+  let totalWeight = 0;
+  let weightedPm25 = 0;
+  let weightedPm10 = 0;
+  let pm10Count = 0;
+  let minMinutesAgo = Infinity;
+  let latestUtc = activeSlice[0].utc;
+  let latestLocal = activeSlice[0].local;
+  let maxTimeMs = 0;
+
+  for (const s of activeSlice) {
+    const w = 1 / Math.max(1.0, s.distanceKm);
+    totalWeight += w;
+    weightedPm25 += s.pm25 * w;
+    if (s.pm10 !== null) {
+      weightedPm10 += s.pm10 * w;
+      pm10Count++;
+    }
+    if (s.minutesAgo < minMinutesAgo) {
+      minMinutesAgo = s.minutesAgo;
+    }
+    const tMs = new Date(s.utc).getTime();
+    if (tMs > maxTimeMs) {
+      maxTimeMs = tMs;
+      latestUtc = s.utc;
+      latestLocal = s.local;
+    }
+  }
+
+  const consensusPM25 = Math.round(weightedPm25 / totalWeight);
+  const consensusPM10 = pm10Count > 0 ? Math.round(weightedPm10 / totalWeight) : null;
+  const nearest = activeSlice[0];
+
+  return {
+    id: nearest.id,
+    name: `${nearest.name.split(',')[0]} & ${activeSlice.length - 1} nearby stations`,
+    provider: nearest.provider,
+    distanceKm: nearest.distanceKm,
+    measuredPM2_5: consensusPM25,
+    measuredPM10: consensusPM10,
+    measuredAtUtc: latestUtc,
+    measuredAtLocal: latestLocal,
+    minutesAgo: minMinutesAgo === Infinity ? nearest.minutesAgo : minMinutesAgo,
+    isAverage: true,
+    stationCount: activeSlice.length,
+    nearbyStations: activeSlice.map((s) => ({
+      id: s.id,
+      name: s.name,
+      distanceKm: s.distanceKm,
+      pm2_5: s.pm25,
+      pm10: s.pm10,
+    })),
+  };
+}
+
+/**
+ * Fetches the nearest fresh government station reading or multi-station consensus from OpenAQ v3.
  * Server-side only. Uses caching, timeouts, and rate-limit backoff.
  */
 export async function getNearestOpenAQStation(
@@ -271,7 +487,7 @@ export async function getNearestOpenAQStation(
     // 1. Query /v3/locations for stations within maxRadiusKm (in meters)
     const radiusMeters = Math.min(25000, Math.round(maxRadiusKm * 1000));
     // Coordinates format in OpenAQ v3: latitude,longitude
-    const locUrl = `${OPENAQ_BASE_URL}/locations?coordinates=${userLat.toFixed(4)},${userLon.toFixed(4)}&radius=${radiusMeters}&parameters_id=2&limit=8`;
+    const locUrl = `${OPENAQ_BASE_URL}/locations?coordinates=${userLat.toFixed(4)},${userLon.toFixed(4)}&radius=${radiusMeters}&parameters_id=2&limit=25`;
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -302,8 +518,8 @@ export async function getNearestOpenAQStation(
       return null;
     }
 
-    // 2. Fetch latest readings for nearby locations (up to 3 nearest)
-    // Sort locations by approximate distance first to fetch only closest
+    // 2. Filter locations within maxRadiusKm and filter out historical dormant stations (where datetimeLast is too old)
+    const nowMs = Date.now();
     const sortedLocs = locations
       .map((l: any) => ({
         loc: l,
@@ -314,9 +530,16 @@ export async function getNearestOpenAQStation(
           l.coordinates?.longitude || 0
         ),
       }))
-      .filter((item: any) => item.dist <= maxRadiusKm)
+      .filter((item: any) => {
+        if (item.dist > maxRadiusKm) return false;
+        // If datetimeLast is provided on location, filter out dormant stations (> maxAgeHours old)
+        if (item.loc?.datetimeLast?.utc && !isReadingFresh(item.loc.datetimeLast.utc, maxAgeHours, nowMs)) {
+          return false;
+        }
+        return true;
+      })
       .sort((a: any, b: any) => a.dist - b.dist)
-      .slice(0, 3);
+      .slice(0, 5); // Take up to top 5 nearest active stations
 
     if (sortedLocs.length === 0) {
       serverCache.set(cacheKey, { result: null, timestamp: Date.now() });
@@ -353,17 +576,17 @@ export async function getNearestOpenAQStation(
       })
     );
 
-    const bestStation = selectBestStation(
+    const consensusStation = selectStationConsensus(
       userLat,
       userLon,
       sortedLocs.map((s) => s.loc),
       latestMap,
-      { maxRadiusKm, maxAgeHours, nowMs: Date.now() }
+      { maxRadiusKm, maxAgeHours, nowMs: Date.now(), maxStations: 5 }
     );
 
     // Cache the result (or null if none found) for 10 minutes
-    serverCache.set(cacheKey, { result: bestStation, timestamp: Date.now() });
-    return bestStation;
+    serverCache.set(cacheKey, { result: consensusStation, timestamp: Date.now() });
+    return consensusStation;
   } catch (err: any) {
     if (err?.name === 'AbortError') {
       // Timeout hit (6s), fallback smoothly

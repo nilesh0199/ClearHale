@@ -244,7 +244,10 @@ async function handleAirQualityRequest(lat: number, lon: number): Promise<AirDat
         isForecast: false,
       },
       hourly: harmonizedHourly,
-      source: `Measured at ${station.name}, ${station.distanceKm} km away`,
+      source:
+        station.isAverage && station.stationCount && station.stationCount > 1
+          ? `Area average of ${station.stationCount} stations (${station.name})`
+          : `Measured at ${station.name}, ${station.distanceKm} km away`,
       updatedAt: Date.now(),
       isCached: false,
       isDemo: false,

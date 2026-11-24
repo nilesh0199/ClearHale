@@ -117,6 +117,14 @@ export interface HourlyReading {
 
 export type AirDataType = 'measured' | 'estimate';
 
+export interface NearbyStationItem {
+  id?: number;
+  name: string;
+  distanceKm: number;
+  pm2_5: number;
+  pm10?: number | null;
+}
+
 export interface StationInfo {
   id: number;
   name: string;
@@ -130,6 +138,9 @@ export interface StationInfo {
   modelPM2_5: number;
   differencePercent?: number;
   differenceNoted?: boolean;
+  isAverage?: boolean;
+  stationCount?: number;
+  nearbyStations?: NearbyStationItem[];
 }
 
 export interface AirData {

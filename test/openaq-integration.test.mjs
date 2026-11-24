@@ -123,6 +123,156 @@ function selectBestStation(userLat, userLon, locations, latestMap, options = {})
   return null;
 }
 
+function selectStationConsensus(userLat, userLon, locations, latestMap, options = {}) {
+  const maxRadius = options.maxRadiusKm ?? DEFAULT_MAX_RADIUS_KM;
+  const maxAge = options.maxAgeHours ?? DEFAULT_MAX_AGE_HOURS;
+  const nowMs = options.nowMs ?? Date.now();
+  const maxStations = options.maxStations ?? 5;
+
+  if (!Array.isArray(locations) || locations.length === 0) return null;
+
+  const validStations = [];
+
+  for (const loc of locations) {
+    const coords = loc.coordinates;
+    if (!coords || typeof coords.latitude !== 'number' || typeof coords.longitude !== 'number') continue;
+
+    const dist = calculateDistanceKm(userLat, userLon, coords.latitude, coords.longitude);
+    if (dist > maxRadius) continue;
+
+    const measurements = latestMap.get(loc.id) || [];
+    if (!Array.isArray(measurements) || measurements.length === 0) continue;
+
+    const sensorMap = new Map();
+    if (Array.isArray(loc.sensors)) {
+      loc.sensors.forEach((s) => sensorMap.set(s.id, s));
+    }
+
+    let bestPm25 = null;
+    let bestPm10 = null;
+    let bestUtc = null;
+    let bestLocal = null;
+    let latestTimestampMs = 0;
+
+    for (const m of measurements) {
+      const sensor = sensorMap.get(m.sensorsId);
+      const paramId = sensor?.parameter?.id ?? m.parameter?.id;
+      const paramName = (sensor?.parameter?.name ?? m.parameter?.name ?? '').toLowerCase();
+
+      const mUtc = m.datetime?.utc || (typeof m.datetime === 'string' ? m.datetime : null);
+      if (!isReadingFresh(mUtc, maxAge, nowMs)) continue;
+
+      if (paramId === 2 || paramName === 'pm25' || paramName === 'pm2_5') {
+        if (isValidPMValue(m.value)) {
+          const tMs = new Date(mUtc).getTime();
+          if (tMs >= latestTimestampMs) {
+            bestPm25 = Math.round(m.value);
+            bestUtc = mUtc;
+            bestLocal = m.datetime?.local || mUtc;
+            latestTimestampMs = tMs;
+          }
+        }
+      } else if (paramId === 1 || paramName === 'pm10') {
+        if (isValidPMValue(m.value)) {
+          bestPm10 = Math.round(m.value);
+        }
+      }
+    }
+
+    if (bestPm25 !== null && bestUtc) {
+      const providerName =
+        loc.provider?.name || loc.owner?.name || 'Government Monitoring Station';
+      const minutesAgo = Math.max(1, Math.round((nowMs - new Date(bestUtc).getTime()) / 60000));
+
+      validStations.push({
+        id: loc.id,
+        name: loc.name || `Station #${loc.id}`,
+        provider: providerName,
+        distanceKm: dist,
+        pm25: bestPm25,
+        pm10: bestPm10,
+        utc: bestUtc,
+        local: bestLocal || bestUtc,
+        minutesAgo,
+      });
+    }
+  }
+
+  if (validStations.length === 0) return null;
+
+  validStations.sort((a, b) => a.distanceKm - b.distanceKm);
+  const activeSlice = validStations.slice(0, maxStations);
+
+  if (activeSlice.length === 1) {
+    const s = activeSlice[0];
+    return {
+      id: s.id,
+      name: s.name,
+      provider: s.provider,
+      distanceKm: s.distanceKm,
+      measuredPM2_5: s.pm25,
+      measuredPM10: s.pm10,
+      measuredAtUtc: s.utc,
+      measuredAtLocal: s.local,
+      minutesAgo: s.minutesAgo,
+      isAverage: false,
+      stationCount: 1,
+      nearbyStations: [{ id: s.id, name: s.name, distanceKm: s.distanceKm, pm2_5: s.pm25, pm10: s.pm10 }],
+    };
+  }
+
+  let totalWeight = 0;
+  let weightedPm25 = 0;
+  let weightedPm10 = 0;
+  let pm10Count = 0;
+  let minMinutesAgo = Infinity;
+  let latestUtc = activeSlice[0].utc;
+  let latestLocal = activeSlice[0].local;
+  let maxTimeMs = 0;
+
+  for (const s of activeSlice) {
+    const w = 1 / Math.max(1.0, s.distanceKm);
+    totalWeight += w;
+    weightedPm25 += s.pm25 * w;
+    if (s.pm10 !== null) {
+      weightedPm10 += s.pm10 * w;
+      pm10Count++;
+    }
+    if (s.minutesAgo < minMinutesAgo) minMinutesAgo = s.minutesAgo;
+    const tMs = new Date(s.utc).getTime();
+    if (tMs > maxTimeMs) {
+      maxTimeMs = tMs;
+      latestUtc = s.utc;
+      latestLocal = s.local;
+    }
+  }
+
+  const consensusPM25 = Math.round(weightedPm25 / totalWeight);
+  const consensusPM10 = pm10Count > 0 ? Math.round(weightedPm10 / totalWeight) : null;
+  const nearest = activeSlice[0];
+
+  return {
+    id: nearest.id,
+    name: `${nearest.name.split(',')[0]} & ${activeSlice.length - 1} nearby stations`,
+    provider: nearest.provider,
+    distanceKm: nearest.distanceKm,
+    measuredPM2_5: consensusPM25,
+    measuredPM10: consensusPM10,
+    measuredAtUtc: latestUtc,
+    measuredAtLocal: latestLocal,
+    minutesAgo: minMinutesAgo === Infinity ? nearest.minutesAgo : minMinutesAgo,
+    isAverage: true,
+    stationCount: activeSlice.length,
+    nearbyStations: activeSlice.map((s) => ({
+      id: s.id,
+      name: s.name,
+      distanceKm: s.distanceKm,
+      pm2_5: s.pm25,
+      pm10: s.pm10,
+    })),
+  };
+}
+
 describe('OpenAQ v3 Live Data Integration', () => {
   const nowMs = 1732200000000; // Fixed timestamp for deterministic tests
   const freshIso = new Date(nowMs - 30 * 60 * 1000).toISOString(); // 30 min ago
@@ -366,6 +516,89 @@ describe('OpenAQ v3 Live Data Integration', () => {
         null,
         'Wrong-city protection MUST reject Mumbai station for Pune coordinates'
       );
+    });
+  });
+
+  describe('7. Multi-Station Consensus & Inverse-Distance Averaging', () => {
+    test('Calculates inverse-distance weighted average across multiple fresh active stations', () => {
+      const userLat = 28.6139;
+      const userLon = 77.2090;
+
+      // Station 1: 3.5 km away, PM2.5 = 73 (Weight = 1/3.5 = 0.2857)
+      const loc1 = {
+        id: 5613,
+        name: 'ITO, New Delhi - CPCB',
+        provider: { name: 'CPCB' },
+        coordinates: { latitude: 28.628, longitude: 77.241 }, // ~3.5 km
+        sensors: [{ id: 101, parameter: { id: 2, name: 'pm25' } }],
+        datetimeLast: { utc: freshIso },
+      };
+
+      // Station 2: 7.1 km away, PM2.5 = 80 (Weight = 1/7.1 = 0.1408)
+      const loc2 = {
+        id: 5586,
+        name: 'Sirifort, Delhi - CPCB',
+        provider: { name: 'CPCB' },
+        coordinates: { latitude: 28.553, longitude: 77.218 }, // ~7.1 km
+        sensors: [{ id: 102, parameter: { id: 2, name: 'pm25' } }],
+        datetimeLast: { utc: freshIso },
+      };
+
+      // Station 3: 6.0 km away, PM2.5 = 47 (Weight = 1/6.0 = 0.1667)
+      const loc3 = {
+        id: 17,
+        name: 'R K Puram, Delhi - DPCC',
+        provider: { name: 'DPCC' },
+        coordinates: { latitude: 28.563, longitude: 77.187 }, // ~6.0 km
+        sensors: [{ id: 103, parameter: { id: 2, name: 'pm25' } }],
+        datetimeLast: { utc: freshIso },
+      };
+
+      const latestMap = new Map();
+      latestMap.set(5613, [{ sensorsId: 101, value: 73, datetime: { utc: freshIso } }]);
+      latestMap.set(5586, [{ sensorsId: 102, value: 80, datetime: { utc: freshIso } }]);
+      latestMap.set(17, [{ sensorsId: 103, value: 47, datetime: { utc: freshIso } }]);
+
+      const result = selectStationConsensus(
+        userLat,
+        userLon,
+        [loc1, loc2, loc3],
+        latestMap,
+        { nowMs, maxStations: 5 }
+      );
+
+      assert.ok(result);
+      assert.equal(result.isAverage, true);
+      assert.equal(result.stationCount, 3);
+      // Expected weighted average: (0.2857*73 + 0.1408*80 + 0.1667*47) / (0.2857 + 0.1408 + 0.1667) ≈ 67
+      assert.ok(result.measuredPM2_5 >= 65 && result.measuredPM2_5 <= 70, `Expected ~67, got ${result.measuredPM2_5}`);
+      assert.equal(result.nearbyStations.length, 3);
+      assert.ok(result.name.includes('ITO'));
+    });
+
+    test('Gracefully collapses to single station when only 1 active station is within radius', () => {
+      const userLat = 21.1458;
+      const userLon = 79.0882;
+
+      const locOnly = {
+        id: 901,
+        name: 'Mahal, Nagpur - MPCB',
+        provider: { name: 'MPCB' },
+        coordinates: { latitude: 21.147, longitude: 79.105 }, // ~1.8 km
+        sensors: [{ id: 91, parameter: { id: 2, name: 'pm25' } }],
+        datetimeLast: { utc: freshIso },
+      };
+
+      const latestMap = new Map();
+      latestMap.set(901, [{ sensorsId: 91, value: 58, datetime: { utc: freshIso } }]);
+
+      const result = selectStationConsensus(userLat, userLon, [locOnly], latestMap, { nowMs });
+
+      assert.ok(result);
+      assert.equal(result.isAverage, false);
+      assert.equal(result.stationCount, 1);
+      assert.equal(result.measuredPM2_5, 58);
+      assert.equal(result.name, 'Mahal, Nagpur - MPCB');
     });
   });
 });

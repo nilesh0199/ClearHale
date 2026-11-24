@@ -1426,17 +1426,29 @@ export function HomeScreen() {
                 <div className={`${isCompact ? 'mt-1.5 text-[11px]' : 'mt-3 text-xs'} flex items-center justify-center gap-1.5 text-muted max-w-sm sm:max-w-md mx-auto text-center px-2`}>
                   <span className="line-clamp-2 leading-snug sm:leading-normal">
                     {airData.dataType === 'measured' && airData.station
-                      ? `Measured at ${airData.station.name}, ${airData.station.distanceKm} km away, ${
-                          airData.station.minutesAgo ??
-                          Math.max(
-                            1,
-                            Math.round(
-                              (Date.now() -
-                                new Date(airData.station.measuredAtUtc || airData.updatedAt).getTime()) /
-                                60000
+                      ? airData.station.isAverage && (airData.station.stationCount ?? 1) > 1
+                        ? `Area average of ${airData.station.stationCount} stations (${airData.station.name}), ${
+                            airData.station.minutesAgo ??
+                            Math.max(
+                              1,
+                              Math.round(
+                                (Date.now() -
+                                  new Date(airData.station.measuredAtUtc || airData.updatedAt).getTime()) /
+                                  60000
+                              )
                             )
-                          )
-                        } min ago`
+                          } min ago`
+                        : `Measured at ${airData.station.name}, ${airData.station.distanceKm} km away, ${
+                            airData.station.minutesAgo ??
+                            Math.max(
+                              1,
+                              Math.round(
+                                (Date.now() -
+                                  new Date(airData.station.measuredAtUtc || airData.updatedAt).getTime()) /
+                                  60000
+                              )
+                            )
+                          } min ago`
                       : `Forecast estimate, Open-Meteo, updated ${Math.max(
                           1,
                           Math.round((Date.now() - airData.updatedAt) / 60000)
@@ -2246,21 +2258,49 @@ export function HomeScreen() {
                     {airData.dataType === 'measured' && airData.station && (
                       <div className="p-3.5 rounded-xl bg-card-subtle border border-card-border space-y-2 text-xs">
                         <div className="flex items-start justify-between gap-2">
-                          <span className="text-muted">Station Name:</span>
+                          <span className="text-muted">
+                            {airData.station.isAverage && (airData.station.stationCount ?? 1) > 1
+                              ? 'Consensus Mode:'
+                              : 'Station Name:'}
+                          </span>
                           <span className="font-semibold text-foreground text-right truncate max-w-[200px]">
-                            {airData.station.name}
+                            {airData.station.isAverage && (airData.station.stationCount ?? 1) > 1
+                              ? `Inverse-Distance Area Average (${airData.station.stationCount} Stations)`
+                              : airData.station.name}
                           </span>
                         </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-muted">
+                            {airData.station.isAverage && (airData.station.stationCount ?? 1) > 1
+                              ? 'Closest Station:'
+                              : 'Distance to Location:'}
+                          </span>
+                          <span className="font-medium text-foreground">
+                            {airData.station.isAverage && (airData.station.stationCount ?? 1) > 1
+                              ? `${airData.station.name} (${airData.station.distanceKm} km away)`
+                              : `${airData.station.distanceKm} km away`}
+                          </span>
+                        </div>
+                        {/* Area Reporting Stations Breakdown */}
+                        {airData.station.nearbyStations && airData.station.nearbyStations.length > 1 && (
+                          <div className="mt-2 pt-2 border-t border-card-border/60">
+                            <div className="text-[11px] text-muted mb-1.5 font-medium">Reporting Stations in Area:</div>
+                            <div className="space-y-1">
+                              {airData.station.nearbyStations.map((st, idx) => (
+                                <div key={idx} className="flex items-center justify-between text-[11px]">
+                                  <span className="text-foreground/80 truncate max-w-[180px]">
+                                    {st.name.split(',')[0]} ({st.distanceKm} km)
+                                  </span>
+                                  <span className="font-semibold text-foreground">{st.pm2_5} µg/m³</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-muted">Data Provider:</span>
                           <span className="font-medium text-foreground text-right">
                             {airData.station.provider} (OpenAQ v3)
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-muted">Distance to Location:</span>
-                          <span className="font-medium text-foreground">
-                            {airData.station.distanceKm} km away
                           </span>
                         </div>
                         <div className="flex items-center justify-between gap-2">
