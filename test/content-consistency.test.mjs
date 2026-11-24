@@ -423,6 +423,71 @@ describe('Content Consistency & Single Source of Truth Test Suite', () => {
           JSON.stringify(longSentences, null, 2)
       );
     });
+
+    test('Night-time sleeping hours (12 AM to 6 AM) strictly suggest sleep and never outdoor exercise', () => {
+      const BANDS = ['good', 'satisfactory', 'moderate', 'poor', 'very_poor', 'severe'];
+      const PERSONAS = ['whole_family', 'child', 'elderly', 'pregnant', 'outdoor_worker', 'asthma'];
+      const NIGHT_HOURS = [0, 1, 2, 3, 4, 5];
+
+      for (const h of NIGHT_HOURS) {
+        for (const band of BANDS) {
+          for (const persona of PERSONAS) {
+            const g = outdoorGuidance(band, null, persona, undefined, 'en', h);
+            const dec = g.decision.toLowerCase();
+
+            // Must suggest sleep or resting
+            assert(
+              dec.includes('sleep') || dec.includes('rest') || dec.includes('night'),
+              `Hour ${h} band ${band} persona ${persona} must suggest sleep or rest: ${g.decision}`
+            );
+
+            // Must NOT suggest outdoor workouts or park trips
+            assert(
+              !dec.includes('outdoor workout') && !dec.includes('park visit') && !dec.includes('errands'),
+              `Hour ${h} band ${band} persona ${persona} must NOT suggest outdoor workouts: ${g.decision}`
+            );
+
+            // For asthma patients, must advise inhaler or medicine
+            if (persona === 'asthma') {
+              assert(
+                dec.includes('inhaler') || dec.includes('medicine') || dec.includes('medication'),
+                `Hour ${h} asthma advice must mention inhaler: ${g.decision}`
+              );
+            }
+
+            // Check <= 18 words per sentence
+            const sentences = g.decision.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean);
+            for (const s of sentences) {
+              const wordCount = s.split(/\s+/).filter(Boolean).length;
+              assert(
+                wordCount <= 18,
+                `Hour ${h} band ${band} persona ${persona} sentence has ${wordCount} words (>18): "${s}"`
+              );
+            }
+          }
+        }
+      }
+    });
+
+    test('Asthma persona decisions across all bands always advise carrying or keeping inhaler / medicine', () => {
+      const BANDS = ['good', 'satisfactory', 'moderate', 'poor', 'very_poor', 'severe'];
+
+      for (const band of BANDS) {
+        const gDay = outdoorGuidance(band, null, 'asthma', undefined, 'en');
+        const decDay = gDay.decision.toLowerCase();
+        assert(
+          decDay.includes('inhaler') || decDay.includes('medicine') || decDay.includes('medication'),
+          `Daytime band ${band} asthma advice must mention inhaler/medicine: ${gDay.decision}`
+        );
+
+        const gNight = outdoorGuidance(band, null, 'asthma', undefined, 'en', 2);
+        const decNight = gNight.decision.toLowerCase();
+        assert(
+          decNight.includes('inhaler') || decNight.includes('medicine') || decNight.includes('medication'),
+          `Nighttime band ${band} asthma advice must mention inhaler/medicine: ${gNight.decision}`
+        );
+      }
+    });
   });
 
   // 7. SHARE POSTER CONTRADICTION & SAFETY VERIFICATION

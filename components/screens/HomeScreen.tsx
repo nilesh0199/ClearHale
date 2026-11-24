@@ -788,11 +788,15 @@ export function HomeScreen() {
       });
     }
 
-    const cacheKey = `${profile.city.name}_${currentBand.key}_${view}_${profile.language}`;
+    const currentH = new Date().getHours();
+    const isNightPeriod = currentH >= 0 && currentH < 6;
+    const cacheKey = `${profile.city.name}_${currentBand.key}_${view}_${profile.language}_${isNightPeriod ? 'night' : 'day'}`;
     const instantFallback = getFallbackNext2Hours(
       currentBand.key,
       view,
-      profile.language
+      profile.language,
+      profile,
+      currentH
     );
 
     if (decisionCache.current[cacheKey]) {
@@ -899,33 +903,51 @@ export function HomeScreen() {
     };
 
     const personaName = personaMap[lang]?.[view] || personaMap.en[view] || 'Whole Family';
+    const nowH = new Date().getHours();
+    const isNightH = nowH >= 0 && nowH < 6;
 
     if (lang === 'hi') {
       return {
-        title: `अगले 2 घंटे का निर्णय: ${personaName}...`,
-        subtitle: 'ताज़ा हवा की गुणवत्ता के अनुसार सुरक्षित सलाह तैयार हो रही है',
+        title: isNightH
+          ? `अगले 2 घंटे (रात का आराम: ${personaName})...`
+          : `अगले 2 घंटे का निर्णय: ${personaName}...`,
+        subtitle: isNightH
+          ? 'हवा की गुणवत्ता के अनुसार सुकून भरी नींद की सलाह'
+          : 'ताज़ा हवा की गुणवत्ता के अनुसार सुरक्षित सलाह तैयार हो रही है',
       };
     }
     if (lang === 'mr') {
       return {
-        title: `पुढील २ तासांचा निर्णय: ${personaName}...`,
-        subtitle: 'हवेच्या गुणवत्तेनुसार सुरक्षित सल्ला तयार होत आहे',
+        title: isNightH
+          ? `पुढील २ तास (रात्रीची विश्रांती: ${personaName})...`
+          : `पुढील २ तासांचा निर्णय: ${personaName}...`,
+        subtitle: isNightH
+          ? 'हवेच्या गुणवत्तेनुसार शांत झोपेचा सल्ला'
+          : 'हवेच्या गुणवत्तेनुसार सुरक्षित सल्ला तयार होत आहे',
       };
     }
     return {
-      title: `Next 2 hours decision for ${personaName}...`,
-      subtitle: 'Matching guidance with current air quality',
+      title: isNightH
+        ? `Next 2 hours (Night Rest for ${personaName})...`
+        : `Next 2 hours decision for ${personaName}...`,
+      subtitle: isNightH
+        ? 'Restful sleep guidance for current air quality'
+        : 'Matching guidance with current air quality',
     };
   };
 
   // Fetch or update Next 2 hours AI text whenever air data, persona, city, or language changes
   useEffect(() => {
     let isCancelled = false;
-    const cacheKey = `${profile.city.name}_${currentBand.key}_${activeFamilyView}_${profile.language}`;
+    const currentH = new Date().getHours();
+    const isNightPeriod = currentH >= 0 && currentH < 6;
+    const cacheKey = `${profile.city.name}_${currentBand.key}_${activeFamilyView}_${profile.language}_${isNightPeriod ? 'night' : 'day'}`;
     const instantFallback = getFallbackNext2Hours(
       currentBand.key,
       activeFamilyView,
-      profile.language
+      profile.language,
+      profile,
+      currentH
     );
 
     // If already in memory cache, display immediately without refetching
@@ -953,6 +975,7 @@ export function HomeScreen() {
             dataType: airData.dataType || (airData.current.isForecast ? 'estimate' : 'measured'),
             stationName: airData.station?.name || '',
             timestamp: airData.station?.measuredAtLocal || airData.current.time,
+            hour: currentH,
           }),
         });
 
@@ -1636,7 +1659,9 @@ export function HomeScreen() {
                   getFallbackNext2Hours(
                     currentBand.key,
                     activeFamilyView,
-                    profile.language
+                    profile.language,
+                    profile,
+                    new Date().getHours()
                   );
                 const isCurrentSpeaking = activeSpeakingId === 'next_2_hours';
                 const parts = fullText.split('---EN---');

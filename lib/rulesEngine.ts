@@ -552,9 +552,10 @@ export function getFallbackNext2Hours(
   aqiBandKey: AQIBandKey,
   familyView: FamilyView,
   lang: string = 'en',
-  profile?: Partial<UserProfile>
+  profile?: Partial<UserProfile>,
+  currentHour?: number
 ): string {
-  const result = outdoorGuidance(aqiBandKey, null, familyView, profile, lang);
+  const result = outdoorGuidance(aqiBandKey, null, familyView, profile, lang, currentHour);
   if (lang === 'en') {
     return result.decision;
   }

@@ -331,9 +331,9 @@ const FAMILY_GUIDANCE: Record<AQIBandKey, Record<FamilyView, CopySet>> = {
       mr: 'हवा शुद्ध आणि निरोगी आहे. बाहेर हलके फिरणे आणि खिडक्या उघडणे सुरक्षित आहे.',
     },
     asthma: {
-      en: 'Clean air today. Safe for outdoor walks, exercise, and opening home windows.',
-      hi: 'आज हवा साफ है। बाहर टहलने, कसरत करने और खिड़कियां खोलने के लिए सुरक्षित है।',
-      mr: 'आज हवा स्वच्छ आहे. बाहेर चालणे, व्यायाम करणे आणि खिडक्या उघडणे पूर्णपणे सुरक्षित आहे.',
+      en: 'Clean air today. Safe for outdoor walks; carry your prescribed rescue inhaler when heading out.',
+      hi: 'आज हवा साफ है। बाहर टहलना सुरक्षित है; बाहर जाते समय अपना इनहेलर साथ रखें।',
+      mr: 'आज हवा स्वच्छ आहे. बाहेर फिरणे सुरक्षित आहे; बाहेर पडताना इनहेलर सोबत ठेवा.',
     },
     outdoor_worker: {
       en: 'Air is clean across work sites. Outdoor work is comfortable today.',
@@ -491,9 +491,9 @@ const FAMILY_GUIDANCE: Record<AQIBandKey, Record<FamilyView, CopySet>> = {
       mr: 'बाहेर अत्यंत विषारी धूर आहे. स्वच्छ बंद खोलीत राहा आणि प्रवास पूर्णपणे टाळा.',
     },
     asthma: {
-      en: 'Emergency toxic smog. Remain strictly indoors in a filtered room; seek emergency care for chest tightness.',
-      hi: 'आपातकालीन जहरीला स्मॉग। बिल्कुल साफ हवा वाले कमरे में रहें; सीने में जकड़न पर तुरंत डॉक्टर को दिखाएं।',
-      mr: 'धोकादायक विषारी हवा. एअर फिल्टर असलेल्या खोलीतच राहा; छातीत तीव्र त्रास जाणवल्यास त्वरित वैद्यकीय मदत घ्या.',
+      en: 'Emergency toxic smog. Stay inside a filtered room with rescue inhalers handy; seek care if chest tightens.',
+      hi: 'आपातकालीन जहरीला स्मॉग। साफ कमरे में इनहेलर पास रखें; सीने में जकड़न पर तुरंत डॉक्टर को दिखाएं।',
+      mr: 'धोकादायक विषारी हवा. इनहेलर जवळ ठेवून फिल्टर खोलीत राहा; त्रास जाणवल्यास त्वरित मदत घ्या.',
     },
     outdoor_worker: {
       en: 'Emergency toxic air. Halt heavy outdoor labor; wear a fitted N95 respirator.',
@@ -526,9 +526,9 @@ const NEXT_2_HOURS_DECISIONS: Record<AQIBandKey, Record<FamilyView, CopySet>> = 
       mr: 'हवा स्वच्छ आणि सुखद आहे. मोकळ्या हवेत हलके फिरा आणि खिडक्या उघड्या ठेवा.',
     },
     asthma: {
-      en: 'Air is clean and soothing right now! Enjoy outdoor walks and open windows for natural airflow.',
-      hi: 'हवा इस समय बिल्कुल साफ और सुखद है! बाहर टहलने का आनंद लें और ताज़ी हवा के लिए खिड़कियां खोलें।',
-      mr: 'हवा आता अतिशय स्वच्छ आणि सुखद आहे! बाहेर फेरफटका मारा आणि घरामध्ये ताजी हवा येऊ द्या.',
+      en: 'Air is clean and soothing! Enjoy outdoor walks freely, and always carry your prescribed rescue inhaler when heading out.',
+      hi: 'हवा साफ और सुखद है! बाहर टहलने का आनंद लें, और बाहर जाते समय अपना इनहेलर हमेशा साथ रखें।',
+      mr: 'हवा अतिशय स्वच्छ आणि सुखद आहे! मोकळेपणाने फिरा, आणि बाहेर जाताना आपला इनहेलर नेहमी सोबत ठेवा.',
     },
     outdoor_worker: {
       en: 'Comfortable working conditions outdoors. No mask needed right now; keep yourself well hydrated.',
@@ -558,9 +558,9 @@ const NEXT_2_HOURS_DECISIONS: Record<AQIBandKey, Record<FamilyView, CopySet>> = 
       mr: 'दैनंदिन कामांसाठी हवा अनुकूल आहे. शांतपणे फिरा आणि गर्दीचे रस्ते टाळा.',
     },
     asthma: {
-      en: 'Comfortable air for normal routines. Safe for gentle outdoor walks; keep your prescribed inhaler accessible.',
-      hi: 'सामान्य दिनचर्या के लिए हवा आरामदायक है। हल्की सैर सुरक्षित है; अपना इनहेलर हमेशा पास रखें।',
-      mr: 'दैनंदिन कामांसाठी हवा आरामदायक आहे. हलके फिरणे सुरक्षित आहे; आवश्यक इनहेलर सोबत ठेवा.',
+      en: 'Pleasant air for gentle routines. Enjoy peaceful outdoor walks, and keep your prescribed inhaler and medication accessible.',
+      hi: 'सामान्य दिनचर्या के लिए हवा अच्छी है। हल्की सैर सुरक्षित है; अपना इनहेलर और दवाएं हमेशा साथ रखें।',
+      mr: 'दैनंदिन कामांसाठी हवा चांगली आहे. हलके फिरणे सुरक्षित आहे; आवश्यक इनहेलर आणि औषधे सोबत ठेवा.',
     },
     outdoor_worker: {
       en: 'Manageable working conditions outdoors. Stay well hydrated throughout your shift.',
@@ -590,9 +590,9 @@ const NEXT_2_HOURS_DECISIONS: Record<AQIBandKey, Record<FamilyView, CopySet>> = 
       mr: 'सामान्य कामांसाठी ठीक आहे. धुराच्या वेळी खिडक्या बंद ठेवा आणि आत विश्रांती घ्या.',
     },
     asthma: {
-      en: 'Mild haze is present. Pace your outdoor activities, avoid cold morning drafts, and keep inhalers handy.',
-      hi: 'हवा में हल्की धुंध है। बाहर की गतिविधि धीमी रखें, सुबह की ठंडी हवा से बचें और इनहेलर पास रखें।',
-      mr: 'हवेत थोडी धुंध आहे. बाहेरील कामे सावकाश करा, सकाळच्या थंड हवेपासून दूर राहा आणि इनहेलर जवळ ठेवा.',
+      en: 'Mild haze is present. Pace outdoor activities, avoid cold drafts, and always carry your rescue inhaler and medicines.',
+      hi: 'हवा में हल्की धुंध है। बाहर की गतिविधि धीमी रखें, ठंडी हवा से बचें और इनहेलर व दवाएं हमेशा साथ रखें।',
+      mr: 'हवेत थोडी धुंध आहे. बाहेरील कामे सावकाश करा, थंड हवेपासून दूर राहा आणि इनहेलर व औषधे सोबत ठेवा.',
     },
     outdoor_worker: {
       en: 'Manageable conditions. Wear a snug N95 mask near traffic and take short rest breaks in shade.',
@@ -622,9 +622,9 @@ const NEXT_2_HOURS_DECISIONS: Record<AQIBandKey, Record<FamilyView, CopySet>> = 
       mr: 'एअर फिल्टर असलेल्या खोलीत विश्रांती घ्या. सुरक्षिततेसाठी अनावश्यक प्रवास पुढे ढकला.',
     },
     asthma: {
-      en: 'Smog can trigger bronchospasm. Rest inside a closed room with air cleaning running, and avoid outdoor travel.',
-      hi: 'प्रदूषण से सांस फूल सकती है। एयर प्यूरीफायर चलाकर बंद कमरे में आराम करें और बाहर जाने से बचें।',
-      mr: 'प्रदूषणामुळे श्वास घेण्यास त्रास होऊ शकतो. एअर फिल्टर चालू असलेल्या बंद खोलीत राहा आणि बाहेर जाणे टाळा.',
+      en: 'Elevated smog can trigger asthma. Rest indoors with air filtration, and keep your rescue inhaler and medicines within reach.',
+      hi: 'प्रदूषण से दमे का दौरा पड़ सकता है। एयर फिल्टर चलाकर अंदर रहें और इनहेलर व दवाएं हमेशा पास रखें।',
+      mr: 'प्रदूषणामुळे श्वास घेण्यास त्रास होऊ शकतो. घरातच राहा आणि इनहेलर व औषधे हाताशी जवळ ठेवा.',
     },
     outdoor_worker: {
       en: 'Unhealthy air outside. Put on your fitted N95 respirator and take breaks inside sheltered rooms.',
@@ -654,9 +654,9 @@ const NEXT_2_HOURS_DECISIONS: Record<AQIBandKey, Record<FamilyView, CopySet>> = 
       mr: 'एअर प्युरिफायर चालू ठेवून घरातच राहा. डॉक्टरकडे जाताना घट्ट N95 वापरा.',
     },
     asthma: {
-      en: 'Dangerous smog for airways. Stay strictly in a filtered sanctuary room and take prescribed preventer medicines.',
-      hi: 'फेफड़ों के लिए हवा खतरनाक है। पूरी तरह साफ हवा वाले कमरे में रहें और नियमित दवाएं समय पर लें।',
-      mr: 'श्वसनासाठी हवा अतिशय धोकादायक आहे. स्वच्छ बंद खोलीतच राहा आणि डॉक्टरांनी दिलेली औषधे वेळेवर घ्या.',
+      en: 'Dangerous smog for sensitive airways. Stay in a clean filtered room, take preventer doses, and keep rescue inhalers handy.',
+      hi: 'फेफड़ों के लिए हवा खतरनाक है। साफ हवा वाले कमरे में रहें, दवाएं समय पर लें और इनहेलर पास रखें।',
+      mr: 'श्वसनासाठी हवा अतिशय धोकादायक आहे. स्वच्छ खोलीतच राहा, औषधे वेळेवर घ्या आणि इनहेलर जवळ ठेवा.',
     },
     outdoor_worker: {
       en: 'Hazardous air outside. Wear your fitted N95 respirator and move heavy tasks to sheltered spaces.',
@@ -686,9 +686,9 @@ const NEXT_2_HOURS_DECISIONS: Record<AQIBandKey, Record<FamilyView, CopySet>> = 
       mr: 'एअर फिल्टर असलेल्या बंद खोलीत राहा. बाहेरचा कोणताही प्रवास टाळा.',
     },
     asthma: {
-      en: 'Severe emergency smog. Remain sealed in a filtered room; call emergency help immediately if breathing becomes difficult.',
-      hi: 'अत्यंत गंभीर आपातकालीन स्मॉग। बंद साफ कमरे में रहें; सांस लेने में तकलीफ हो तो तुरंत आपातकालीन मदद लें।',
-      mr: 'अतिधोकादायक विषारी स्मॉग. एअर फिल्टर असलेल्या खोलीतच राहा; श्वास घेण्यास अडचण आल्यास त्वरित वैद्यकीय मदत घ्या.',
+      en: 'Emergency toxic smog. Remain sealed in a filtered room with inhalers ready; seek immediate care if chest tightens.',
+      hi: 'आपातकालीन जहरीला स्मॉग। इनहेलर पास रखकर साफ कमरे में रहें; सीने में जकड़न पर तुरंत डॉक्टर को दिखाएं।',
+      mr: 'धोकादायक विषारी स्मॉग. इनहेलर जवळ ठेवून बंद खोलीतच राहा; छातीत तीव्र त्रास जाणवल्यास त्वरित वैद्यकीय मदत घ्या.',
     },
     outdoor_worker: {
       en: 'Stop heavy outdoor work. Wear a fitted N95 respirator and rest in filtered air.',
@@ -699,7 +699,208 @@ const NEXT_2_HOURS_DECISIONS: Record<AQIBandKey, Record<FamilyView, CopySet>> = 
 };
 
 /**
- * Single function outdoorGuidance(currentBand, hourlyForecast, persona, profile, lang)
+ * Night-time sleeping hours decisions (12 AM to 6 AM / hours 00:00 - 05:59).
+ * Between 12 AM and 6 AM, strictly suggests restful sleep and bedroom air quality,
+ * never outdoor activities. For asthma patients, reinforces having rescue inhalers bedside.
+ * Every sentence is strictly 18 words or fewer.
+ */
+const NIGHT_SLEEP_DECISIONS: Record<AQIBandKey, Record<FamilyView, CopySet>> = {
+  good: {
+    whole_family: {
+      en: 'It is late night. Enjoy a peaceful and restful sleep in clean, fresh air.',
+      hi: 'देर रात का समय है। साफ और ताज़ा हवा में सुकून भरी नींद लें।',
+      mr: 'मध्यरात्र आहे. स्वच्छ आणि ताज्या हवेत शांत व गाढ झोप घ्या.',
+    },
+    child: {
+      en: 'Late night resting hours. Keep the bedroom cozy, quiet, and well-ventilated for sound sleep.',
+      hi: 'देर रात का समय है। बच्चों के कमरे को आरामदायक व हवादार रखकर सुकून से सोने दें।',
+      mr: 'मध्यरात्र आहे. मुलांच्या खोलीत शांत वातावरण ठेवून त्यांना गाढ झोपू द्या.',
+    },
+    elderly: {
+      en: 'Late night resting hours. Rest comfortably in a warm, quiet room for restorative sleep.',
+      hi: 'रात के आराम का समय है। कमरे को शांत व गर्म रखकर आरामदायक नींद लें।',
+      mr: 'रात्रीच्या विश्रांतीची वेळ आहे. शांत आणि उबदार खोलीत गाढ झोप घ्या.',
+    },
+    pregnant: {
+      en: 'Late night resting time. Rest comfortably in clean air and enjoy sound, restorative sleep.',
+      hi: 'रात के आराम का समय है। साफ हवा में आरामदायक मुद्रा में सुकून की नींद लें।',
+      mr: 'रात्रीच्या आरामाची वेळ आहे. स्वच्छ हवेत आरामदायक आणि शांत झोप घ्या.',
+    },
+    asthma: {
+      en: 'Late night hours. Sleep peacefully in fresh air and keep your rescue inhaler at your bedside.',
+      hi: 'देर रात का समय है। साफ हवा में सुकून से सोएं और अपना इनहेलर सिरहाने पास रखें।',
+      mr: 'मध्यरात्र आहे. स्वच्छ हवेत शांत झोप घ्या आणि आपला इनहेलर उशाशी जवळ ठेवा.',
+    },
+    outdoor_worker: {
+      en: 'Night resting hours. Sleep soundly indoors and let your body recharge for tomorrow.',
+      hi: 'रात के आराम का समय है। कमरे के अंदर गहरी नींद लें और कल के लिए ऊर्जा जुटाएं।',
+      mr: 'रात्रीच्या विश्रांतीची वेळ आहे. घरात शांत झोप घ्या आणि उद्यासाठी ताजेतवाने व्हा.',
+    },
+  },
+  satisfactory: {
+    whole_family: {
+      en: 'It is late night. Enjoy a peaceful and restful sleep in pleasant indoor air.',
+      hi: 'देर रात का समय है। आरामदायक कमरे में सुकून और शांति से सोएं।',
+      mr: 'मध्यरात्र आहे. आरामदायक खोलीत शांत आणि गाढ झोप घ्या.',
+    },
+    child: {
+      en: 'Late night hours. Keep the bedroom cozy, quiet, and comfortable for sound sleep.',
+      hi: 'देर रात का समय है। बच्चों के कमरे को आरामदायक व शांत रखकर गहरी नींद लेने दें।',
+      mr: 'मध्यरात्र आहे. मुलांच्या खोलीत शांत वातावरण ठेवून त्यांना गाढ झोपू द्या.',
+    },
+    elderly: {
+      en: 'Late night hours. Rest comfortably in a warm bedroom for gentle, restorative sleep.',
+      hi: 'रात के आराम का समय है। गर्म और शांत कमरे में आरामदायक नींद लें।',
+      mr: 'रात्रीच्या विश्रांतीची वेळ आहे. उबदार खोलीत शांत आणि गाढ झोप घ्या.',
+    },
+    pregnant: {
+      en: 'Late night resting time. Sleep comfortably in pleasant air and get peaceful night rest.',
+      hi: 'रात के आराम का समय है। आरामदायक कमरे में सुकून से सोएं।',
+      mr: 'रात्रीच्या आरामाची वेळ आहे. स्वच्छ आणि आरामदायक खोलीत शांत झोपा.',
+    },
+    asthma: {
+      en: 'Late night hours. Sleep comfortably indoors and keep your rescue inhaler accessible at your bedside.',
+      hi: 'देर रात का समय है। आराम से सोएं और अपना इनहेलर व दवाएं हमेशा सिरहाने रखें।',
+      mr: 'मध्यरात्र आहे. शांत झोप घ्या आणि आपला इनहेलर व औषधे उशाशी जवळ ठेवा.',
+    },
+    outdoor_worker: {
+      en: 'Night resting hours. Get restful indoor sleep to recharge your stamina for the morning.',
+      hi: 'रात के आराम का समय है। सुबह के लिए पूरी ऊर्जा जुटाने हेतु अच्छी नींद लें।',
+      mr: 'रात्रीच्या विश्रांतीची वेळ आहे. सकाळच्या कामासाठी शरीराला ताजी ऊर्जा मिळण्यासाठी गाढ झोपा.',
+    },
+  },
+  moderate: {
+    whole_family: {
+      en: 'It is late night. Keep windows shut against night haze and sleep comfortably indoors.',
+      hi: 'देर रात का समय है। रात की धुंध से बचने के लिए खिड़कियां बंद रखें और अच्छी नींद लें।',
+      mr: 'मध्यरात्र आहे. रात्रीच्या धुरापासून बचावासाठी खिडक्या बंद ठेवा आणि गाढ झोप घ्या.',
+    },
+    child: {
+      en: 'Late night hours. Keep bedroom windows closed so children can sleep peacefully in clean air.',
+      hi: 'देर रात का समय है। खिड़कियां बंद रखें ताकि बच्चे साफ कमरे में सुकून से सो सकें।',
+      mr: 'मध्यरात्र आहे. खिडक्या बंद ठेवा जेणेकरून मुले शांत आणि स्वच्छ हवेत झोपू शकतील.',
+    },
+    elderly: {
+      en: 'Late night hours. Keep bedroom draft-free, stay warm, and enjoy peaceful, uninterrupted sleep.',
+      hi: 'देर रात का समय है। कमरे को गर्म व धूल-मुक्त रखें और सुकून भरी नींद लें।',
+      mr: 'मध्यरात्र आहे. खोली उबदार आणि धूळमुक्त ठेवा आणि शांत झोप घ्या.',
+    },
+    pregnant: {
+      en: 'Late night resting time. Keep bedroom windows shut against night haze and rest comfortably.',
+      hi: 'रात के आराम का समय है। खिड़की बंद रखें और साफ कमरे में आराम से सोएं।',
+      mr: 'रात्रीच्या विश्रांतीची वेळ आहे. खिडक्या बंद ठेवा आणि स्वच्छ खोलीत शांत झोपा.',
+    },
+    asthma: {
+      en: 'Night haze can trigger coughing. Keep windows shut, stay warm, and keep your rescue inhaler beside you.',
+      hi: 'रात की धुंध से खांसी हो सकती है। खिड़की बंद रखें और इनहेलर अपने बिस्तर के पास रखें।',
+      mr: 'रात्रीच्या हवेमुळे खोकला येऊ शकतो. खिडक्या बंद ठेवा आणि इनहेलर आपल्या अंथरुणाजवळ ठेवा.',
+    },
+    outdoor_worker: {
+      en: 'Late night resting time. Rest well indoors away from road haze and recharge your body.',
+      hi: 'रात के आराम का समय है। सड़क की धुंध से दूर घर में आराम से सोएं।',
+      mr: 'रात्रीच्या आरामाची वेळ आहे. रस्त्यावरील धुरापासून दूर घरात शांत झोप घ्या.',
+    },
+  },
+  poor: {
+    whole_family: {
+      en: 'Night smog is elevated. Keep bedroom windows closed, run filtration quietly, and get restful sleep.',
+      hi: 'रात में स्मॉग बढ़ा हुआ है। खिड़कियां बंद रखें, एयर फिल्टर चलाएं और सुकून से सोएं।',
+      mr: 'रात्री धूर वाढला आहे. खिडक्या बंद ठेवा, एअर फिल्टर शांतपणे चालवा आणि शांत झोपा.',
+    },
+    child: {
+      en: 'Night smog is elevated. Keep children sleeping safely in a closed room with air cleaning running.',
+      hi: 'रात में स्मॉग बढ़ा हुआ है। बच्चों को एयर फिल्टर वाले बंद कमरे में सुरक्षित सुलाएं।',
+      mr: 'रात्री प्रदूषण वाढले आहे. मुलांना एअर फिल्टर चालू असलेल्या बंद खोलीतच सुरक्षित झोपू द्या.',
+    },
+    elderly: {
+      en: 'Night smog is unhealthy. Keep the bedroom sealed with air filtration running, and sleep warmly.',
+      hi: 'रात का स्मॉग नुकसानदेह है। एयर प्यूरीफायर चलाकर बंद कमरे में गर्म रहकर सोएं।',
+      mr: 'रात्रीचा धूर त्रासदायक आहे. एअर प्युरिफायर चालू ठेवून उबदार खोलीत शांत झोपा.',
+    },
+    pregnant: {
+      en: 'Night smog is high outside. Sleep in a sealed bedroom with air filtration running quietly.',
+      hi: 'रात में बाहर स्मॉग है। पूरी रात एयर फिल्टर वाले बंद कमरे में सुकून की नींद लें।',
+      mr: 'रात्री बाहेर धूर आहे. रात्रभर एअर फिल्टर चालू असलेल्या बंद खोलीत शांत झोपा.',
+    },
+    asthma: {
+      en: 'Night smog triggers asthma attacks. Sleep in a filtered room and keep your rescue inhaler at your bedside.',
+      hi: 'रात का स्मॉग दमा बढ़ा सकता है। एयर फिल्टर वाले कमरे में सोएं और इनहेलर सिरहाने पास रखें।',
+      mr: 'रात्रीच्या धुरामुळे दम्याचा त्रास वाढू शकतो. फिल्टर असलेल्या खोलीत झोपा आणि इनहेलर उशाशी जवळ ठेवा.',
+    },
+    outdoor_worker: {
+      en: 'Hazardous night air outside. Sleep safely indoors in filtered air and rest your lungs.',
+      hi: 'रात में बाहर जहरीली हवा है। घर में साफ हवा के अंदर सोएं और फेफड़ों को आराम दें।',
+      mr: 'रात्री बाहेर विषारी हवा आहे. घरात स्वच्छ हवेमध्ये झोपा आणि फुफ्फुसांना विश्रांती द्या.',
+    },
+  },
+  very_poor: {
+    whole_family: {
+      en: 'Heavy night smog outside. Sleep in a sealed room with air filtration running all night.',
+      hi: 'बाहर भारी स्मॉग है। पूरी रात एयर फिल्टर वाले बंद कमरे में सुकून की नींद लें।',
+      mr: 'बाहेर दाट धूर आहे. रात्रभर एअर फिल्टर चालू असलेल्या बंद खोलीत शांत झोपा.',
+    },
+    child: {
+      en: 'Heavy night smog outside. Keep children safely asleep in a sealed room with air cleaners.',
+      hi: 'बाहर भारी स्मॉग है। बच्चों को एयर प्यूरीफायर वाले बंद कमरे में सुरक्षित सुलाएं।',
+      mr: 'बाहेर दाट धूर आहे. मुलांना एअर प्युरिफायर चालू असलेल्या बंद खोलीतच झोपू द्या.',
+    },
+    elderly: {
+      en: 'Dangerous night smog outside. Sleep in a sealed cleaner-air room and keep rescue medicines handy.',
+      hi: 'बाहर खतरनाक स्मॉग है। साफ हवा वाले कमरे में सोएं और जरूरी दवाएं पास रखें।',
+      mr: 'बाहेर धोकादायक धूर आहे. स्वच्छ बंद खोलीत झोपा आणि आवश्यक औषधे जवळ ठेवा.',
+    },
+    pregnant: {
+      en: 'Heavy night smog outside. Sleep in a sealed sanctuary room with air cleaning running quietly.',
+      hi: 'रात में बाहर भारी स्मॉग है। एयर फिल्टर वाले शांत कमरे में सुरक्षित नींद लें।',
+      mr: 'रात्री बाहेर दाट धूर आहे. एअर फिल्टर असलेल्या शांत खोलीत गाढ झोप घ्या.',
+    },
+    asthma: {
+      en: 'Heavy night smog outside. Sleep in a sealed filtered room and keep rescue inhalers within arm reach.',
+      hi: 'बाहर भारी स्मॉग है। साफ हवा वाले बंद कमरे में सोएं और इनहेलर हमेशा हाथ के पास रखें।',
+      mr: 'बाहेर दाट धूर आहे. स्वच्छ बंद खोलीत झोपा आणि इनहेलर हाताशी जवळ ठेवा.',
+    },
+    outdoor_worker: {
+      en: 'Heavy toxic night air. Rest strictly indoors in filtered air and let your lungs recover.',
+      hi: 'रात में बाहर जहरीली हवा है। घर के अंदर साफ हवा में सोएं और फेफड़ों को आराम दें।',
+      mr: 'रात्री बाहेर विषारी हवा आहे. घरात स्वच्छ हवेत झोपा आणि फुफ्फुसांना विश्रांती द्या.',
+    },
+  },
+  severe: {
+    whole_family: {
+      en: 'Emergency night smog outside. Keep bedroom strictly sealed with filtration running and sleep safely.',
+      hi: 'बाहर आपातकालीन स्मॉग है। बेडरूम बंद रखकर एयर फिल्टर चलाएं और सुरक्षित सोएं।',
+      mr: 'बाहेर आणीबाणीचा धूर आहे. खोली पूर्ण बंद ठेवून एअर फिल्टर चालवा आणि सुरक्षित झोपा.',
+    },
+    child: {
+      en: 'Emergency night smog outside. Keep children asleep in a sealed bedroom with active air filtration.',
+      hi: 'आपातकालीन स्मॉग। बच्चों को बंद बेडरूम में सक्रिय एयर फिल्टर के साथ सुलाएं।',
+      mr: 'धोकादायक आणीबाणी स्मॉग. मुलांना एअर फिल्टर चालू असलेल्या बंद बेडरूममध्येच झोपू द्या.',
+    },
+    elderly: {
+      en: 'Emergency night smog outside. Sleep sealed in a filtered room and keep emergency contacts ready.',
+      hi: 'आपातकालीन जहरीला स्मॉग। बंद साफ कमरे में सोएं और दवाएं पास रखें।',
+      mr: 'धोकादायक विषारी स्मॉग. बंद स्वच्छ खोलीत झोपा आणि औषधे जवळ ठेवा.',
+    },
+    pregnant: {
+      en: 'Severe toxic night smoke. Sleep in a sealed room with air cleaners running all night.',
+      hi: 'रात में गंभीर जहरीला स्मॉग। पूरी रात एयर फिल्टर वाले बंद कमरे में सुरक्षित सोएं।',
+      mr: 'रात्री अत्यंत विषारी हवा आहे. रात्रभर एअर क्लीनर चालू असलेल्या खोलीत शांत झोपा.',
+    },
+    asthma: {
+      en: 'Emergency toxic night smog. Sleep sealed in a filtered room with your rescue inhaler bedside.',
+      hi: 'गंभीर आपातकालीन स्मॉग। इनहेलर पास रखकर साफ कमरे में सोएं; सांस में तकलीफ पर तुरंत मदद लें।',
+      mr: 'धोकादायक विषारी स्मॉग. इनहेलर जवळ ठेवून बंद खोलीत झोपा; त्रास जाणवल्यास त्वरित वैद्यकीय मदत घ्या.',
+    },
+    outdoor_worker: {
+      en: 'Emergency toxic night air. Rest safely indoors with air cleaning running and sleep soundly.',
+      hi: 'अत्यधिक जहरीली हवा। साफ कमरे में आराम से सोएं और फेफड़ों को पूरी तरह राहत दें।',
+      mr: 'अतिविषारी हवा. घरात एअर क्लीनर चालू ठेवून शांत झोप घ्या आणि विश्रांती मिळवा.',
+    },
+  },
+};
+
+/**
+ * Single function outdoorGuidance(currentBand, hourlyForecast, persona, profile, lang, currentHour)
  * Returns the unified outdoor advice, level, status line, guidance copy, and decision.
  */
 export function outdoorGuidance(
@@ -707,7 +908,8 @@ export function outdoorGuidance(
   hourlyForecast?: Array<{ hour: string; pm2_5: number; isBestHour?: boolean }> | null,
   persona: FamilyView = 'whole_family',
   profile?: Partial<UserProfile>,
-  lang: string = 'en'
+  lang: string = 'en',
+  currentHour?: number
 ): OutdoorGuidanceResult {
   // Resolve band key
   let bandKey: AQIBandKey = 'poor';
@@ -735,8 +937,11 @@ export function outdoorGuidance(
   const guidanceNative =
     lang === 'hi' ? guidanceSet.hi : lang === 'mr' ? guidanceSet.mr : guidance;
 
-  // Next 2 hours decision text
-  const decisionMap = NEXT_2_HOURS_DECISIONS[bandKey] || NEXT_2_HOURS_DECISIONS.poor;
+  // Next 2 hours decision text:
+  // If hour is between 12 AM and 6 AM (hours 0, 1, 2, 3, 4, 5), suggest sleep/night rest and indoor comfort
+  const isNightSleep = currentHour !== undefined && currentHour >= 0 && currentHour < 6;
+  const activeDecisionsMap = isNightSleep ? NIGHT_SLEEP_DECISIONS : NEXT_2_HOURS_DECISIONS;
+  const decisionMap = activeDecisionsMap[bandKey] || activeDecisionsMap.poor;
   const decisionSet = decisionMap[persona] || decisionMap.whole_family;
   const decision = decisionSet.en;
   const decisionNative =
