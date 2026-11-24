@@ -161,6 +161,48 @@ async function handleAirQualityRequest(lat: number, lon: number): Promise<AirDat
     const diffPercent = modelPM2_5 > 0 ? (diff / modelPM2_5) * 100 : 0;
     const differenceNoted = diffPercent > 40;
 
+    // Harmonize hourly forecast: anchor index 0 ("Now") to ground measurement,
+    // and smoothly decay measurement bias over 8 hours so the timeline is continuous.
+    const deltaPM = measuredPM - modelPM2_5;
+    const deltaPM10 = measuredPM10 - modelPM10;
+    const blendHours = 8;
+
+    const harmonizedHourly: HourlyReading[] = hourly24.map((h, idx) => {
+      if (idx === 0) {
+        return {
+          ...h,
+          pm2_5: measuredPM,
+          pm10: measuredPM10,
+          us_aqi: measuredAQI,
+        };
+      }
+      if (idx < blendHours) {
+        const decayWeight = (blendHours - idx) / blendHours;
+        const blendedPM = Math.max(5, Math.round(h.pm2_5 + deltaPM * decayWeight));
+        const blendedPM10 = Math.max(8, Math.round(h.pm10 + deltaPM10 * decayWeight));
+        return {
+          ...h,
+          pm2_5: blendedPM,
+          pm10: blendedPM10,
+          us_aqi: calculateAQIFromPM25(blendedPM),
+        };
+      }
+      return h;
+    });
+
+    // Recompute best hour on the harmonized timeline
+    let minPM = Infinity;
+    let bestIdx = 0;
+    harmonizedHourly.forEach((h, idx) => {
+      if (h.pm2_5 < minPM) {
+        minPM = h.pm2_5;
+        bestIdx = idx;
+      }
+    });
+    harmonizedHourly.forEach((h, idx) => {
+      h.isBestHour = idx === bestIdx;
+    });
+
     return {
       current: {
         pm2_5: measuredPM,
@@ -169,7 +211,7 @@ async function handleAirQualityRequest(lat: number, lon: number): Promise<AirDat
         time: 'Live',
         isForecast: false,
       },
-      hourly: hourly24, // Hourly forecast continues to use Open-Meteo model
+      hourly: harmonizedHourly,
       source: `Measured at ${station.name}, ${station.distanceKm} km away`,
       updatedAt: Date.now(),
       isCached: false,

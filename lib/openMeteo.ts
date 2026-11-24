@@ -248,14 +248,16 @@ export async function fetchAirQuality(lat: number, lon: number): Promise<AirData
       const hourLabel = timeStr.includes('T')
         ? timeStr.split('T')[1].slice(0, 5)
         : `${new Date(timeStr).getHours().toString().padStart(2, '0')}:00`;
-      const pm = Math.round(pm25s[i] ?? 0);
+      const pm = i === currentIndex ? currentPM2_5 : Math.round(pm25s[i] ?? 0);
+      const usAqi = i === currentIndex ? currentAQI : Math.round(aqiList[i] ?? Math.round(pm * 1.2));
+      const pm10 = i === currentIndex ? currentPM10 : Math.round(pm10s[i] ?? Math.round(pm * 1.5));
 
       hourly24.push({
         time: timeStr,
         hour: hourLabel,
         pm2_5: pm,
-        pm10: Math.round(pm10s[i] ?? Math.round(pm * 1.5)),
-        us_aqi: Math.round(aqiList[i] ?? Math.round(pm * 1.2)),
+        pm10,
+        us_aqi: usAqi,
         isBestHour: (i - currentIndex) === bestIdx,
       });
     }

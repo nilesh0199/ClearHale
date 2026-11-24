@@ -1941,6 +1941,7 @@ export function HomeScreen() {
         >
           {airData.hourly.map((h, i) => {
             const isSelected = i === forecastSliderIndex;
+            const displayPM = i === 0 ? airData.current.pm2_5 : h.pm2_5;
             return (
               <div
                 key={i}
@@ -1956,7 +1957,7 @@ export function HomeScreen() {
                     ? 'border-teal-accent bg-teal-accent/10 shadow-sm ring-2 ring-teal-accent'
                     : 'border-card-border bg-card-subtle/50 hover:bg-card-subtle'
                 }`}
-                title={`Hour ${h.hour}: ${h.pm2_5} µg/m³`}
+                title={`Hour ${h.hour}: ${displayPM} µg/m³`}
               >
                 <div className="text-[11px] font-medium text-muted flex items-center justify-center gap-1">
                   <span>{h.hour}</span>
@@ -1971,7 +1972,7 @@ export function HomeScreen() {
                   ) : null}
                 </div>
                 <div className="text-base font-semibold text-foreground my-1">
-                  {h.pm2_5}
+                  {displayPM}
                 </div>
                 <div className="text-[10px] text-muted">µg/m³</div>
                 {h.isBestHour ? (
@@ -2017,7 +2018,7 @@ export function HomeScreen() {
               </span>
               {airData.hourly[forecastSliderIndex] && (
                 <span className="text-muted font-normal">
-                  · {airData.hourly[forecastSliderIndex].pm2_5} µg/m³
+                  · {forecastSliderIndex === 0 ? airData.current.pm2_5 : airData.hourly[forecastSliderIndex].pm2_5} µg/m³
                 </span>
               )}
               {airData.hourly[forecastSliderIndex]?.isBestHour && (
