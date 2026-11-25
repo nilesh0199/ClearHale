@@ -38,13 +38,13 @@ Clearhale is built to achieve the highest standards of the Hack2Skill Evaluation
 
 Unlike generic weather apps that display arbitrary numbers, Clearhale’s calculations are grounded in peer-reviewed atmospheric physics and Indian statutory standards:
 
-### 1. CPCB Piecewise Linear AQI Interpolation
-Clearhale calculates the National Air Quality Index (NAQI) strictly conforming to Central Pollution Control Board (CPCB) methodology:
+### 1. PM2.5 Sub-Index using CPCB Breakpoints
+In statutory Central Pollution Control Board (CPCB) National Air Quality Index (NAQI) guidelines, the composite index is defined as the maximum of multiple criteria pollutant sub-indices (requiring at least three criteria pollutants with at least one particulate). Because severe winter smog episodes across Indian metropolitan regions are overwhelmingly dominated by sub-micron combustion soot, Clearhale calculates the **PM2.5 sub-index using official CPCB concentration breakpoints** via piecewise linear interpolation:
 $$I_p = \frac{I_{\text{hi}} - I_{\text{lo}}}{B_{\text{hi}} - B_{\text{lo}}} (C_p - B_{\text{lo}}) + I_{\text{lo}}$$
 Where:
 - $C_p$: Measured $\text{PM}_{2.5}$ concentration ($\mu\text{g/m}^3$)
-- $B_{\text{lo}}, B_{\text{hi}}$: Lower and upper concentration breakpoints for the corresponding category
-- $I_{\text{lo}}, I_{\text{hi}}$: Lower and upper AQI category index values
+- $B_{\text{lo}}, B_{\text{hi}}$: Lower and upper concentration breakpoints for the corresponding category ($0\text{--}30$ Good, $31\text{--}60$ Satisfactory, $61\text{--}90$ Moderate, $91\text{--}120$ Poor, $121\text{--}250$ Very Poor, $250+$ Severe)
+- $I_{\text{lo}}, I_{\text{hi}}$: Lower and upper sub-index category values ($0\text{--}50$, $51\text{--}100$, $101\text{--}200$, $201\text{--}300$, $301\text{--}400$, $401\text{--}500$)
 
 ### 2. Single-Compartment Mass Balance Decay (CADR Filtration Model)
 Room clearance time and particle concentration decay with air filtration are calculated using the single-compartment mass balance differential model:
@@ -78,7 +78,7 @@ During India's severe winter pollution spikes, particulate pollution ($\text{PM}
 
 Every feature described below is verified in the codebase and covered by automated test suites:
 
-- **6-Band CPCB National Air Quality Index (NAQI)**: Real-time calculation of Indian CPCB air quality bands (`Good`, `Satisfactory`, `Moderate`, `Poor`, `Very Poor`, `Severe`) mapped from live $\text{PM}_{2.5}$ measurements (`lib/aqi.ts`).
+- **6-Band PM2.5 Sub-Index using CPCB Breakpoints**: Real-time calculation of Indian CPCB air quality bands (`Good`, `Satisfactory`, `Moderate`, `Poor`, `Very Poor`, `Severe`) mapped from live $\text{PM}_{2.5}$ measurements (`lib/aqi.ts`). Note: Full composite CPCB NAQI requires multi-pollutant monitoring; Clearhale tracks the predominant fine-particulate ($\text{PM}_{2.5}$) sub-index.
 - **Live Ground Stations with Spatial Guardrails**: Direct integration with OpenAQ v3 physical sensors with automatic 25 km proximity boundaries, staleness filtering (< 3 hours fresh), and Open-Meteo spatial grid fallback with explicit source labels and timestamps (`lib/openaq.ts`, `lib/openMeteo.ts`).
 - **Personalized Action Catalog (`32 Actions`)**: Categorized into *Indoors*, *Routines*, and *Sustainable Swaps*, with transparent cost badges (`Free`, `Low-cost`, `If you can afford`) and scientific evidence ratings (`Strong`, `Moderate`, `Limited`, `Myth`) (`data/actions.json`).
 - **Interactive "What-If" Indoor Exposure Simulator**: Mathematical estimation of indoor $\text{PM}_{2.5}$ based on window status and active filtration physics (HEPA: ~50–80% reduction; DIY Box-Fan: ~40–70% reduction; windows shut without filter: ~55–60% of outdoor air) (`lib/rulesEngine.ts:calculateWhatIfExposure`).
@@ -90,6 +90,8 @@ Every feature described below is verified in the codebase and covered by automat
   - *Learn*: Smog myth-busting with emergency red-flag intercept (`tel:112`) for acute respiratory symptoms (`components/screens/MythsTab.tsx`, `lib/medicalSafety.ts`).
   - *Terms*: Plain-language air quality glossary featuring relatable Indian analogies (AQI as a fever thermometer, HEPA as a chai strainer) (`data/terms.ts`, `components/screens/TermsTab.tsx`).
 - **Social & Family Share Posters**: High-contrast, brand-aligned visual card generator rendering tailored action plans for family WhatsApp groups (`components/share/AirQualityCard.tsx`).
+- **Severe-Air Emergency Alerts (PWA / Web Notifications)**: Proactive browser notifications when local $\text{PM}_{2.5}$ crosses into `Very Poor` (>120 µg/m³) or `Severe` (>250 µg/m³), throttled with an intelligent 8-hour cooldown interval and immediate emergency escalation detection (`lib/notifications.ts`, `components/screens/HomeScreen.tsx`, `components/screens/ProfileScreen.tsx`).
+- **Bring Your Own Key (BYOK) for Google Gemini**: Privacy-first client configuration allowing users to supply their personal Google Gemini API key from Google AI Studio. Stored strictly client-side in browser `localStorage`, passed via encrypted HTTPS header (`x-gemini-api-key`), with zero server disk/DB persistence, zero plaintext logging, and automatic fallback to our shared server key (`lib/byok.ts`, `app/api/gemini/validate/route.ts`, `components/screens/ProfileScreen.tsx`).
 - **Offline-First PWA**: Service worker caching and local storage persistence ensuring full offline capability when network signals drop (`public/sw.js`, `lib/storage.ts`).
 
 ---
@@ -117,7 +119,7 @@ flowchart TD
     end
 
     subgraph DeterministicCode ["Deterministic Rules Engine (Code & Physical Formulas)"]
-        AQI["AQI & Band Conversion (CPCB Formula)"]
+        AQI["PM2.5 Sub-Index & Band Conversion (CPCB Formula)"]
         Outdoor["Outdoor Guidance (Thresholds & Waking Hours)"]
         Exposure["What-If Exposure Math (Indoor Infiltration Physics)"]
         Safety["Medical Safety Intercept (Regex Red-Flags / tel:112)"]
@@ -160,8 +162,8 @@ flowchart TD
                        v                                    v
 +------------------------------------+   +------------------------------------------------+
 |         DATA INGESTION APIS        |   |           DUAL-LLM STREAMING ENGINE            |
-|  - OpenAQ v3 Real-time Station Data|   |  - Primary: Groq LPU (qwen/qwen3.8-27b)        |
-|  - Open-Meteo Spatial Forecast Fallback| - Fallback: Google Gemini (gemini-3.5-flash-lite)
+|  - OpenAQ v3 Real-time Station Data|   |  - Primary: Groq LPU (Llama 3.3 70B Versatile) |
+|  - Open-Meteo Spatial Forecast Fallback| - Fallback: Google Gemini (Gemini 2.5 Flash)    |
 +------------------------------------+   +------------------------------------------------+
 ```
 
@@ -253,7 +255,6 @@ Comprehensive manifests for all six pillars are fully detailed in the root docum
 - **What We Did**: Fully accessible color pairs with strict WCAG AA minimum and high-contrast AAA ratios on primary text (`18.1:1` in Dark mode; `17.5:1` in Light mode). Mobile touch targets exceed 48x48 px. Screen reader dual-language twins.
 - **Where in Code**: `app/globals.css`, `test/contrast.test.mjs`, `components/ui/rb/Particles.tsx`.
 - **How to Verify**: Run `node --test test/contrast.test.mjs`.
-- **How to Verify**: Run `node --test test/contrast.test.mjs`.
 
 ---
 
@@ -282,7 +283,7 @@ Comprehensive manifests for all six pillars are fully detailed in the root docum
 - **Animations**: Framer Motion / Motion (`motion/react`)
 - **UI Components & Motion**: React Bits (`Particles`, `SpotlightCard`, `BlurText`, `ShinyText`, `CountUp`)
 - **Data Providers**: OpenAQ v3 API, Open-Meteo API
-- **AI Providers**: Groq Cloud SDK (Llama 3.3 70B), Google Gen AI SDK (Gemini 2.5 Flash)
+- **AI Providers**: Groq Cloud SDK (Llama 3.3 70B Versatile), Google Gen AI SDK (Gemini 2.5 Flash / 2.0 Flash)
 - **Icons**: Lucide Icons
 - **Attribution**: Comprehensive component and library licenses are detailed in [CREDITS.md](CREDITS.md).
 

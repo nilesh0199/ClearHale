@@ -15,4 +15,5 @@ export interface AIOptions {
   onTipAppended?: () => void;
   jsonMode?: boolean;
   transformText?: (text: string) => string;
+  customGeminiKey?: string;
 }

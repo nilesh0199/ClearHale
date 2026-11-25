@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { isTtsSupported } from '@/lib/ai/config';
 import { splitIntoSentences } from '@/context/VoiceContext';
+import { getByokHeaders } from '@/lib/byok';
 
 export interface UseSpeechOptions {
   language?: string;
@@ -181,7 +182,7 @@ export function useSpeech(defaultOptions: UseSpeechOptions = {}): UseSpeechRetur
 
       const res = await fetch('/api/tts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getByokHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           text: sentence.slice(0, 600),
           language: lang,

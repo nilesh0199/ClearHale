@@ -51,7 +51,30 @@ import {
   Wind,
   Navigation,
   Loader2,
+  Bell,
+  Key,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  Lock,
+  ExternalLink,
+  X,
 } from 'lucide-react';
+import {
+  isNotificationSupported,
+  getNotificationPermission,
+  isSevereAlertsEnabled,
+  setSevereAlertsEnabled,
+  requestNotificationPermission,
+  sendTestNotification,
+} from '@/lib/notifications';
+import {
+  getCustomGeminiKey,
+  saveCustomGeminiKey,
+  removeCustomGeminiKey,
+  maskApiKey,
+  validateGeminiKey,
+} from '@/lib/byok';
 
 export function ProfileScreen() {
   const {
@@ -96,16 +119,110 @@ export function ProfileScreen() {
   const [chatClearedToast, setChatClearedToast] = useState(false);
   const [syncToast, setSyncToast] = useState(false);
 
-  // Lock body scroll when reset confirmation is open
+  // Severe Air Alerts State
+  const [notificationPerm, setNotificationPerm] = useState<NotificationPermission | 'unsupported'>('unsupported');
+  const [alertsEnabled, setAlertsEnabled] = useState(false);
+  const [alertTestStatus, setAlertTestStatus] = useState<string | null>(null);
+
+  // BYOK Gemini State
+  const [customKey, setCustomKey] = useState<string | null>(null);
+  const [showByokModal, setShowByokModal] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [inputKey, setInputKey] = useState('');
+  const [showKeyText, setShowKeyText] = useState(false);
+  const [testingKey, setTestingKey] = useState(false);
+  const [testResult, setTestResult] = useState<{ valid: boolean; message: string } | null>(null);
+  const [saveToast, setSaveToast] = useState(false);
+
   useEffect(() => {
-    if (showResetConfirm) {
+    if (typeof window === 'undefined') return;
+    setNotificationPerm(getNotificationPermission());
+    setAlertsEnabled(isSevereAlertsEnabled());
+    const stored = getCustomGeminiKey();
+    setCustomKey(stored);
+    if (stored) setInputKey(stored);
+  }, []);
+
+  // Lock body scroll when any modal is open
+  useEffect(() => {
+    if (showResetConfirm || showByokModal || showSecurityModal) {
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       return () => {
         document.body.style.overflow = originalOverflow;
       };
     }
-  }, [showResetConfirm]);
+  }, [showResetConfirm, showByokModal, showSecurityModal]);
+
+  const handleToggleAlerts = async () => {
+    if (!isNotificationSupported()) return;
+    if (notificationPerm !== 'granted') {
+      const perm = await requestNotificationPermission();
+      setNotificationPerm(perm);
+      if (perm === 'granted') {
+        setAlertsEnabled(true);
+        sendTestNotification(profile.city.name);
+      }
+    } else {
+      const next = !alertsEnabled;
+      setSevereAlertsEnabled(next);
+      setAlertsEnabled(next);
+    }
+  };
+
+  const handleSendTestAlert = async () => {
+    setAlertTestStatus('Sending...');
+    const ok = await sendTestNotification(profile.city.name);
+    setNotificationPerm(getNotificationPermission());
+    if (ok) {
+      setAlertsEnabled(true);
+      setAlertTestStatus('Sent! Check your device notifications.');
+    } else {
+      setAlertTestStatus('Permission required or blocked in browser settings.');
+    }
+    setTimeout(() => setAlertTestStatus(null), 3500);
+  };
+
+  const handleTestKey = async () => {
+    if (!inputKey.trim()) {
+      setTestResult({ valid: false, message: 'Please enter a key to test.' });
+      return;
+    }
+    setTestingKey(true);
+    setTestResult(null);
+    try {
+      const res = await validateGeminiKey(inputKey);
+      setTestResult(res);
+    } catch {
+      setTestResult({ valid: false, message: 'Network error validating key.' });
+    } finally {
+      setTestingKey(false);
+    }
+  };
+
+  const handleSaveKey = () => {
+    const trimmed = inputKey.trim();
+    if (!trimmed) {
+      removeCustomGeminiKey();
+      setCustomKey(null);
+    } else {
+      saveCustomGeminiKey(trimmed);
+      setCustomKey(trimmed);
+    }
+    setSaveToast(true);
+    setTimeout(() => {
+      setSaveToast(false);
+      setShowByokModal(false);
+    }, 1200);
+  };
+
+  const handleRemoveKey = () => {
+    removeCustomGeminiKey();
+    setCustomKey(null);
+    setInputKey('');
+    setTestResult(null);
+    setShowByokModal(false);
+  };
 
   const household = profile.household;
 
@@ -1194,7 +1311,150 @@ export function ProfileScreen() {
         </div>
       </SpotlightCard>
 
-      {/* 7. Demo Reload & Danger Zone */}
+      {/* 7. Severe Air Quality Alerts */}
+      <SpotlightCard
+        spotlightColor="rgba(45, 212, 191, 0.1)"
+        className="bg-card rounded-card border border-card-border p-5 sm:p-6 shadow-soft space-y-4"
+      >
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="space-y-1.5 sm:space-y-2 max-w-md">
+            <div className="flex items-center gap-2">
+              <Bell className="w-4 h-4 text-teal-accent" />
+              <h2 className="text-sm sm:text-base font-semibold text-foreground">
+                Severe Air Quality Alerts
+              </h2>
+            </div>
+            <p className="text-xs sm:text-sm text-muted leading-relaxed">
+              Receive browser notifications when PM2.5 crosses into <span className="font-semibold text-foreground">Very Poor (&gt;120 µg/m³)</span> or <span className="font-semibold text-foreground">Severe (&gt;250 µg/m³)</span>.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={alertsEnabled && notificationPerm === 'granted'}
+              disabled={notificationPerm === 'unsupported' || notificationPerm === 'denied'}
+              onClick={handleToggleAlerts}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-accent focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 ${
+                alertsEnabled && notificationPerm === 'granted'
+                  ? 'bg-teal-accent'
+                  : 'bg-card-border'
+              }`}
+            >
+              <span
+                aria-hidden="true"
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                  alertsEnabled && notificationPerm === 'granted'
+                    ? 'translate-x-5'
+                    : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        {/* Status Line & Test Alert */}
+        <div className="pt-3 border-t border-card-border/70 flex items-center justify-between flex-wrap gap-2 text-xs">
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-block w-2 h-2 rounded-full ${
+                notificationPerm === 'granted' && alertsEnabled
+                  ? 'bg-teal-500'
+                  : notificationPerm === 'denied'
+                  ? 'bg-rose-500'
+                  : 'bg-neutral-400'
+              }`}
+            />
+            <span className="text-muted">
+              {notificationPerm === 'unsupported'
+                ? 'Notifications unsupported on this browser'
+                : notificationPerm === 'denied'
+                ? 'Permission denied in browser settings'
+                : alertsEnabled && notificationPerm === 'granted'
+                ? 'Active & Guarding (8-hour cooldown)'
+                : 'Alerts inactive'}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSendTestAlert}
+            className="px-3 py-1.5 rounded-xl border border-card-border hover:border-teal-accent/50 bg-card hover:bg-card-subtle text-foreground font-medium transition-all text-xs flex items-center gap-1.5 cursor-pointer"
+          >
+            <Bell className="w-3.5 h-3.5 text-teal-accent" />
+            <span>Send Test Alert</span>
+          </button>
+        </div>
+
+        {alertTestStatus && (
+          <div className="text-xs text-teal-accent font-medium">
+            {alertTestStatus}
+          </div>
+        )}
+      </SpotlightCard>
+
+      {/* 8. AI API Configuration (BYOK) */}
+      <SpotlightCard
+        spotlightColor="rgba(45, 212, 191, 0.1)"
+        className="bg-card rounded-card border border-card-border p-5 sm:p-6 shadow-soft space-y-4"
+      >
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="space-y-1.5 sm:space-y-2 max-w-md">
+            <div className="flex items-center gap-2">
+              <Key className="w-4 h-4 text-teal-accent" />
+              <h2 className="text-sm sm:text-base font-semibold text-foreground">
+                Custom Gemini API Key (BYOK)
+              </h2>
+            </div>
+            <p className="text-xs sm:text-sm text-muted leading-relaxed">
+              Use your personal Google Gemini API key for AI chat and regional language answers. Stored strictly in your browser.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setShowByokModal(true);
+                setTestResult(null);
+                setInputKey(customKey || '');
+              }}
+              className="px-3.5 py-1.5 rounded-xl border border-teal-accent text-teal-accent font-semibold hover:bg-teal-light transition-colors text-xs sm:text-sm flex items-center gap-2 cursor-pointer"
+            >
+              <Key className="w-3.5 h-3.5" />
+              <span>{customKey ? 'Manage Key' : 'Configure Key'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Current Key Status & Safe Logic Button */}
+        <div className="pt-3 border-t border-card-border/70 flex items-center justify-between flex-wrap gap-2 text-xs">
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-block w-2 h-2 rounded-full ${
+                customKey ? 'bg-teal-500' : 'bg-neutral-400'
+              }`}
+            />
+            <span className="text-muted">
+              {customKey
+                ? `Using Custom Key: ${maskApiKey(customKey)}`
+                : 'Using Default Server Key (Shared)'}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowSecurityModal(true)}
+            className="text-teal-accent hover:underline flex items-center gap-1 font-medium cursor-pointer"
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>How we keep your key safe</span>
+          </button>
+        </div>
+      </SpotlightCard>
+
+      {/* 9. Demo Reload & Danger Zone */}
       <SpotlightCard
         spotlightColor="rgba(45, 212, 191, 0.08)"
         className="bg-card rounded-card border border-card-border p-5 sm:p-6 shadow-soft space-y-5"
@@ -1325,6 +1585,236 @@ export function ProfileScreen() {
                     className="px-4 py-2 rounded-card bg-rose-600 text-white hover:bg-rose-700 text-xs font-semibold shadow-soft"
                   >
                     <Bi k="profile.confirmReset" en="Yes, Reset Everything" layout="inline" />
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* BYOK Gemini Configuration Modal */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showByokModal && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-card rounded-card max-w-md w-full p-6 shadow-float border border-card-border space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Key className="w-5 h-5 text-teal-accent" />
+                    <h3 className="font-semibold text-base text-foreground">
+                      Configure Google Gemini Key
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowByokModal(false)}
+                    className="p-1 rounded-lg text-muted hover:text-foreground hover:bg-card-subtle"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <p className="text-xs text-muted leading-relaxed">
+                  Enter your personal Google Gemini API key to use your own quota for Clearhale AI queries. If omitted or cleared, Clearhale uses the shared server key.
+                </p>
+
+                <div className="p-3 rounded-xl bg-card-subtle border border-card-border/70 flex items-center justify-between text-xs">
+                  <span className="text-muted">Need a free Gemini key?</span>
+                  <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-teal-accent font-semibold hover:underline flex items-center gap-1"
+                  >
+                    <span>Google AI Studio</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-foreground block">
+                    Gemini API Key
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showKeyText ? 'text' : 'password'}
+                      value={inputKey}
+                      onChange={(e) => {
+                        setInputKey(e.target.value);
+                        setTestResult(null);
+                      }}
+                      placeholder="AIzaSy..."
+                      className="w-full px-3 py-2 pr-10 rounded-xl border border-card-border bg-card text-foreground text-xs focus:border-teal-accent focus:outline-none font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowKeyText(!showKeyText)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-foreground p-1"
+                    >
+                      {showKeyText ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Test Result Message */}
+                {testResult && (
+                  <div
+                    className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
+                      testResult.valid
+                        ? 'bg-teal-accent/10 border border-teal-accent/30 text-teal-accent'
+                        : 'bg-rose-500/10 border border-rose-500/30 text-rose-500'
+                    }`}
+                  >
+                    {testResult.valid ? (
+                      <Check className="w-4 h-4 shrink-0" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                    )}
+                    <span>{testResult.message}</span>
+                  </div>
+                )}
+
+                {saveToast && (
+                  <div className="p-2.5 rounded-xl bg-teal-accent/10 border border-teal-accent/30 text-teal-accent text-xs flex items-center gap-2">
+                    <Check className="w-4 h-4 shrink-0" />
+                    <span>Key saved in browser!</span>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="pt-2 flex items-center justify-between flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={testingKey || !inputKey.trim()}
+                    onClick={handleTestKey}
+                    className="px-3 py-1.5 rounded-xl border border-card-border hover:border-teal-accent/50 bg-card hover:bg-card-subtle text-foreground text-xs font-medium flex items-center gap-1.5 disabled:opacity-40"
+                  >
+                    {testingKey && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <span>{testingKey ? 'Testing...' : 'Test Connection'}</span>
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    {customKey && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveKey}
+                        className="px-3 py-1.5 rounded-xl border border-rose-300 dark:border-rose-800/60 text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-medium"
+                      >
+                        Remove
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleSaveKey}
+                      className="px-4 py-1.5 rounded-xl bg-teal-accent hover:bg-teal-hover text-white text-xs font-semibold shadow-soft"
+                    >
+                      Save Key
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-1 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowByokModal(false);
+                      setShowSecurityModal(true);
+                    }}
+                    className="text-[11px] text-muted hover:text-teal-accent underline cursor-pointer"
+                  >
+                    Learn how we keep your API key secure
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* BYOK Security Architecture Explanation Modal */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showSecurityModal && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-card rounded-card max-w-md w-full p-6 shadow-float border border-card-border space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <ShieldCheck className="w-5 h-5 text-teal-accent" />
+                    <h3 className="font-semibold text-base text-foreground">
+                      How We Keep Your Key Safe
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowSecurityModal(false)}
+                    className="p-1 rounded-lg text-muted hover:text-foreground hover:bg-card-subtle"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-3 text-xs leading-relaxed">
+                  <div className="p-3 rounded-xl bg-card-subtle border border-card-border/60 space-y-1">
+                    <p className="font-semibold text-foreground flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-teal-accent" />
+                      1. Stored in Browser History / Local Storage Only
+                    </p>
+                    <p className="text-muted">
+                      Your key is saved only in your device browser (<code className="text-teal-accent font-mono">localStorage</code>). It is never saved in any database, cloud table, or persistent disk on our servers.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-card-subtle border border-card-border/60 space-y-1">
+                    <p className="font-semibold text-foreground flex items-center gap-1.5">
+                      <Shield className="w-3.5 h-3.5 text-teal-accent" />
+                      2. Encrypted HTTPS In-Flight Transport
+                    </p>
+                    <p className="text-muted">
+                      When querying the AI, your key is transmitted inside an encrypted HTTP header (<code className="text-teal-accent font-mono">x-gemini-api-key</code>) over TLS. It is never placed in public URLs or query parameters.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-card-subtle border border-card-border/60 space-y-1">
+                    <p className="font-semibold text-foreground flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-teal-accent" />
+                      3. Ephemeral In-Memory Execution
+                    </p>
+                    <p className="text-muted">
+                      The server only holds your key in volatile memory for the single streaming request to Google Gemini and releases it immediately. Server logs scrub and mask all credentials.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-card-subtle border border-card-border/60 space-y-1">
+                    <p className="font-semibold text-foreground flex items-center gap-1.5">
+                      <RotateCcw className="w-3.5 h-3.5 text-teal-accent" />
+                      4. Instant Reset & Shared Key Fallback
+                    </p>
+                    <p className="text-muted">
+                      You can delete or overwrite your key at any moment. If no custom key is present, Clearhale automatically falls back to our default shared server key.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowSecurityModal(false)}
+                    className="px-4 py-2 rounded-xl bg-teal-accent hover:bg-teal-hover text-white text-xs font-semibold shadow-soft cursor-pointer"
+                  >
+                    Understood
                   </button>
                 </div>
               </motion.div>

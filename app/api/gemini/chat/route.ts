@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const customGeminiKey = req.headers.get('x-gemini-api-key')?.trim() || undefined;
     const body = await req.json();
     const {
       message,
@@ -167,6 +168,7 @@ ${actionCatalogSummary}
       maxTokens: isRegional ? 1400 : 850,
       fallbackTemplateText,
       sessionHadTip,
+      customGeminiKey,
     });
 
     return new Response(streamResponse, {

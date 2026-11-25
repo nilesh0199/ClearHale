@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const customGeminiKey = req.headers.get('x-gemini-api-key')?.trim() || undefined;
     const body = await req.json();
     const {
       pm2_5 = 150,
@@ -157,6 +158,7 @@ ${familyView === 'asthma' ? '- CRITICAL ASTHMA RULE: Always remind asthma patien
       temperature: 0.2,
       maxTokens: 500,
       fallbackTemplateText: fallback,
+      customGeminiKey,
     });
 
     return new Response(streamResponse, {

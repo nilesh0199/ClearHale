@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
       .trim();
 
     // 4. Gemini Speech Generation
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = req.headers.get('x-gemini-api-key')?.trim() || process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         {

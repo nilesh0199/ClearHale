@@ -44,13 +44,13 @@ function devLog(message: string, ...args: unknown[]): void {
 function getGeminiModel(): string {
   const custom = process.env.GEMINI_MODEL?.trim();
   if (custom) return custom;
-  return 'gemini-3.5-flash-lite';
+  return 'gemini-2.5-flash';
 }
 
 function getGroqModel(): string {
   const custom = process.env.GROQ_MODEL?.trim();
   if (custom) return custom;
-  return 'qwen/qwen3.8-27b';
+  return 'llama-3.3-70b-versatile';
 }
 
 /**
@@ -59,12 +59,12 @@ function getGroqModel(): string {
  * 2. If only one provider's key is set (e.g. GEMINI_API_KEY on Vercel), prioritizes that provider.
  * 3. If both are set, routes according to language capability (Groq for EN/HI, Gemini for regional).
  */
-export function getProviderOrder(language?: string): {
+export function getProviderOrder(language?: string, customGeminiKey?: string): {
   primary: ProviderName;
   secondary: ProviderName;
 } {
   const hasGroq = Boolean(process.env.GROQ_API_KEY?.trim());
-  const hasGemini = Boolean(process.env.GEMINI_API_KEY?.trim());
+  const hasGemini = Boolean(customGeminiKey?.trim() || process.env.GEMINI_API_KEY?.trim());
 
   if (!hasGroq && hasGemini) {
     return { primary: 'gemini', secondary: 'groq' };
@@ -95,7 +95,7 @@ async function callGeminiStream(
   onFirstToken: () => void,
   onChunk: (text: string) => void
 ): Promise<void> {
-  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+  const apiKey = (options.customGeminiKey || process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey) throw new Error('GEMINI_API_KEY is not set');
 
   const systemMessage =
@@ -113,9 +113,9 @@ async function callGeminiStream(
   const modelsToTry = Array.from(
     new Set([
       preferredModel,
-      'gemini-3.5-flash-lite',
-      'gemini-3.5-flash',
-      'gemini-3.6-flash',
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
       'gemini-flash-latest',
     ])
   );
@@ -148,6 +148,9 @@ async function callGeminiStream(
         const errText = await res.text().catch(() => '');
         devLog(`Gemini stream model [${modelName}] HTTP error ${res.status}: ${errText}`);
         lastError = new Error(`Gemini HTTP error ${res.status}: ${errText}`);
+        if (res.status === 400 || res.status === 403 || res.status === 429) {
+          break;
+        }
         continue;
       }
 
@@ -208,7 +211,7 @@ async function callGeminiGenerate(
   options: AIOptions,
   signal: AbortSignal
 ): Promise<string> {
-  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+  const apiKey = (options.customGeminiKey || process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey) throw new Error('GEMINI_API_KEY is not set');
 
   const systemMessage =
@@ -226,9 +229,9 @@ async function callGeminiGenerate(
   const modelsToTry = Array.from(
     new Set([
       preferredModel,
-      'gemini-3.5-flash-lite',
-      'gemini-3.5-flash',
-      'gemini-3.6-flash',
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
       'gemini-flash-latest',
     ])
   );
@@ -260,6 +263,9 @@ async function callGeminiGenerate(
         const errText = await res.text().catch(() => '');
         devLog(`Gemini generate model [${modelName}] HTTP error ${res.status}: ${errText}`);
         lastError = new Error(`Gemini HTTP error ${res.status}: ${errText}`);
+        if (res.status === 400 || res.status === 403 || res.status === 429) {
+          break;
+        }
         continue;
       }
 
@@ -308,9 +314,9 @@ async function callGroqStream(
   const modelsToTry = Array.from(
     new Set([
       preferredModel,
+      'llama-3.3-70b-versatile',
+      'llama-3.1-70b-versatile',
       'qwen/qwen3.8-27b',
-      'openai/gpt-oss-120b',
-      'openai/gpt-oss-20b',
     ])
   );
   let lastError: Error | null = null;
@@ -419,9 +425,9 @@ async function callGroqGenerate(
   const modelsToTry = Array.from(
     new Set([
       preferredModel,
+      'llama-3.3-70b-versatile',
+      'llama-3.1-70b-versatile',
       'qwen/qwen3.8-27b',
-      'openai/gpt-oss-120b',
-      'openai/gpt-oss-20b',
     ])
   );
   let lastError: Error | null = null;
@@ -473,7 +479,7 @@ export async function stream(
   options: AIOptions = {}
 ): Promise<ReadableStream<Uint8Array>> {
   const encoder = new TextEncoder();
-  const { primary, secondary } = getProviderOrder(options.language);
+  const { primary, secondary } = getProviderOrder(options.language, options.customGeminiKey);
 
   const isDebugForceFallback = process.env.DEBUG_FORCE_FALLBACK === 'true';
 
@@ -651,7 +657,7 @@ export async function generate(
   messages: AIMessage[],
   options: AIOptions = {}
 ): Promise<string> {
-  const { primary, secondary } = getProviderOrder(options.language);
+  const { primary, secondary } = getProviderOrder(options.language, options.customGeminiKey);
   const isDebugForceFallback = process.env.DEBUG_FORCE_FALLBACK === 'true';
 
   let usedFallback = false;

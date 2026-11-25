@@ -64,7 +64,18 @@ import {
   ArrowUp,
   ChevronDown,
   LucideIcon,
+  Bell,
 } from 'lucide-react';
+import {
+  isNotificationSupported,
+  getNotificationPermission,
+  hasBeenPromptedForNotifications,
+  markNotificationPrompted,
+  requestNotificationPermission,
+  checkAndTriggerSevereAlert,
+  sendTestNotification,
+} from '@/lib/notifications';
+import { getByokHeaders } from '@/lib/byok';
 
 function renderHighlightedSentences(
   text: string,
@@ -136,6 +147,40 @@ export function HomeScreen() {
   const [isDesktopDevice, setIsDesktopDevice] = useState(false);
   const isFullScreenLayout =
     (isDesktopFullScreen || manualFullscreen) && isDesktopDevice;
+
+  // Severe Air Quality Notifications Prompt & Auto-Alert
+  const [showNotificationBanner, setShowNotificationBanner] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isNotificationSupported()) {
+      const perm = getNotificationPermission();
+      if (perm === 'default' && !hasBeenPromptedForNotifications()) {
+        setShowNotificationBanner(true);
+      }
+    }
+  }, []);
+
+  const handleEnableNotifications = async () => {
+    setShowNotificationBanner(false);
+    const perm = await requestNotificationPermission();
+    if (perm === 'granted') {
+      sendTestNotification(profile.city.name);
+    }
+  };
+
+  const handleDismissNotificationBanner = () => {
+    setShowNotificationBanner(false);
+    markNotificationPrompted();
+  };
+
+  // Background trigger when air quality crosses into Very Poor (>120) or Severe (>250)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (airData && airData.current && typeof airData.current.pm2_5 === 'number' && airData.current.pm2_5 > 120) {
+      checkAndTriggerSevereAlert(airData.current.pm2_5, profile.city.name, currentBand.label);
+    }
+  }, [airData?.current?.pm2_5, profile.city.name, currentBand.label]);
 
   useEffect(() => {
     const checkFullScreen = () => {
@@ -1046,7 +1091,7 @@ export function HomeScreen() {
       try {
         const res = await fetch('/api/gemini/next-hours', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getByokHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({
             pm2_5: airData.current.pm2_5,
             aqiBand: currentBand.key,
@@ -1496,6 +1541,51 @@ export function HomeScreen() {
       {/* Row 2: Family Tabs (fixed on desktop, never scrolls, with page background) */}
       <div className="w-full bg-background relative z-10 py-0 lg:py-2.5 px-0 lg:px-8 shrink-0">
         <div className={`w-full ${isFullScreenLayout ? 'max-w-6xl' : 'max-w-5xl'} mx-auto space-y-2`}>
+          {/* One-time Severe Air Alerts Permission Prompt Toast */}
+          <AnimatePresence>
+            {showNotificationBanner && (
+              <motion.div
+                initial={{ opacity: 0, y: 16, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 16, scale: 0.95 }}
+                className="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md z-40"
+              >
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-card border border-teal-accent/30 shadow-float flex items-center justify-between gap-3 text-xs sm:text-sm">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-teal-accent/20 flex items-center justify-center shrink-0">
+                      <Bell className="w-4.5 h-4.5 text-teal-accent" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-foreground truncate">
+                        Turn on Severe Air Alerts?
+                      </p>
+                      <p className="text-xs text-muted truncate">
+                        Get warned if {profile.city.name} air drops to Very Poor or Severe.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={handleEnableNotifications}
+                      className="px-3.5 py-1.5 rounded-xl bg-teal-accent hover:bg-teal-hover text-white text-xs font-semibold shadow-soft transition-colors cursor-pointer"
+                    >
+                      Enable
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDismissNotificationBanner}
+                      aria-label="Dismiss notification alert prompt"
+                      className="p-1.5 text-muted hover:text-foreground rounded-lg hover:bg-card-subtle transition-colors cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Family View Segmented Switcher (Mobile: Dynamic pill switcher with smooth expansion & scrolling, Desktop: Full pills) */}
           <div
             ref={tabListRef}

@@ -118,6 +118,10 @@ export function resetAllStoredData(): void {
     localStorage.removeItem('vayu_last_reading_cache');
     localStorage.removeItem('clearhale_chat_history');
     localStorage.removeItem('vayu_chat_history');
+    localStorage.removeItem('clearhale_byok_gemini_key');
+    localStorage.removeItem('clearhale_last_severe_alert');
+    localStorage.removeItem('clearhale_notifications_prompted');
+    localStorage.removeItem('clearhale_notifications_enabled');
     sessionStorage.removeItem('vayu_had_fallback_tip');
     sessionStorage.removeItem('clearhale_had_fallback_tip');
   } catch (err) {

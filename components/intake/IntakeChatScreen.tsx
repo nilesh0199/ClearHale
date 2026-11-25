@@ -13,6 +13,7 @@ import { hasEmergencySymptoms } from '@/lib/medicalSafety';
 import { WaveformBars } from '../voice/WaveformBars';
 import { Bi } from '../Bi';
 import { HouseholdProfile, FamilyMember, CommuteType, CookingFuel, BudgetTier, PriorityGoal } from '@/types';
+import { getByokHeaders } from '@/lib/byok';
 import {
   ArrowLeft,
   ArrowRight,
@@ -262,7 +263,7 @@ export function IntakeChatScreen({ mode, onClose }: IntakeChatScreenProps) {
     try {
       const res = await fetch('/api/ai/intake', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getByokHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           questionId: currentQ?.id || 'question',
           userText: textToSubmit,

@@ -10,6 +10,7 @@ import { Bi } from '../Bi';
 import { Term } from '../Term';
 import { ShinyText } from '../ui/rb/ShinyText';
 import { ChatMessage } from '@/types';
+import { getByokHeaders } from '@/lib/byok';
 import { hasEmergencySymptoms } from '@/lib/medicalSafety';
 import { detectProfileChangeInMessage, ProfileUpdateProposal } from '@/lib/ai/intakeParser';
 import {
@@ -436,7 +437,7 @@ export function AskScreen() {
     try {
       const res = await fetch('/api/gemini/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getByokHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           message: query,
           history: messages.slice(-6).map((m) => ({

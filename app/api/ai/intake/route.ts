@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const customGeminiKey = req.headers.get('x-gemini-api-key')?.trim() || undefined;
     const body = await req.json();
     const {
       questionId,
@@ -116,6 +117,7 @@ Turn Count: ${turnCount}`,
             followUpQuestion: null,
             understoodSummary: 'Answer recorded.',
           }),
+          customGeminiKey,
         }
       );
 
