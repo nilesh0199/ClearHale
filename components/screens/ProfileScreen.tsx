@@ -461,7 +461,7 @@ export function ProfileScreen() {
           )}
         </div>
 
-        <p className="text-xs text-muted leading-relaxed pt-2 border-t border-card-border/60">
+        <p className="text-xs text-muted leading-relaxed pt-2">
           <Bi k="profile.cloudConsent" layout="plain" />
         </p>
       </SpotlightCard>
@@ -507,7 +507,7 @@ export function ProfileScreen() {
         </div>
 
         {/* Reduce Effects Switch */}
-        <div className="pt-4 mt-4 border-t border-card-border/70 flex items-center justify-between gap-4">
+        <div className="pt-3 mt-3 flex items-center justify-between gap-4">
           <div className="space-y-0.5">
             <span className="text-xs sm:text-sm font-semibold text-foreground block">
               Reduce effects
@@ -537,7 +537,7 @@ export function ProfileScreen() {
         {process.env.NEXT_PUBLIC_THEME_EXPERIMENT === 'true' && (
           <>
             {/* Accent Mode Switcher */}
-            <div className="pt-4 mt-4 border-t border-card-border/70">
+            <div className="pt-3 mt-3">
               <div className="space-y-0.5 mb-3">
                 <span className="text-xs sm:text-sm font-semibold text-foreground block">
                   Accent Color Mode
@@ -580,7 +580,7 @@ export function ProfileScreen() {
             </div>
 
             {/* True Black (OLED) Setting */}
-            <div className="pt-4 mt-4 border-t border-card-border/70 flex items-center justify-between gap-4">
+            <div className="pt-3 mt-3 flex items-center justify-between gap-4">
               <div className="space-y-0.5">
                 <span className="text-xs sm:text-sm font-semibold text-foreground block">
                   True black (OLED)
@@ -1130,7 +1130,7 @@ export function ProfileScreen() {
 
         {/* Child Age Band (if children present) */}
         {household.members.includes('child') && (
-          <div className="pt-2 border-t border-card-border/60">
+          <div className="pt-2">
             <label className="text-xs sm:text-sm font-medium text-foreground block mb-3">
               Child Age Band
             </label>
@@ -1164,7 +1164,7 @@ export function ProfileScreen() {
         )}
 
         {/* Work & Commute */}
-        <div className="pt-2 border-t border-card-border/60 space-y-4">
+        <div className="pt-2 space-y-4">
           <div>
             <label className="text-xs sm:text-sm font-medium text-foreground block mb-3">
               Work Environment
@@ -1245,7 +1245,7 @@ export function ProfileScreen() {
         </div>
 
         {/* Air Purifier & Clean Air Gear */}
-        <div className="pt-2 border-t border-card-border/60 space-y-4">
+        <div className="pt-2 space-y-4">
           <div>
             <label className="text-xs sm:text-sm font-medium text-foreground block mb-3">
               Home Air Purifier
@@ -1355,7 +1355,7 @@ export function ProfileScreen() {
         </div>
 
         {/* Status Line & Test Alert */}
-        <div className="pt-3 border-t border-card-border/70 flex items-center justify-between flex-wrap gap-2 text-xs">
+        <div className="pt-2 flex items-center justify-between flex-wrap gap-2 text-xs">
           <div className="flex items-center gap-2">
             <span
               className={`inline-block w-2 h-2 rounded-full ${
@@ -1429,7 +1429,7 @@ export function ProfileScreen() {
         </div>
 
         {/* Current Key Status & Safe Logic Button */}
-        <div className="pt-3 border-t border-card-border/70 flex items-center justify-between flex-wrap gap-2 text-xs">
+        <div className="pt-2 flex items-center justify-between flex-wrap gap-2 text-xs">
           <div className="flex items-center gap-2">
             <span
               className={`inline-block w-2 h-2 rounded-full ${
@@ -1479,7 +1479,7 @@ export function ProfileScreen() {
         </div>
 
         {/* Clear Chat History */}
-        <div className="pt-4 border-t border-card-border/70 flex items-center justify-between flex-wrap gap-3">
+        <div className="pt-3 flex items-center justify-between flex-wrap gap-3">
           <div className="space-y-1.5 sm:space-y-2">
             <h2 className="text-sm sm:text-base font-semibold text-foreground flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-teal-accent" />
@@ -1513,7 +1513,7 @@ export function ProfileScreen() {
         </div>
 
         {/* Reset All Data */}
-        <div className="pt-4 border-t border-card-border/70 flex items-center justify-between flex-wrap gap-3">
+        <div className="pt-3 flex items-center justify-between flex-wrap gap-3">
           <div className="space-y-1.5 sm:space-y-2">
             <h2 className="text-sm sm:text-base font-semibold text-rose-800 dark:text-rose-400 flex items-center gap-2">
               <Trash2 className="w-4 h-4 text-rose-500" />
