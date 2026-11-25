@@ -1751,31 +1751,6 @@ export function HomeScreen() {
         </AnimatePresence>
       </SpotlightCard>
 
-      {/* Share link under "Next 2 hours" card */}
-      <div className="flex justify-end pt-1 -mt-4 px-1">
-        <button
-          onClick={() =>
-            handleOpenShare(
-              activeFamilyView === 'outdoor_worker'
-                ? 'outdoor_worker'
-                : activeFamilyView === 'child'
-                ? 'child'
-                : activeFamilyView === 'elderly'
-                ? 'elderly'
-                : activeFamilyView === 'pregnant'
-                ? 'pregnant'
-                : activeFamilyView === 'asthma'
-                ? 'asthma'
-                : 'whole_family'
-            )
-          }
-          className="text-xs text-teal-accent hover:underline flex items-center gap-1.5 font-medium transition-colors cursor-pointer min-h-[36px]"
-        >
-          <Share2 className="w-3.5 h-3.5" strokeWidth={1.75} />
-          <Bi k="share.shareCard" en="Share air card with family" layout="inline" />
-        </button>
-      </div>
-
       {/* Top 3 Actions with Cost Tags */}
       <section id="top-actions-section" className="space-y-3 scroll-mt-4">
         <div className="flex items-center justify-between">
