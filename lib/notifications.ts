@@ -7,6 +7,9 @@
 const NOTIFICATION_STORAGE_KEY = 'clearhale_last_severe_alert';
 const NOTIFICATION_PROMPTED_KEY = 'clearhale_notifications_prompted';
 const NOTIFICATIONS_ENABLED_KEY = 'clearhale_notifications_enabled';
+export const NOTIFICATION_NEVER_ASK_KEY = 'clearhale_notifications_never_ask';
+export const NOTIFICATION_FIRST_MODAL_DONE_KEY = 'clearhale_notifications_first_modal_done';
+export const NOTIFICATION_DAILY_DISMISSED_KEY = 'clearhale_nudge_alerts_dismissed';
 
 // Cooldown interval: 8 hours
 export const SEVERE_ALERT_COOLDOWN_MS = 8 * 60 * 60 * 1000;
@@ -34,6 +37,43 @@ export function hasBeenPromptedForNotifications(): boolean {
 export function markNotificationPrompted(): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem(NOTIFICATION_PROMPTED_KEY, 'true');
+}
+
+export function isNeverAskNotifications(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(NOTIFICATION_NEVER_ASK_KEY) === 'true';
+}
+
+export function setNeverAskNotifications(neverAsk: boolean): void {
+  if (typeof window === 'undefined') return;
+  if (neverAsk) {
+    localStorage.setItem(NOTIFICATION_NEVER_ASK_KEY, 'true');
+    markNotificationPrompted();
+    markFirstTimeNotificationModalDone();
+  } else {
+    localStorage.removeItem(NOTIFICATION_NEVER_ASK_KEY);
+  }
+}
+
+export function isFirstTimeNotificationModalDone(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(NOTIFICATION_FIRST_MODAL_DONE_KEY) === 'true';
+}
+
+export function markFirstTimeNotificationModalDone(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(NOTIFICATION_FIRST_MODAL_DONE_KEY, 'true');
+  markNotificationPrompted();
+}
+
+export function isDailyAlertNudgeDismissed(todayStr: string): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(NOTIFICATION_DAILY_DISMISSED_KEY) === todayStr;
+}
+
+export function dismissDailyAlertNudge(todayStr: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(NOTIFICATION_DAILY_DISMISSED_KEY, todayStr);
 }
 
 export function isSevereAlertsEnabled(): boolean {

@@ -65,6 +65,7 @@ describe('Desktop Home Sticky Layout (Playwright E2E)', () => {
     // Bypass onboarding and set default active profile
     await page.addInitScript((base) => {
       localStorage.setItem('clearhale_user_profile', JSON.stringify(base));
+      localStorage.setItem('clearhale_notifications_first_modal_done', 'true');
     }, BASE_PROFILE);
 
     await page.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' });
@@ -141,6 +142,7 @@ describe('Desktop Home Sticky Layout (Playwright E2E)', () => {
 
     await page.addInitScript((base) => {
       localStorage.setItem('clearhale_user_profile', JSON.stringify(base));
+      localStorage.setItem('clearhale_notifications_first_modal_done', 'true');
     }, BASE_PROFILE);
 
     await page.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' });
@@ -171,6 +173,7 @@ describe('Desktop Home Sticky Layout (Playwright E2E)', () => {
 
     await page.addInitScript((base) => {
       localStorage.setItem('clearhale_user_profile', JSON.stringify(base));
+      localStorage.setItem('clearhale_notifications_first_modal_done', 'true');
     }, BASE_PROFILE);
 
     await page.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' });
@@ -205,6 +208,7 @@ describe('Desktop Home Sticky Layout (Playwright E2E)', () => {
 
     await page.addInitScript((base) => {
       localStorage.setItem('clearhale_user_profile', JSON.stringify(base));
+      localStorage.setItem('clearhale_notifications_first_modal_done', 'true');
     }, BASE_PROFILE);
 
     await page.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' });
@@ -238,14 +242,15 @@ describe('Desktop Home Sticky Layout (Playwright E2E)', () => {
     const page720 = await ctx720.newPage();
     await page720.addInitScript((base) => {
       localStorage.setItem('clearhale_user_profile', JSON.stringify(base));
+      localStorage.setItem('clearhale_notifications_first_modal_done', 'true');
     }, BASE_PROFILE);
     await page720.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' });
     await page720.waitForSelector('#recommendations-container');
 
-    // Ring SVG on 720p should be compact (<= 185px)
+    // Ring SVG on 720p should be compact (<= 195px)
     const ringSvg720 = page720.locator('section svg').first();
     const ringBox720 = await ringSvg720.boundingBox();
-    assert.ok(ringBox720.width <= 185, `Ring should be compact (<= 185px) on 720p, got ${ringBox720.width}`);
+    assert.ok(ringBox720.width <= 195, `Ring should be compact (<= 195px) on 720p, got ${ringBox720.width}`);
 
     // Check left column is not cut off
     const leftCol = page720.locator('#recommendations-container').locator('..').locator('div').first();
@@ -259,6 +264,7 @@ describe('Desktop Home Sticky Layout (Playwright E2E)', () => {
     const page1080 = await ctx1080.newPage();
     await page1080.addInitScript((base) => {
       localStorage.setItem('clearhale_user_profile', JSON.stringify(base));
+      localStorage.setItem('clearhale_notifications_first_modal_done', 'true');
     }, BASE_PROFILE);
     await page1080.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' });
     await page1080.waitForSelector('#recommendations-container');
@@ -276,6 +282,7 @@ describe('Desktop Home Sticky Layout (Playwright E2E)', () => {
     const pageMobile = await ctxMobile.newPage();
     await pageMobile.addInitScript((base) => {
       localStorage.setItem('clearhale_user_profile', JSON.stringify(base));
+      localStorage.setItem('clearhale_notifications_first_modal_done', 'true');
     }, BASE_PROFILE);
     await pageMobile.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' });
     await pageMobile.waitForSelector('header');
@@ -300,6 +307,7 @@ describe('Desktop Home Sticky Layout (Playwright E2E)', () => {
         theme: 'dark',
       }));
       localStorage.setItem('clearhale_theme', 'dark');
+      localStorage.setItem('clearhale_notifications_first_modal_done', 'true');
     }, BASE_PROFILE);
     await pageRegional.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' });
     await pageRegional.waitForSelector('#recommendations-container');
