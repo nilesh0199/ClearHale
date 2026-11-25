@@ -1370,7 +1370,7 @@ export function HomeScreen() {
               onWheel={handleLeftCardWheel}
               className="lg:col-span-5 h-full min-h-0 lg:overflow-y-auto lg:overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden flex flex-col"
             >
-              <section className={`relative overflow-hidden bg-card rounded-card border border-card-border shadow-soft flex flex-col items-center justify-between text-center transition-all min-h-full ${isCompact ? 'p-4 sm:p-5' : 'p-6 sm:p-7'}`}>
+              <section className={`relative overflow-hidden bg-card rounded-card border border-card-border shadow-soft flex flex-col items-center text-center transition-all ${isCompact ? 'p-4 sm:p-5' : 'p-6 sm:p-7'}`}>
             {/* Flat subtle band tint behind the ring card (no gradient, no glow) */}
             <div
               className="absolute inset-0 pointer-events-none opacity-[0.05]"
@@ -1491,8 +1491,8 @@ export function HomeScreen() {
               className={`${
                 isCompact
                   ? 'mt-2 space-y-1.5'
-                  : 'mt-4 lg:mt-0 lg:my-auto lg:translate-y-7 space-y-2'
-              } max-w-lg text-center w-full my-auto`}
+                  : 'mt-4 sm:mt-5 space-y-2'
+              } max-w-lg text-center w-full`}
             >
               <p className={`${isCompact ? 'text-xs sm:text-sm leading-snug' : 'text-sm sm:text-base leading-relaxed'} font-medium text-foreground`}>
                 {currentBand.statusLine}
@@ -1546,7 +1546,7 @@ export function HomeScreen() {
             </div>
 
             {/* Secondary metric chips (US AQI & PM10) */}
-            <div className={`${isCompact ? 'mt-2 pt-2 text-[11px]' : 'mt-4 pt-4 text-xs'} flex items-center justify-center gap-4 text-muted border-t border-card-border/60 w-full max-w-xs relative z-10 tabular-nums`}>
+            <div className={`${isCompact ? 'mt-2 pt-2 text-[11px]' : 'mt-4 pt-4 sm:mt-5 sm:pt-5 text-xs'} flex items-center justify-center gap-4 text-muted border-t border-card-border/60 w-full max-w-xs relative z-10 tabular-nums`}>
               <div>
                 <Term k="aqi">
                   <span className="text-muted/70 hover:text-teal-accent transition-colors cursor-pointer">
