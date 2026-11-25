@@ -4,20 +4,10 @@ import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/context/AppContext';
+import { MythItem, getMythField } from '@/data/myths';
 import { X, CheckCircle2, AlertTriangle, BookOpen } from 'lucide-react';
 
-export interface MythItem {
-  id: string;
-  category: 'masks' | 'indoor' | 'cooking';
-  titleEn: string;
-  titleHi: string;
-  titleMr: string;
-  verdictKey: string;
-  verdictEn: string;
-  mythText: string;
-  explanation: string;
-  whatToDo: string;
-}
+export { type MythItem } from '@/data/myths';
 
 export interface MythDetailModalProps {
   myth: MythItem | null;
@@ -31,6 +21,8 @@ export function MythDetailModal({
   onClose,
 }: MythDetailModalProps) {
   const { profile } = useApp();
+  const lang = profile.language;
+  const isEn = lang === 'en';
 
   // Close on Escape key press
   useEffect(() => {
@@ -57,6 +49,84 @@ export function MythDetailModal({
   if (typeof document === 'undefined' || !isOpen || !myth) {
     return null;
   }
+
+  // Regional language localized text
+  const localizedTitle = getMythField(myth, 'title', lang);
+  const localizedVerdict = getMythField(myth, 'verdict', lang);
+  const localizedClaim = getMythField(myth, 'mythText', lang);
+  const localizedExplanation = getMythField(myth, 'explanation', lang);
+  const localizedWhatToDo = getMythField(myth, 'whatToDo', lang);
+
+  // Section Header Labels in regional language
+  const badgeLabel = isEn
+    ? 'Myth Busted'
+    : lang === 'hi'
+    ? 'भ्रम का सच (Myth Busted)'
+    : lang === 'mr'
+    ? 'गैरसमज दूर (Myth Busted)'
+    : lang === 'bn'
+    ? 'ভ্রান্ত ধারণা নিরসন (Myth Busted)'
+    : lang === 'ta'
+    ? 'கட்டுக்கதை உடைக்கப்பட்டது (Myth Busted)'
+    : lang === 'te'
+    ? 'అపోహ నివృత్తి (Myth Busted)'
+    : 'भ्रम का सच (Myth Busted)';
+
+  const claimLabel = isEn
+    ? 'Common Winter Smog Claim'
+    : lang === 'hi'
+    ? 'प्रचलित शीतकालीन भ्रम / दावा'
+    : lang === 'mr'
+    ? 'प्रचलित हिवाळी गैरसमज / दावा'
+    : lang === 'bn'
+    ? 'প্রচলিত শীতকালীন ভ্রান্ত বিশ্বাস'
+    : lang === 'ta'
+    ? 'பொதுவான தவறான நம்பிக்கை'
+    : lang === 'te'
+    ? 'సాధారణ శీతాకాలపు అపోహ'
+    : 'प्रचलित शीतकालीन भ्रम / दावा';
+
+  const realityLabel = isEn
+    ? 'The Scientific Reality:'
+    : lang === 'hi'
+    ? 'वैज्ञानिक सच्चाई (Scientific Reality):'
+    : lang === 'mr'
+    ? 'वैज्ञानिक सत्य (Scientific Reality):'
+    : lang === 'bn'
+    ? 'বৈজ্ঞানিক সত্য (Scientific Reality):'
+    : lang === 'ta'
+    ? 'அறிவியல் உண்மை (Scientific Reality):'
+    : lang === 'te'
+    ? 'శాస్త్రీయ నిజం (Scientific Reality):'
+    : 'वैज्ञानिक सच्चाई (Scientific Reality):';
+
+  const whatToDoLabel = isEn
+    ? 'What to do instead:'
+    : lang === 'hi'
+    ? 'इसके बजाय क्या करें (What to do instead):'
+    : lang === 'mr'
+    ? 'त्याऐवजी काय करावे (What to do instead):'
+    : lang === 'bn'
+    ? 'এর পরিবর্তে কী করবেন (What to do instead):'
+    : lang === 'ta'
+    ? 'அதற்கு பதிலாக என்ன செய்ய வேண்டும் (What to do instead):'
+    : lang === 'te'
+    ? 'బదులుగా ఏమి చేయాలి (What to do instead):'
+    : 'इसके बजाय क्या करें (What to do instead):';
+
+  const closeLabel = isEn
+    ? 'Close'
+    : lang === 'hi'
+    ? 'बंद करें (Close)'
+    : lang === 'mr'
+    ? 'बंद करा (Close)'
+    : lang === 'bn'
+    ? 'বন্ধ করুন (Close)'
+    : lang === 'ta'
+    ? 'மூடு (Close)'
+    : lang === 'te'
+    ? 'మూసివేయి (Close)'
+    : 'बंद करें (Close)';
 
   return createPortal(
     <AnimatePresence>
@@ -94,14 +164,19 @@ export function MythDetailModal({
               <div className="flex items-center gap-2 flex-wrap mb-1.5">
                 <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40">
                   <AlertTriangle className="w-3 h-3 text-rose-600 dark:text-rose-400" />
-                  Myth Busted
+                  {badgeLabel}
                 </span>
                 <span className="text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-card-subtle text-muted border border-card-border capitalize">
                   {myth.category}
                 </span>
+                {localizedVerdict && !isEn && (
+                  <span className="text-[11px] px-2 py-0.5 rounded-md font-medium bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                    {localizedVerdict}
+                  </span>
+                )}
               </div>
 
-              {profile.language === 'en' ? (
+              {isEn ? (
                 <h2
                   id="myth-modal-title"
                   className="text-base sm:text-lg font-bold text-foreground leading-snug"
@@ -114,7 +189,7 @@ export function MythDetailModal({
                     id="myth-modal-title"
                     className="text-base sm:text-lg font-bold text-foreground leading-snug"
                   >
-                    {profile.language === 'mr' ? myth.titleMr : myth.titleHi}
+                    {localizedTitle}
                   </h2>
                   <span className="text-xs text-muted font-normal mt-0.5">
                     {myth.titleEn}
@@ -136,37 +211,54 @@ export function MythDetailModal({
 
           {/* Scrollable Body */}
           <div className="overflow-y-auto p-4 sm:p-6 space-y-4 text-xs sm:text-sm">
-            {/* Common Myth Claim */}
+            {/* Common Myth Claim (Explained in Regional Language) */}
             <div className="p-3.5 rounded-xl bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200/70 dark:border-rose-900/40 text-rose-950 dark:text-rose-200">
               <span className="text-[11px] uppercase tracking-wider font-semibold text-rose-700 dark:text-rose-400 block mb-1">
-                Common Winter Smog Claim
+                {claimLabel}
               </span>
               <p className="italic text-xs sm:text-sm leading-relaxed font-medium">
-                &ldquo;{myth.mythText}&rdquo;
+                &ldquo;{localizedClaim}&rdquo;
               </p>
+              {!isEn && myth.mythTextEn !== localizedClaim && (
+                <p className="text-[11px] text-muted italic mt-1 font-normal opacity-75">
+                  &ldquo;{myth.mythTextEn}&rdquo;
+                </p>
+              )}
             </div>
 
-            {/* Peer-reviewed scientific reality */}
+            {/* Peer-reviewed scientific reality (Explained in Regional Language) */}
             <div className="space-y-1.5">
               <span className="font-semibold text-foreground text-xs sm:text-sm flex items-center gap-1.5">
                 <BookOpen className="w-4 h-4 text-teal-accent" strokeWidth={2} />
-                The Scientific Reality:
+                {realityLabel}
               </span>
-              <p className="leading-relaxed text-foreground/90 pl-5 text-xs sm:text-sm">
-                {myth.explanation}
-              </p>
+              <div className="pl-5 space-y-1 text-xs sm:text-sm">
+                <p className="leading-relaxed text-foreground/95">
+                  {localizedExplanation}
+                </p>
+                {!isEn && myth.explanationEn !== localizedExplanation && (
+                  <p className="text-xs text-muted leading-relaxed font-normal pt-1 border-t border-card-border/40 mt-1.5">
+                    {myth.explanationEn}
+                  </p>
+                )}
+              </div>
             </div>
 
-            {/* What to do instead */}
+            {/* What to do instead (Explained in Regional Language) */}
             <div className="p-3.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-800/50 text-teal-950 dark:text-teal-100 flex items-start gap-2.5">
               <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
-              <div className="space-y-1">
+              <div className="space-y-1 flex-1 min-w-0">
                 <strong className="font-semibold text-xs sm:text-sm text-teal-800 dark:text-teal-300 block">
-                  What to do instead:
+                  {whatToDoLabel}
                 </strong>
                 <p className="text-xs sm:text-sm text-teal-950 dark:text-teal-100 leading-relaxed">
-                  {myth.whatToDo}
+                  {localizedWhatToDo}
                 </p>
+                {!isEn && myth.whatToDoEn !== localizedWhatToDo && (
+                  <p className="text-xs text-teal-800/70 dark:text-teal-300/70 leading-relaxed font-normal pt-1 border-t border-teal-200/50 dark:border-teal-800/50 mt-1">
+                    {myth.whatToDoEn}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -178,7 +270,7 @@ export function MythDetailModal({
               onClick={onClose}
               className="min-h-[42px] px-5 py-2 rounded-xl border border-card-border bg-card hover:bg-card-subtle text-foreground text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
             >
-              Close
+              {closeLabel}
             </button>
           </div>
         </motion.div>

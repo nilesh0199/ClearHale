@@ -6,137 +6,71 @@ import { useApp } from '@/context/AppContext';
 import { Bi } from '../Bi';
 import { SpotlightCard } from '../ui/rb/SpotlightCard';
 import { MythDetailModal } from '../care/MythDetailModal';
+import { MYTH_ITEMS, MythCategory, MythItem, getMythField } from '@/data/myths';
 import {
   HeartPulse,
   PhoneCall,
-  ChevronDown,
   ChevronRight,
-  CheckCircle2,
   AlertTriangle,
-  Flame,
-  Wind,
-  Shield,
-  Home,
 } from 'lucide-react';
 
-export type MythCategory = 'all' | 'masks' | 'indoor' | 'cooking';
+export { type MythCategory, type MythItem } from '@/data/myths';
 
-interface MythItem {
-  id: string;
-  category: 'masks' | 'indoor' | 'cooking';
-  titleEn: string;
-  titleHi: string;
-  titleMr: string;
-  verdictKey: string;
-  verdictEn: string;
-  mythText: string;
-  explanation: string;
-  whatToDo: string;
-}
-
-const MYTH_ITEMS: MythItem[] = [
+const EMERGENCY_SIGNS: { en: string; hi: string; mr: string; bn?: string; ta?: string; te?: string }[] = [
   {
-    id: 'cloth_masks',
-    category: 'masks',
-    titleEn: 'Cloth Masks, Scarves & Dupattas',
-    titleHi: 'कपड़े के मास्क और दुपट्टे',
-    titleMr: 'कापडी मास्क आणि ओढणी',
-    verdictKey: 'learn.myths.badge',
-    verdictEn: 'Myth for PM2.5',
-    mythText: 'Wrapping a dupatta, cloth handkerchief, or surgical mask stops winter smog.',
-    explanation:
-      'Cloth fabric weaves have large microscopic gaps between 50 and 200 microns. Fine winter smog particles (PM2.5) are smaller than 2.5 microns and pass effortlessly through cloth fibers into your lungs.',
-    whatToDo:
-      'Wear a certified, well-fitted N95 or FFP2 respirator with tight facial seal during outdoor commutes. (Never use on infants or children under 2).',
+    en: 'Stridor or high-pitched wheezing at rest',
+    hi: 'आराम करते समय भी सांस में सीटी जैसी तेज आवाज (स्ट्रिडर)',
+    mr: 'विश्रांतीच्या वेळीही श्वास घेताना शिटीसारखा आवाज येणे',
+    bn: 'বিশ্রামের সময়ও শ্বাস নিতে গিয়ে বাঁশির মতো শব্দ হওয়া',
+    ta: 'ஓய்வெடுக்கும் போதும் மூச்சுத்திணறல் அல்லது சீழ்க்கை ஒலி',
+    te: 'విశ్రాంతి తీసుకుంటున్నప్పుడు కూడా శ్వాసలో పిల్లికూతలు రావడం',
   },
   {
-    id: 'houseplants',
-    category: 'indoor',
-    titleEn: 'Houseplants Clean Smog Indoors',
-    titleHi: 'घर के पौधे (हाउसप्लांट्स)',
-    titleMr: 'घरातील शोभेची झाडे',
-    verdictKey: 'learn.myths.badge',
-    verdictEn: 'Myth for Smog',
-    mythText: 'Snake plants and money plants remove winter smoke from bedrooms.',
-    explanation:
-      'The famous NASA experiment evaluated sealed lab chambers with massive plant-to-air ratios. In real homes with outside air leaking in, potted plants remove zero PM2.5 particles, and damp soil can breed mold.',
-    whatToDo:
-      'Run a mechanical True HEPA purifier or a DIY box-fan with MERV-13 filter in a closed bedroom.',
+    en: 'Inability to speak in full sentences without gasping',
+    hi: 'बिना हांफे एक पूरा वाक्य न बोल पाना',
+    mr: 'धाप न लागता पूर्ण वाक्यात बोलता न येणे',
+    bn: 'দম না নিয়ে একটি সম্পূর্ণ বাক্য বলতে না পারা',
+    ta: 'மூச்சு வாங்காமல் முழு வாக்கியங்களில் பேச முடியாமை',
+    te: 'ఆగకుండా పూర్తి వాక్యాలు మాట్లాడలేకపోవడం',
   },
   {
-    id: 'morning_airing',
-    category: 'indoor',
-    titleEn: 'Airing Out Rooms During Early Morning Smog',
-    titleHi: 'सुबह खिड़कियां खोलना',
-    titleMr: 'सकाळी खिडक्या उघडणे',
-    verdictKey: 'learn.myths.badge',
-    verdictEn: 'Hazardous Timing',
-    mythText: 'Opening windows at 6 AM lets in fresh morning air.',
-    explanation:
-      'In northern Indian winters, cold air traps heavy vehicle smoke right at ground level between 5 AM and 10 AM. Opening windows then floods your home with toxic dust and smoke particles.',
-    whatToDo:
-      'Keep exterior windows shut during the morning. Air out briefly for 10–15 minutes only in the afternoon when the sun warms the air and the smoke spreads out.',
+    en: 'Bluish tint on lips, fingernails, or tongue',
+    hi: 'होठों, नाखूनों या जीभ का नीला या बैंगनी पड़ना',
+    mr: 'ओठ, नखे किंवा जीभ निळसर पडणे',
+    bn: 'ঠোঁট, নখ বা জিহ্বায় নীলচে ভাব দেখা দেওয়া',
+    ta: 'உதடுகள், விரல் நகங்கள் அல்லது நாக்கில் நீல நிற மாற்றம்',
+    te: 'పెదవులు, గోర్లు లేదా నాలుక నీలి రంగులోకి మారడం',
   },
   {
-    id: 'sealing_airtight',
-    category: 'indoor',
-    titleEn: 'Sealing Every Gap Without Airing Out',
-    titleHi: 'सारे छेद पूरी तरह सील करना',
-    titleMr: 'घरातील सर्व फटी बंद करणे',
-    verdictKey: 'learn.myths.badge',
-    verdictEn: 'Carbon Monoxide Risk',
-    mythText: 'Taping every crack and door completely airtight keeps you safest.',
-    explanation:
-      'Completely airtight rooms trap exhaled carbon dioxide (CO2), indoor humidity, and lethal carbon monoxide if gas heaters, stoves, or angithi are used inside.',
-    whatToDo:
-      'Keep doors and windows closed to cut outdoor smog, but pair with active mechanical HEPA filtration. Never use open-flame heaters or burning coal indoors.',
+    en: 'Chest heaviness, severe pressure, or acute pain',
+    hi: 'छाती में भारीपन, तेज दबाव या तेज दर्द',
+    mr: 'छातीत जडपणा, तीव्र दाब किंवा तीव्र वेदना',
+    bn: 'বুকে ভারী ভাব, প্রচণ্ড চাপ বা তীব্র ব্যথা',
+    ta: 'நெஞ்சு பாரம், கடுமையான அழுத்தம் அல்லது கடுமையான வலி',
+    te: 'ఛాతీలో బరువు, తీవ్రమైన ఒత్తిడి లేదా నొప్పి',
   },
   {
-    id: 'outdoor_breathing',
-    category: 'indoor',
-    titleEn: 'Deep Breathing Exercises Outdoors',
-    titleHi: 'स्मॉग में बाहर गहरी सांस व दौड़',
-    titleMr: 'बाहेर धुरक्यात दीर्घ श्वास व धावणे',
-    verdictKey: 'learn.myths.badge',
-    verdictEn: 'Lung Hazard',
-    mythText: 'Deep morning pranayama or jogging outside strengthens lungs against smog.',
-    explanation:
-      'Heavy or deep respiration during high smog bypasses your nasal passages and drives toxic fine particles directly into deep alveolar lung tissue and the bloodstream.',
-    whatToDo:
-      'Practice calm breathing exercises strictly indoors in a room with filtered air. Keep outdoor morning trips brief and low-effort.',
+    en: 'Skin sucking in around ribs or collarbone',
+    hi: 'सांस लेते समय पसलियों या गर्दन के पास त्वचा का अंदर धंसना',
+    mr: 'श्वास घेताना बरगड्या किंवा गळ्याभोवतीची त्वचा आत खेचली जाणे',
+    bn: 'শ্বাস নেওয়ার সময় পাঁজরের চামড়া ভেতরের দিকে দেবে যাওয়া',
+    ta: 'சுவாசிக்கும் போது விலா எலும்புகள் அல்லது கழுத்து எலும்பு அருகே தோல் உள்வாங்குதல்',
+    te: 'శ్వాస తీసుకునేటప్పుడు పక్కటెముకల వద్ద చర్మం లోపలికి లాగడం',
   },
   {
-    id: 'incense_agarbatti',
-    category: 'cooking',
-    titleEn: 'Incense & Camphor Purify the Air',
-    titleHi: 'अगरबत्ती व कपूर जलाना',
-    titleMr: 'अगरबत्ती व कापूर जाळणे',
-    verdictKey: 'learn.myths.badge',
-    verdictEn: 'Indoor Smoke Spike',
-    mythText: 'Burning dhoop, agarbatti, or camphor cleanses indoor smog pollution.',
-    explanation:
-      'Burning incense and dhoop produces dense indoor PM2.5, benzene, and formaldehyde spikes that often exceed the pollution levels of heavy outdoor traffic.',
-    whatToDo:
-      'Avoid burning incense, mosquito coils, or candles in closed rooms during winter. Switch to electric lamps or flameless diffusers.',
-  },
-  {
-    id: 'cooking_smoke',
-    category: 'cooking',
-    titleEn: 'Kitchen Smoke Clears On Its Own',
-    titleHi: 'रसोई का धुआं अपने आप निकलना',
-    titleMr: 'स्वयंपाकघरातील धूर',
-    verdictKey: 'learn.myths.badge',
-    verdictEn: 'Indoor Particle Burst',
-    mythText: 'Cooking smoke stays in the kitchen and does not hurt family members.',
-    explanation:
-      'High-heat oil frying, tadka, and open gas flames generate massive bursts of fine combustion particles that quickly circulate into children’s and elderly bedrooms.',
-    whatToDo:
-      'Cook with lids on pots, keep the kitchen door closed to living areas, and always run a mechanical exhaust fan or chimney that vents outdoors.',
+    en: 'Sudden dizziness, confusion, or severe lethargy',
+    hi: 'अचानक चक्कर आना, घबराहट, बेहोशी या अत्यधिक सुस्ती',
+    mr: 'अचानक चक्कर येणे, गोंधळ उडणे किंवा अतिशय थकवा येणे',
+    bn: 'হঠাৎ মাথা ঘোরা, বিভ্রান্তি বা প্রচণ্ড অলসতা দেখা দেওয়া',
+    ta: 'திடீர் தலைசுற்றல், குழப்பம் அல்லது கடுமையான சோர்வு',
+    te: 'అకస్మాత్తుగా మైకం రావడం, అయోమయం లేదా తీవ్రమైన నిస్సత్తువ',
   },
 ];
 
 export function MythsTab() {
   const { profile } = useApp();
+  const lang = profile.language;
+  const isEn = lang === 'en';
   const [selectedCategory, setSelectedCategory] = useState<MythCategory>('all');
   const [selectedModalMyth, setSelectedModalMyth] = useState<MythItem | null>(null);
 
@@ -151,6 +85,34 @@ export function MythsTab() {
     selectedCategory === 'all'
       ? MYTH_ITEMS
       : MYTH_ITEMS.filter((m) => m.category === selectedCategory);
+
+  const mythsSubtitle = isEn
+    ? 'Peer-reviewed evidence on common winter smog claims.'
+    : lang === 'hi'
+    ? 'सर्दियों के प्रदूषण व स्मॉग से जुड़े सामान्य दावों का वैज्ञानिक सच।'
+    : lang === 'mr'
+    ? 'हिवाळ्यातील धुरक्याशी संबंधित गैरसमज आणि त्यांचे वैज्ञानिक सत्य.'
+    : lang === 'bn'
+    ? 'শীতকালীন ধোঁয়াশা সম্পর্কিত প্রচলিত ভুল ধারণা ও বৈজ্ঞানিক সত্য।'
+    : lang === 'ta'
+    ? 'குளிர்கால காற்று மாசுபாடு பற்றிய கட்டுக்கதைகளும் அறிவியல் உண்மைகளும்.'
+    : lang === 'te'
+    ? 'శీతాకాలపు పొగమంచుకు సంబంధించిన అపోహలు మరియు శాస్త్రీయ నిజాలు.'
+    : 'सर्दियों के प्रदूषण व स्मॉग से जुड़े सामान्य दावों का वैज्ञानिक सच।';
+
+  const mythBadgeText = isEn
+    ? 'Myth'
+    : lang === 'hi'
+    ? 'भ्रम (Myth)'
+    : lang === 'mr'
+    ? 'गैरसमज (Myth)'
+    : lang === 'bn'
+    ? 'ভুল ধারণা (Myth)'
+    : lang === 'ta'
+    ? 'கட்டுக்கதை (Myth)'
+    : lang === 'te'
+    ? 'అపోహ (Myth)'
+    : 'भ्रम (Myth)';
 
   return (
     <div className="w-full space-y-6 py-1">
@@ -180,24 +142,38 @@ export function MythsTab() {
           <Bi k="learn.emergency.subtitle" layout="plain" />
         </p>
 
-        {/* Warning signs: compact 2-column grid */}
+        {/* Warning signs: compact 2-column grid in regional languages */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
-          {[
-            'Stridor or high-pitched wheezing at rest',
-            'Inability to speak in full sentences without gasping',
-            'Bluish tint on lips, fingernails, or tongue',
-            'Chest heaviness, severe pressure, or acute pain',
-            'Skin sucking in around ribs or collarbone',
-            'Sudden dizziness, confusion, or severe lethargy',
-          ].map((sign, i) => (
-            <div
-              key={i}
-              className="p-2 sm:p-2.5 rounded-lg bg-white/90 dark:bg-rose-900/40 border border-rose-200 dark:border-rose-800/50 text-xs sm:text-sm font-medium text-rose-950 dark:text-rose-100 flex items-center gap-2"
-            >
-              <div className="w-1.5 h-1.5 rounded-full bg-rose-600 dark:bg-rose-400 shrink-0" />
-              <span className="leading-tight">{sign}</span>
-            </div>
-          ))}
+          {EMERGENCY_SIGNS.map((sign, i) => {
+            const localizedSign = isEn
+              ? sign.en
+              : lang === 'hi'
+              ? sign.hi
+              : lang === 'mr'
+              ? sign.mr
+              : lang === 'bn'
+              ? sign.bn || sign.hi
+              : lang === 'ta'
+              ? sign.ta || sign.hi
+              : lang === 'te'
+              ? sign.te || sign.hi
+              : sign.hi;
+
+            return (
+              <div
+                key={i}
+                className="p-2 sm:p-2.5 rounded-lg bg-white/90 dark:bg-rose-900/40 border border-rose-200 dark:border-rose-800/50 text-xs sm:text-sm font-medium text-rose-950 dark:text-rose-100 flex items-center gap-2"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-rose-600 dark:bg-rose-400 shrink-0" />
+                <div className="flex flex-col leading-tight">
+                  <span>{localizedSign}</span>
+                  {!isEn && (
+                    <span className="text-[11px] text-muted opacity-80 font-normal">{sign.en}</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div className="text-xs text-rose-800/80 dark:text-rose-300/80 font-medium pt-1">
@@ -210,10 +186,10 @@ export function MythsTab() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h2 id="myths-heading" className="text-base sm:text-lg font-semibold text-foreground">
-              <Bi k="learn.mythBusters" layout="plain" />
+              <Bi k="learn.mythBusters" en="Myth Busters" layout="plain" />
             </h2>
             <p className="text-xs sm:text-sm text-muted">
-              Peer-reviewed evidence on common winter smog claims.
+              {mythsSubtitle}
             </p>
           </div>
 
@@ -257,6 +233,8 @@ export function MythsTab() {
           const col2Myths = filteredMyths.filter((_, i) => i % 2 === 1);
 
           const renderMythCard = (myth: (typeof filteredMyths)[0]) => {
+            const cardTitle = getMythField(myth, 'title', lang);
+
             return (
               <SpotlightCard
                 key={myth.id}
@@ -271,14 +249,14 @@ export function MythsTab() {
                   aria-label={`View details for ${myth.titleEn}`}
                 >
                   <div className="flex flex-col min-w-0 pr-2">
-                    {profile.language === 'en' ? (
+                    {isEn ? (
                       <span className="text-sm sm:text-base font-semibold text-foreground truncate">
                         {myth.titleEn}
                       </span>
                     ) : (
                       <>
                         <span className="text-sm sm:text-base font-semibold text-foreground truncate">
-                          {profile.language === 'mr' ? myth.titleMr : myth.titleHi}
+                          {cardTitle}
                         </span>
                         <span className="text-xs text-muted truncate">
                           {myth.titleEn}
@@ -289,7 +267,7 @@ export function MythsTab() {
 
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40">
-                      Myth
+                      {mythBadgeText}
                     </span>
                     <ChevronRight className="w-4 h-4 text-muted/70 group-hover:text-foreground group-hover:translate-x-0.5 shrink-0 transition-all" strokeWidth={1.75} />
                   </div>
