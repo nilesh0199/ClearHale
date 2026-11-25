@@ -55,8 +55,10 @@ interface VoiceContextType {
   startListening: (options?: {
     onFinal?: (text: string) => void;
     onInterim?: (text: string) => void;
+    onAutoSend?: (text: string) => void;
   }) => void;
   stopListening: () => void;
+  cancelListening: () => void;
   clearRecognitionError: () => void;
   pendingAutoSend: PendingAutoSend | null;
   cancelAutoSend: () => void;
@@ -182,6 +184,7 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
   const autoStopRecordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const onFinalCallbackRef = useRef<((text: string) => void) | null>(null);
   const onInterimCallbackRef = useRef<((text: string) => void) | null>(null);
+  const onAutoSendCallbackRef = useRef<((text: string) => void) | null>(null);
   const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null);
   const currentConfidenceRef = useRef<number>(1.0);
   const isIntentionalStopRef = useRef(false);
@@ -224,12 +227,50 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const confirmAutoSendNow = useCallback(() => {
-    if (pendingAutoSend?.text && onFinalCallbackRef.current) {
+    if (pendingAutoSend?.text) {
       const textToSend = pendingAutoSend.text;
       cancelAutoSend();
-      onFinalCallbackRef.current(textToSend);
+      if (onAutoSendCallbackRef.current) {
+        onAutoSendCallbackRef.current(textToSend);
+      } else if (onFinalCallbackRef.current) {
+        onFinalCallbackRef.current(textToSend);
+      }
     }
   }, [pendingAutoSend, cancelAutoSend]);
+
+  const cancelListening = useCallback(() => {
+    isIntentionalStopRef.current = true;
+    onFinalCallbackRef.current = null;
+    onInterimCallbackRef.current = null;
+    onAutoSendCallbackRef.current = null;
+    setIsListening(false);
+    setListeningState('idle');
+    setTranscript('');
+    setInterimTranscript('');
+    cancelAutoSend();
+
+    if (autoStopRecordingTimerRef.current) {
+      clearTimeout(autoStopRecordingTimerRef.current);
+      autoStopRecordingTimerRef.current = null;
+    }
+
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch (e) {}
+    }
+
+    if (mediaRecorderRef.current) {
+      try {
+        if (mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.onstop = null;
+          mediaRecorderRef.current.stop();
+        }
+      } catch (e) {}
+    }
+    audioChunksRef.current = [];
+    stopMediaTracks();
+  }, [cancelAutoSend, stopMediaTracks]);
 
   const stopListening = useCallback(() => {
     isIntentionalStopRef.current = true;
@@ -314,7 +355,9 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
               clearInterval(autoSendTimerRef.current!);
               autoSendTimerRef.current = null;
               setPendingAutoSend(null);
-              if (onFinalCallbackRef.current) {
+              if (onAutoSendCallbackRef.current) {
+                onAutoSendCallbackRef.current(cleanText);
+              } else if (onFinalCallbackRef.current) {
                 onFinalCallbackRef.current(cleanText);
               }
             } else {
@@ -351,9 +394,11 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
     async (options?: {
       onFinal?: (text: string) => void;
       onInterim?: (text: string) => void;
+      onAutoSend?: (text: string) => void;
     }) => {
       onFinalCallbackRef.current = options?.onFinal || null;
       onInterimCallbackRef.current = options?.onInterim || null;
+      onAutoSendCallbackRef.current = options?.onAutoSend || null;
       isIntentionalStopRef.current = false;
       setTranscript('');
       setInterimTranscript('');
@@ -446,6 +491,7 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
     (options?: {
       onFinal?: (text: string) => void;
       onInterim?: (text: string) => void;
+      onAutoSend?: (text: string) => void;
     }) => {
       if (!isSpeechRecognitionSupported || !voiceSettings.enabled) {
         return;
@@ -457,6 +503,7 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
 
       onFinalCallbackRef.current = options?.onFinal || null;
       onInterimCallbackRef.current = options?.onInterim || null;
+      onAutoSendCallbackRef.current = options?.onAutoSend || null;
       isIntentionalStopRef.current = false;
       currentConfidenceRef.current = 1.0;
       setTranscript('');
@@ -626,7 +673,9 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
                 clearInterval(autoSendTimerRef.current!);
                 autoSendTimerRef.current = null;
                 setPendingAutoSend(null);
-                if (onFinalCallbackRef.current) {
+                if (onAutoSendCallbackRef.current) {
+                  onAutoSendCallbackRef.current(cleanText);
+                } else if (onFinalCallbackRef.current) {
                   onFinalCallbackRef.current(cleanText);
                 }
               } else {
@@ -951,6 +1000,7 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
         recognitionErrorCode,
         startListening,
         stopListening,
+        cancelListening,
         clearRecognitionError,
         pendingAutoSend,
         cancelAutoSend,

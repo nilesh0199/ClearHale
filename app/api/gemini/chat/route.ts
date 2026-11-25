@@ -81,13 +81,13 @@ export async function POST(req: NextRequest) {
     if (isRegional) {
       languageDirective = `BILINGUAL FORMATTING REQUIREMENT (MANDATORY):
 The user selected the regional language: ${langName} (${langInfo?.nativeName || ''}).
-1. First, provide your complete answer in ${langName} in the natural native script following the exact 3-part layout (2-3 lines top + 3-4 bullet points + 1 closing line).
+1. First, provide your complete answer in ${langName} in the natural native script following the exact 3-part layout (1-2 lines top + 2-3 bullet points + 1 closing line).
 2. Then, output a single newline, then EXACTLY the delimiter line:
 ---EN---
 3. Then, provide the matching concise English version below it using the same 3-part layout.
-Keep both language sections brief, punchy, and under 110 words each. The delimiter line must be exactly "---EN---" on its own line.`;
+Keep both language sections brief, punchy, and strictly under 85 words each. The delimiter line must be exactly "---EN---" on its own line.`;
     } else {
-      languageDirective = `Output language: English only. Follow the exact 3-part layout (2-3 lines top + 3-4 bullet points + 1 closing line). DO NOT output any "---EN---" delimiter.`;
+      languageDirective = `Output language: English only. Follow the exact 3-part layout (1-2 lines top + 2-3 bullet points + 1 closing line). DO NOT output any "---EN---" delimiter. Keep response strictly under 85 words.`;
     }
 
     const dataSourceDesc =
@@ -112,18 +112,18 @@ Current Context:
 ${languageDirective}
 
 CONCISENESS & LAYOUT RULES (MANDATORY):
-1. Keep the entire response bite-sized, practical, and strictly under 120 words (around 500-650 characters). People do NOT read long walls of text.
+1. Keep the entire response compact, bite-sized, and strictly under 85 words (around 350-500 characters). Do NOT write long paragraphs.
 2. Structure your answer in EXACTLY this 3-part format:
-   [Part 1 - Top 2-3 Lines]: Exactly 2 to 3 concise, direct sentences answering the user's specific question with a warm, caring tone.
+   [Part 1 - Top 1-2 Lines]: Exactly 1 to 2 concise, direct sentences answering the user's specific question with a warm, caring tone.
    
-   [Part 2 - Exactly 3 to 4 Bullet Points]:
+   [Part 2 - Exactly 2 to 3 Bullet Points]:
    • **[Action Name]**: One short, punchy sentence explaining the concrete action and why.
    • **[Action Name]**: One short, punchy sentence.
-   • **[Action Name]**: One short, punchy sentence.
+   • **[Action Name]**: One short, punchy sentence (optional 3rd).
    
    [Part 3 - Closing Line]: Exactly 1 short, encouraging concluding sentence.
 3. Every bullet point must be on its own line and start with a bullet '• ' and a bold title '**...**: '. Never write multiple sentences inside one bullet.
-4. Ensure your answer is fully complete and never cuts off mid-sentence.
+4. CRITICAL COMPLETION MANDATE: You MUST ALWAYS finish your final sentence completely with terminal punctuation (. or ! or ।). NEVER stop mid-sentence, leave trailing thoughts, or cut off prematurely. Ensure the entire response is cleanly concluded.
 
 STRICT DATA INTEGRITY & SCIENTIFIC GUARDRAILS:
 1. NEVER invent, hallucinate, or alter any PM2.5 or AQI number. Use ONLY the exact numbers provided in the context above. Never state any air-quality value not in the context.
@@ -164,7 +164,7 @@ ${actionCatalogSummary}
       systemPrompt,
       language,
       temperature: 0.2,
-      maxTokens: isRegional ? 800 : 450,
+      maxTokens: isRegional ? 1400 : 850,
       fallbackTemplateText,
       sessionHadTip,
     });

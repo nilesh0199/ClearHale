@@ -235,6 +235,8 @@ export function AskScreen() {
     listeningState,
     startListening,
     stopListening,
+    cancelListening,
+    transcript,
     pendingAutoSend,
     cancelAutoSend,
     confirmAutoSendNow,
@@ -296,6 +298,7 @@ export function AskScreen() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const baseInputRef = useRef('');
+  const isSendingRef = useRef(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -304,6 +307,16 @@ export function AskScreen() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isStreaming]);
+
+  // Synchronize transcript if mic was invoked externally (e.g. AskByVoiceFab)
+  useEffect(() => {
+    if (listeningState === 'listening' && transcript && !isSendingRef.current) {
+      setInput(transcript);
+      if (textareaRef.current) {
+        textareaRef.current.value = transcript;
+      }
+    }
+  }, [transcript, listeningState]);
 
   // Handle mobile virtual keyboard appearance: keep input and active message visible
   useEffect(() => {
@@ -342,12 +355,22 @@ export function AskScreen() {
 
   const handleSendMessage = async (textToSend?: string) => {
     cancelAutoSend();
+    cancelListening();
     stopListening();
+    isSendingRef.current = true;
+    baseInputRef.current = '';
 
     const query = (textToSend || input).trim();
-    if (!query || isStreaming) return;
+    if (!query || isStreaming) {
+      isSendingRef.current = false;
+      return;
+    }
 
+    // Immediately clear state and DOM input
     setInput('');
+    if (textareaRef.current) {
+      textareaRef.current.value = '';
+    }
     setTimeout(() => {
       textareaRef.current?.focus();
     }, 10);
@@ -512,6 +535,12 @@ export function AskScreen() {
       );
     } finally {
       setIsStreaming(false);
+      isSendingRef.current = false;
+      baseInputRef.current = '';
+      setInput('');
+      if (textareaRef.current) {
+        textareaRef.current.value = '';
+      }
       setTimeout(() => {
         textareaRef.current?.focus();
       }, 50);
@@ -542,17 +571,27 @@ export function AskScreen() {
 
       startListening({
         onFinal: (finalText) => {
+          if (isSendingRef.current) return;
           const combined = appendToPrefix(finalText);
           setInput(combined);
           if (textareaRef.current) {
+            textareaRef.current.value = combined;
             textareaRef.current.focus();
             const len = combined.length;
             textareaRef.current.setSelectionRange(len, len);
           }
         },
         onInterim: (interimText) => {
+          if (isSendingRef.current) return;
           const combined = appendToPrefix(interimText);
           setInput(combined);
+          if (textareaRef.current) {
+            textareaRef.current.value = combined;
+          }
+        },
+        onAutoSend: (autoText) => {
+          const combined = appendToPrefix(autoText);
+          handleSendMessage(combined);
         },
       });
     }
@@ -764,7 +803,12 @@ export function AskScreen() {
                 </button>
                 <button
                   type="button"
-                  onClick={confirmAutoSendNow}
+                  onClick={() => {
+                    const text = pendingAutoSend.text;
+                    cancelAutoSend();
+                    cancelListening();
+                    handleSendMessage(text);
+                  }}
                   className="px-2.5 py-1 rounded-lg bg-teal-accent text-white hover:bg-teal-hover text-[11px] font-semibold transition-colors cursor-pointer shadow-xs"
                 >
                   <Bi k="voice.sendNow" en="Send now" layout="inline" />
