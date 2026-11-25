@@ -93,19 +93,17 @@ const VoiceContext = createContext<VoiceContextType | null>(null);
  */
 export function splitIntoSentences(text: string): string[] {
   if (!text) return [];
-  // Clean markdown bold, bullets, and links
+  // Clean markdown links and styling markers (*, _, #, `, ~)
   const cleaned = text
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .replace(/[*_#`~]/g, '')
     .trim();
 
-  // Split on sentence terminators while preserving them
-  const regex = /[^.?!।\n]+[.?!।\n]+|[^.?!।\n]+$/g;
-  const matches = cleaned.match(regex);
-  if (!matches) return [cleaned].filter(Boolean);
-  return matches
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0 && !/^[-•–—\s]+$/.test(s));
+  // Split on sentence terminators [.?!।] followed by whitespace/end or newlines
+  const parts = cleaned.split(/(?<=[.?!।])\s+|\n+/);
+  return parts
+    .map((s) => s.replace(/^[-•–—\s*]+/, '').trim())
+    .filter((s) => s.length > 0);
 }
 
 export function VoiceProvider({ children }: { children: React.ReactNode }) {

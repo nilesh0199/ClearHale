@@ -173,42 +173,52 @@ function renderFormattedMarkdownWithGlossary(rawText: string) {
 }
 
 /**
- * Renders text while highlighting the active sentence currently being read aloud
+ * Renders text while preserving all bullet points, bold markdown, and line breaks,
+ * highlighting the active sentence currently being read aloud without collapsing into a plain paragraph.
  */
 function renderSentenceHighlightedText(
   text: string,
   isCurrentSpeakingMessage: boolean,
   currentSentenceIdx: number,
-  currentSentencesList: string[]
+  currentSentencesList: string[],
+  sentenceOffset: number = 0
 ) {
   if (!text) return null;
   if (!isCurrentSpeakingMessage || currentSentencesList.length === 0 || currentSentenceIdx < 0) {
     return renderFormattedMarkdownWithGlossary(text);
   }
 
-  const sentences = splitIntoSentences(text);
-  if (sentences.length <= 1) {
-    return (
-      <span className="bg-teal-500/15 dark:bg-teal-400/25 rounded px-1 -mx-0.5 py-0.5 font-medium transition-colors">
-        {renderFormattedMarkdownWithGlossary(text)}
-      </span>
-    );
-  }
+  // Normalize markdown list bullets (* or - at line start) to standard bullet symbol (•)
+  const normalized = text.replace(/^(\s*)[*-]\s+/gm, '$1• ');
+
+  // Split into sentence tokens while capturing delimiters (spaces, newlines)
+  const tokens = normalized.split(/((?<=[.?!।])\s+|\n+)/);
+
+  let sentenceCounter = 0;
 
   return (
     <>
-      {sentences.map((sentence, sIdx) => {
-        const isHighlight = sIdx === currentSentenceIdx;
+      {tokens.map((tok, tIdx) => {
+        if (!tok) return null;
+
+        // If this token is purely whitespace or newlines, render it as-is to preserve spacing & line breaks
+        if (/^(\s+|\n+)$/.test(tok)) {
+          return <React.Fragment key={tIdx}>{tok}</React.Fragment>;
+        }
+
+        const sIdx = sentenceCounter++;
+        const isHighlight = sIdx + sentenceOffset === currentSentenceIdx;
+
         return (
           <span
-            key={sIdx}
+            key={tIdx}
             className={`transition-all duration-200 inline ${
               isHighlight
                 ? 'bg-teal-500/15 dark:bg-teal-400/25 text-teal-950 dark:text-teal-50 rounded px-1 -mx-0.5 py-0.5 font-medium shadow-xs'
                 : ''
             }`}
           >
-            {renderFormattedMarkdownWithGlossary(sentence)}{' '}
+            {renderFormattedMarkdownWithGlossary(tok)}
           </span>
         );
       })}
@@ -669,6 +679,9 @@ export function AskScreen() {
                       const enText = parts[1]?.trim();
 
                       if (enText && profile.language !== 'en') {
+                        const nativeSentences = splitIntoSentences(nativeText);
+                        const nativeCount = nativeSentences.length;
+
                         return (
                           <div className="space-y-2.5">
                             <div className="text-foreground leading-relaxed whitespace-pre-wrap">
@@ -676,7 +689,8 @@ export function AskScreen() {
                                 nativeText,
                                 isCurrentSpeakingMsg,
                                 currentSentenceIndex,
-                                currentSentences
+                                currentSentences,
+                                0
                               )}
                             </div>
                             <div className="border-t border-card-border/80 pt-2 text-xs text-muted leading-relaxed font-normal whitespace-pre-wrap">
@@ -684,7 +698,8 @@ export function AskScreen() {
                                 enText,
                                 isCurrentSpeakingMsg,
                                 currentSentenceIndex,
-                                currentSentences
+                                currentSentences,
+                                voiceSettings.readBothBilingual ? nativeCount : 0
                               )}
                             </div>
                           </div>
