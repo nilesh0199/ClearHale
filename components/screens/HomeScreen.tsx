@@ -39,7 +39,6 @@ import {
   Globe,
   RefreshCw,
   Clock,
-  ShieldCheck,
   CheckCircle2,
   Circle,
   ChevronLeft,
@@ -76,8 +75,6 @@ import {
   sendTestNotification,
   isNeverAskNotifications,
   setNeverAskNotifications,
-  isFirstTimeNotificationModalDone,
-  markFirstTimeNotificationModalDone,
   isDailyAlertNudgeDismissed,
   dismissDailyAlertNudge,
 } from '@/lib/notifications';
@@ -154,40 +151,18 @@ export function HomeScreen() {
   const isFullScreenLayout =
     (isDesktopFullScreen || manualFullscreen) && isDesktopDevice;
 
-  // Severe Air Quality Notifications: Centered First-Time Modal & Daily In-Slot Nudge
-  const [showFirstTimeAlertModal, setShowFirstTimeAlertModal] = useState(false);
+  // Severe Air Quality Notifications: Daily In-Slot Nudge (harmonized with family warning banner)
   const [dailyAlertNudgeDismissed, setDailyAlertNudgeDismissed] = useState(true);
 
-  // Check first-time landing prompt: shows centered modal when entering Home for the very first time
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (isNotificationSupported()) {
-      const perm = getNotificationPermission();
-      const neverAsk = isNeverAskNotifications();
-      const firstDone = isFirstTimeNotificationModalDone();
-      if (perm !== 'granted' && !neverAsk && !firstDone) {
-        setShowFirstTimeAlertModal(true);
-      }
-    }
-  }, []);
-
   const handleEnableNotifications = async () => {
-    setShowFirstTimeAlertModal(false);
     setDailyAlertNudgeDismissed(true);
-    markFirstTimeNotificationModalDone();
     const perm = await requestNotificationPermission();
     if (perm === 'granted') {
       sendTestNotification(profile.city.name);
     }
   };
 
-  const handleDismissFirstTimeModal = () => {
-    setShowFirstTimeAlertModal(false);
-    markFirstTimeNotificationModalDone();
-  };
-
   const handleNeverAskAgain = () => {
-    setShowFirstTimeAlertModal(false);
     setDailyAlertNudgeDismissed(true);
     setNeverAskNotifications(true);
   };
@@ -1697,8 +1672,6 @@ export function HomeScreen() {
             </div>
           </div>
         ) : (!dailyAlertNudgeDismissed &&
-             isFirstTimeNotificationModalDone() &&
-             !showFirstTimeAlertModal &&
              !isNeverAskNotifications() &&
              getNotificationPermission() !== 'granted') ? (
           <div className="p-3.5 sm:p-4 rounded-2xl bg-teal-500/10 dark:bg-teal-950/30 border border-teal-500/25 flex items-center justify-between gap-3 text-xs sm:text-sm">
@@ -1735,7 +1708,7 @@ export function HomeScreen() {
                 type="button"
                 onClick={handleDismissDailyAlertNudge}
                 aria-label="Dismiss notification alert prompt for today"
-                className="p-1.5 text-muted hover:text-foreground rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                className="p-1.5 rounded-full text-muted hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" strokeWidth={1.75} />
               </button>
@@ -2278,100 +2251,6 @@ export function HomeScreen() {
   </div>
 </div>
       </div>
-
-      {/* First-Time Center Modal: Enable Severe Air Alerts */}
-      {typeof document !== 'undefined' &&
-        showFirstTimeAlertModal &&
-        createPortal(
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-            {/* Backdrop dismiss */}
-            <div
-              className="absolute inset-0"
-              onClick={handleDismissFirstTimeModal}
-            />
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="severe-alert-modal-title"
-              className="relative z-10 w-full max-w-md bg-card border border-card-border rounded-2xl p-6 sm:p-7 shadow-float text-left overflow-hidden animate-in fade-in zoom-in-95 duration-150"
-            >
-              {/* Close button at top-right */}
-              <button
-                type="button"
-                onClick={handleDismissFirstTimeModal}
-                className="absolute top-4 right-4 p-1.5 text-muted hover:text-foreground rounded-full hover:bg-card-subtle transition-colors cursor-pointer"
-                aria-label="Close alert modal"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-                  {/* Icon & Title */}
-                  <div className="flex items-center gap-3.5 mb-4">
-                    <div className="w-12 h-12 rounded-2xl bg-teal-accent/15 border border-teal-accent/30 text-teal-accent flex items-center justify-center shrink-0 shadow-soft">
-                      <Bell className="w-6 h-6 animate-mic-pulse" />
-                    </div>
-                    <div>
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-teal-accent block">
-                        Safety Warning System
-                      </span>
-                      <h2 id="severe-alert-modal-title" className="text-lg sm:text-xl font-bold text-foreground leading-tight">
-                        Enable Severe Air Alerts?
-                      </h2>
-                    </div>
-                  </div>
-
-                  {/* Body Content */}
-                  <div className="space-y-3 text-xs sm:text-sm text-muted leading-relaxed">
-                    <p className="text-foreground font-medium">
-                      Get immediate warnings when air quality in <span className="text-teal-accent font-semibold">{profile.city.name}</span> drops into <span className="font-semibold text-rose-600 dark:text-rose-400">Very Poor</span> (&gt;120 µg/m³) or <span className="font-semibold text-rose-700 dark:text-rose-300">Severe</span> (&gt;250 µg/m³).
-                    </p>
-                    <div className="p-3.5 rounded-xl bg-card-subtle border border-card-border/60 space-y-2 text-xs">
-                      <div className="flex items-center gap-2 text-foreground font-medium">
-                        <ShieldCheck className="w-4 h-4 text-teal-accent shrink-0" />
-                        <span>Protects your children & elderly before they step out</span>
-                      </div>
-                      <p className="text-muted text-[11px] pl-6 leading-normal">
-                        Alerts help you shut windows early and ensure sensitive family members wear an N95 mask before leaving home.
-                      </p>
-                      <div className="flex items-center gap-2 text-muted text-[11px] pt-1.5 border-t border-card-border/40 pl-6">
-                        <span>⏱ Strictly throttled: Max 1 alert per 8 hours. Zero spam.</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="mt-6 flex flex-col sm:flex-row items-center gap-2.5">
-                    <button
-                      type="button"
-                      onClick={handleEnableNotifications}
-                      className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-teal-accent hover:bg-teal-hover text-white font-semibold text-sm shadow-soft transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <Bell className="w-4 h-4" />
-                      <span>Turn on Alerts</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDismissFirstTimeModal}
-                      className="w-full sm:w-auto py-2.5 px-4 rounded-xl border border-card-border bg-card hover:bg-card-subtle text-muted hover:text-foreground font-medium text-xs sm:text-sm transition-colors cursor-pointer"
-                    >
-                      Not Now
-                    </button>
-                  </div>
-
-                  {/* Don't ask again toggle button */}
-                  <div className="mt-4 pt-3 border-t border-card-border/50 flex items-center justify-center">
-                    <button
-                      type="button"
-                      onClick={handleNeverAskAgain}
-                      className="text-xs text-muted/70 hover:text-foreground transition-colors cursor-pointer hover:underline"
-                    >
-                      Don't ask again on this device
-                    </button>
-                  </div>
-                </div>
-              </div>,
-              document.body
-            )}
 
       {/* Floating Ask by Voice Button */}
       <AskByVoiceFab />
