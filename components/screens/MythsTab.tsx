@@ -5,10 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/context/AppContext';
 import { Bi } from '../Bi';
 import { SpotlightCard } from '../ui/rb/SpotlightCard';
+import { MythDetailModal } from '../care/MythDetailModal';
 import {
   HeartPulse,
   PhoneCall,
   ChevronDown,
+  ChevronRight,
   CheckCircle2,
   AlertTriangle,
   Flame,
@@ -136,7 +138,7 @@ const MYTH_ITEMS: MythItem[] = [
 export function MythsTab() {
   const { profile } = useApp();
   const [selectedCategory, setSelectedCategory] = useState<MythCategory>('all');
-  const [expandedMythId, setExpandedMythId] = useState<string | null>(null);
+  const [selectedModalMyth, setSelectedModalMyth] = useState<MythItem | null>(null);
 
   const filterChips: { id: MythCategory; key: string; label: string }[] = [
     { id: 'all', key: 'learn.filters.all', label: 'All' },
@@ -149,11 +151,6 @@ export function MythsTab() {
     selectedCategory === 'all'
       ? MYTH_ITEMS
       : MYTH_ITEMS.filter((m) => m.category === selectedCategory);
-
-  const toggleAccordion = (id: string) => {
-    // Only one accordion open at a time
-    setExpandedMythId(expandedMythId === id ? null : id);
-  };
 
   return (
     <div className="w-full space-y-6 py-1">
@@ -260,20 +257,18 @@ export function MythsTab() {
           const col2Myths = filteredMyths.filter((_, i) => i % 2 === 1);
 
           const renderMythCard = (myth: (typeof filteredMyths)[0]) => {
-            const isExpanded = expandedMythId === myth.id;
-
             return (
               <SpotlightCard
                 key={myth.id}
                 spotlightColor="rgba(45, 212, 191, 0.1)"
-                className="bg-card rounded-card border border-card-border shadow-soft overflow-hidden transition-all duration-200"
+                className="bg-card rounded-card border border-card-border shadow-soft overflow-hidden transition-all duration-200 group cursor-pointer hover:border-teal-accent/40"
               >
                 {/* Header (Always Visible, Min 44px tap target) */}
                 <button
-                  onClick={() => toggleAccordion(myth.id)}
-                  className="w-full min-h-[48px] p-3.5 text-left flex items-center justify-between gap-3 hover:bg-card-subtle/60 transition-colors focus-visible:ring-2 focus-visible:ring-teal-accent"
-                  aria-expanded={isExpanded}
-                  aria-controls={`myth-content-${myth.id}`}
+                  type="button"
+                  onClick={() => setSelectedModalMyth(myth)}
+                  className="w-full min-h-[48px] p-3.5 sm:p-4 text-left flex items-center justify-between gap-3 hover:bg-card-subtle/60 transition-colors focus-visible:ring-2 focus-visible:ring-teal-accent cursor-pointer"
+                  aria-label={`View details for ${myth.titleEn}`}
                 >
                   <div className="flex flex-col min-w-0 pr-2">
                     {profile.language === 'en' ? (
@@ -296,53 +291,9 @@ export function MythsTab() {
                     <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40">
                       Myth
                     </span>
-                    <motion.div
-                      animate={{ rotate: isExpanded ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <ChevronDown className="w-4 h-4 text-muted" />
-                    </motion.div>
+                    <ChevronRight className="w-4 h-4 text-muted/70 group-hover:text-foreground group-hover:translate-x-0.5 shrink-0 transition-all" strokeWidth={1.75} />
                   </div>
                 </button>
-
-                {/* Collapsible Accordion Content */}
-                <AnimatePresence initial={false}>
-                  {isExpanded && (
-                    <motion.div
-                      id={`myth-content-${myth.id}`}
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2, ease: 'easeInOut' }}
-                      className="overflow-hidden"
-                    >
-                      <div className="p-3.5 pt-0 border-t border-card-border/60 space-y-2.5 text-xs sm:text-sm">
-                        {/* Myth Statement */}
-                        <div className="text-muted/80 italic text-xs bg-card-subtle/50 p-2.5 rounded-lg">
-                          &ldquo;{myth.mythText}&rdquo;
-                        </div>
-
-                        {/* Plain Language Explanation (2-3 lines) */}
-                        <p className="text-foreground leading-relaxed font-normal text-sm sm:text-base">
-                          {myth.explanation}
-                        </p>
-
-                        {/* What To Do Instead */}
-                        <div className="p-3 rounded-lg bg-teal-50 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-800/50 text-teal-950 dark:text-teal-100 flex items-start gap-2.5">
-                          <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
-                          <div className="space-y-0.5">
-                            <span className="font-semibold text-xs sm:text-sm text-teal-800 dark:text-teal-300 block">
-                              <Bi k="learn.myths.whatToDo" en="What to do instead:" layout="plain" />
-                            </span>
-                            <span className="text-xs sm:text-sm text-teal-950 dark:text-teal-100 leading-snug">
-                              {myth.whatToDo}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </SpotlightCard>
             );
           };
@@ -367,6 +318,13 @@ export function MythsTab() {
           );
         })()}
       </section>
+
+      {/* Myth Detail Pop-up Modal */}
+      <MythDetailModal
+        myth={selectedModalMyth}
+        isOpen={Boolean(selectedModalMyth)}
+        onClose={() => setSelectedModalMyth(null)}
+      />
     </div>
   );
 }

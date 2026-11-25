@@ -15,6 +15,7 @@ import { SpeakerButton } from '../voice/SpeakerButton';
 import { AskByVoiceFab } from '../voice/AskByVoiceFab';
 import { ShareModal } from '../share/ShareModal';
 import { ShareAudience } from '../share/AirQualityCard';
+import { ActionDetailModal } from '../actions/ActionDetailModal';
 import {
   getTop3Actions,
   getFallbackNext2Hours,
@@ -29,7 +30,7 @@ import {
   getLanguageOption,
   isIndianCity,
 } from '@/lib/languages';
-import { FamilyView, FamilyMember } from '@/types';
+import { FamilyView, FamilyMember, ActionItem } from '@/types';
 import { getAQIBand } from '@/lib/aqi';
 import { findNearestCatalogCity } from '@/lib/citiesData';
 import { CostChip } from '../ui/NeutralChips';
@@ -114,7 +115,7 @@ export function HomeScreen() {
 
   const [next2HoursText, setNext2HoursText] = useState<string>('');
   const [loadingDecision, setLoadingDecision] = useState(false);
-  const [expandedActionId, setExpandedActionId] = useState<string | null>(null);
+  const [selectedModalAction, setSelectedModalAction] = useState<ActionItem | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareAudience, setShareAudience] = useState<ShareAudience>('whole_family');
   const shouldReduceMotion = useReducedMotion();
@@ -858,7 +859,7 @@ export function HomeScreen() {
     if (typeof window !== 'undefined') {
       localStorage.setItem('clearhale_family_view', view);
     }
-    setExpandedActionId(null);
+    setSelectedModalAction(null);
     setIsGuidanceExpanded(false);
 
     if (rightColRef.current) {
@@ -2049,9 +2050,7 @@ export function HomeScreen() {
           >
             {topActions.map((action) => {
               const isChecked = profile.checkedActions?.includes(action.id) || false;
-              const isExpanded = expandedActionId === action.id;
               const { enTitle, nativeTitle } = getActionBi(action.id, action.title, currentBand.key);
-              const nativeWhy = ACTIONS_I18N[profile.language]?.[action.id]?.why;
 
               return (
                 <motion.div
@@ -2063,16 +2062,14 @@ export function HomeScreen() {
                     spotlightColor={
                       isChecked ? 'rgba(16, 185, 129, 0.12)' : 'rgba(45, 212, 191, 0.12)'
                     }
-                    className={`rounded-card border transition-all shadow-soft overflow-hidden group ${
+                    className={`rounded-card border transition-all shadow-soft overflow-hidden group cursor-pointer ${
                       isChecked
                         ? 'border-emerald-500/30 bg-emerald-500/10'
                         : 'border-card-border hover:border-teal-accent/40 hover:shadow-md'
                     }`}
                   >
                   <div
-                    onClick={() =>
-                      setExpandedActionId(isExpanded ? null : action.id)
-                    }
+                    onClick={() => setSelectedModalAction(action)}
                     className="p-4 flex items-start gap-3 cursor-pointer"
                   >
                     <motion.button
@@ -2122,60 +2119,14 @@ export function HomeScreen() {
                     </div>
 
                     <ChevronRight
-                      className={`w-4 h-4 text-muted shrink-0 transition-transform ${
-                        isExpanded ? 'rotate-90' : ''
-                      }`}
+                      className="w-4 h-4 text-muted/70 group-hover:text-foreground group-hover:translate-x-0.5 shrink-0 transition-all mt-1"
+                      strokeWidth={1.75}
                     />
                   </div>
-
-                <AnimatePresence>
-                  {isExpanded && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="px-4 pb-4 pt-1 border-t border-card-border/60 bg-card-subtle text-xs text-muted space-y-2"
-                    >
-                      <div>
-                        <strong className="text-foreground font-semibold">
-                          Do this:{' '}
-                        </strong>
-                        <span>{action.doThis}</span>
-                      </div>
-                      <div>
-                        <strong className="text-foreground font-semibold">
-                          Why it works:{' '}
-                        </strong>
-                        <span>{action.whyItWorks || action.why}</span>
-                      </div>
-                      <div>
-                        <strong className="text-foreground font-semibold">
-                          Cost and time:{' '}
-                        </strong>
-                        <span>{action.cost_tier} • {action.timeNeeded}</span>
-                      </div>
-                      <div>
-                        <strong className="text-foreground font-semibold">
-                          Evidence:{' '}
-                        </strong>
-                        <span>{action.evidence}</span>
-                      </div>
-                      {action.careful && (
-                        <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200/80 dark:border-amber-800/60 flex items-start gap-2">
-                          <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                          <div>
-                            <strong className="font-semibold block">Be careful about:</strong>
-                            <span>{action.careful}</span>
-                          </div>
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </SpotlightCard>
-            </motion.div>
-          );
-        })}
+                </SpotlightCard>
+              </motion.div>
+            );
+          })}
         </motion.div>
       </AnimatePresence>
     </section>
@@ -2594,6 +2545,15 @@ export function HomeScreen() {
           </AnimatePresence>,
           document.body
         )}
+
+      {/* Action Detail Pop-up Modal */}
+      <ActionDetailModal
+        action={selectedModalAction}
+        isOpen={Boolean(selectedModalAction)}
+        onClose={() => setSelectedModalAction(null)}
+        isChecked={selectedModalAction ? (profile.checkedActions?.includes(selectedModalAction.id) || false) : false}
+        onToggleCheck={handleActionCheck}
+      />
     </div>
   );
 }

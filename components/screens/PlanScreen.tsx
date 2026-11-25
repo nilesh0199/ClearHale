@@ -15,12 +15,14 @@ import { ActionGroup, ActionItem, FamilyMember, FamilyView } from '@/types';
 import { CostChip, EvidenceChip } from '../ui/NeutralChips';
 import confetti from 'canvas-confetti';
 import { ShareModal } from '../share/ShareModal';
+import { ActionDetailModal } from '../actions/ActionDetailModal';
 import {
   SlidersHorizontal,
   Info,
   CheckCircle2,
   Circle,
   ChevronDown,
+  ChevronRight,
   AlertTriangle,
   Flame,
   Shield,
@@ -45,7 +47,7 @@ export function PlanScreen() {
   // What-if simulator state
   const [windowsClosed, setWindowsClosed] = useState(true);
   const [activeFilter, setActiveFilter] = useState<'none' | 'hepa' | 'diy_box'>('hepa');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedModalAction, setSelectedModalAction] = useState<ActionItem | null>(null);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<string>('all');
 
@@ -92,11 +94,9 @@ export function PlanScreen() {
 
   const renderActionCard = (action: ActionItem) => {
     const isChecked = profile.checkedActions.includes(action.id);
-    const isExpanded = expandedId === action.id;
     const { enTitle, nativeTitle } = getActionBi(action.id, action.title, currentBand.key);
 
     const isMyth = action.evidence === 'Myth' || action.evidence_level === 'Myth';
-    const isStrong = action.evidence === 'Strong' || action.evidence_level === 'Strong';
     const isPersonaMatch =
       activeFamilyView !== 'whole_family' &&
       action.suits.includes(activeFamilyView);
@@ -115,7 +115,7 @@ export function PlanScreen() {
               ? 'rgba(45, 212, 191, 0.14)'
               : 'rgba(13, 92, 82, 0.08)'
           }
-          className={`rounded-card border transition-all shadow-soft overflow-hidden ${
+          className={`rounded-card border transition-all shadow-soft overflow-hidden group cursor-pointer ${
             isChecked
               ? 'border-emerald-200 dark:border-emerald-800/50 bg-emerald-50/20 dark:bg-emerald-950/20'
               : isPersonaMatch
@@ -127,7 +127,7 @@ export function PlanScreen() {
         >
           {/* Action Header */}
           <div
-            onClick={() => setExpandedId(isExpanded ? null : action.id)}
+            onClick={() => setSelectedModalAction(action)}
             className="p-4 sm:p-5 flex items-start gap-3.5 cursor-pointer"
           >
             <button
@@ -180,77 +180,11 @@ export function PlanScreen() {
               </p>
             </div>
 
-            <ChevronDown
-              className={`w-4 h-4 text-muted shrink-0 transition-transform ${
-                isExpanded ? 'rotate-180' : ''
-              }`}
+            <ChevronRight
+              className="w-4 h-4 text-muted/70 group-hover:text-foreground group-hover:translate-x-0.5 shrink-0 transition-all mt-1"
               strokeWidth={1.75}
             />
           </div>
-
-          {/* Expanded Card Details */}
-          <AnimatePresence>
-            {isExpanded && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="px-4 sm:px-5 pb-5 pt-1 border-t border-card-border/60 bg-card-subtle/50 text-xs sm:text-sm text-muted space-y-3"
-              >
-                <div>
-                  <span className="font-semibold text-foreground block mb-0.5">
-                    Do this:
-                  </span>
-                  <p className="leading-relaxed text-foreground/90">
-                    {action.doThis}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="font-semibold text-foreground block mb-0.5">
-                    Why it works:
-                  </span>
-                  <p className="leading-relaxed text-muted/90">
-                    {action.whyItWorks || action.why}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-4 text-xs sm:text-sm text-muted flex-wrap">
-                  <div>
-                    <span className="font-semibold text-foreground">Cost and time: </span>
-                    <span>{action.cost_tier} • {action.timeNeeded}</span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-foreground">Evidence: </span>
-                    <span>{action.evidence || action.evidence_level}</span>
-                  </div>
-                </div>
-
-                {action.source && (
-                  <div>
-                    <a
-                      href={action.source}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-teal-accent hover:underline inline-flex items-center gap-1 text-xs"
-                    >
-                      Official Source <span aria-hidden="true">↗</span>
-                    </a>
-                  </div>
-                )}
-
-                {(action.careful || action.safety_note) && (
-                  <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-800/40 flex items-start gap-2.5">
-                    <AlertTriangle className="w-4 h-4 shrink-0 text-amber-700 dark:text-amber-400 mt-0.5" strokeWidth={1.75} />
-                    <div>
-                      <strong className="font-semibold block">Be careful about:</strong>
-                      <span className="leading-relaxed">{action.careful || action.safety_note}</span>
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
         </SpotlightCard>
       </motion.div>
     );
@@ -768,6 +702,15 @@ export function PlanScreen() {
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
         initialStyle="done"
+      />
+
+      {/* Action Detail Pop-up Modal */}
+      <ActionDetailModal
+        action={selectedModalAction}
+        isOpen={Boolean(selectedModalAction)}
+        onClose={() => setSelectedModalAction(null)}
+        isChecked={selectedModalAction ? profile.checkedActions.includes(selectedModalAction.id) : false}
+        onToggleCheck={handleActionToggle}
       />
     </div>
   );
