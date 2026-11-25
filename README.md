@@ -9,11 +9,13 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/05-home-mobile.png" width="240" alt="Mobile Home Screen" />
+  <img src="docs/screenshots/05-home-mobile.png" width="195" alt="Mobile Home Screen" />
   &nbsp;&nbsp;
-  <img src="docs/screenshots/06-plan-mobile.png" width="240" alt="Mobile Action Plan Simulator" />
+  <img src="docs/screenshots/06-plan-mobile.png" width="195" alt="Mobile Action Plan Simulator" />
   &nbsp;&nbsp;
-  <img src="docs/screenshots/07-care-mobile.png" width="240" alt="Mobile Guided Breathing Care" />
+  <img src="docs/screenshots/07-care-mobile.png" width="195" alt="Mobile Guided Breathing Care" />
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/08-share-poster.png" width="195" alt="Family Action Plan Sharing Poster" />
 </p>
 
 ---
