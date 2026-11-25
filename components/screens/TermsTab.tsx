@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/context/AppContext';
 import { Bi } from '../Bi';
 import { SpotlightCard } from '../ui/rb/SpotlightCard';
+import { TermDetailModal } from '../care/TermDetailModal';
 import {
   GLOSSARY_TERMS,
   AIR_BANDS_10SEC,
@@ -14,6 +15,7 @@ import {
 import {
   Search,
   ChevronDown,
+  ChevronRight,
   Lightbulb,
   ShieldCheck,
   HelpCircle,
@@ -27,25 +29,22 @@ export function TermsTab() {
   const { profile } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<TermCategory>('all');
-  const [expandedTermId, setExpandedTermId] = useState<string | null>('aqi');
+  const [selectedModalTerm, setSelectedModalTerm] = useState<TermDetail | null>(null);
 
   const lang = profile.language;
   const isEn = lang === 'en';
 
-  // Highlight or auto-expand term passed from <Term> popovers
+  // Highlight or auto-open term passed from <Term> popovers
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
       const termToHighlight = localStorage.getItem('clearhale_highlight_term');
       if (termToHighlight) {
-        setExpandedTermId(termToHighlight);
+        const found = GLOSSARY_TERMS.find((t) => t.id === termToHighlight);
+        if (found) {
+          setSelectedModalTerm(found);
+        }
         localStorage.removeItem('clearhale_highlight_term');
-        setTimeout(() => {
-          const el = document.getElementById(`term-${termToHighlight}`);
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }, 300);
       }
     } catch (e) {}
   }, []);
@@ -75,10 +74,6 @@ export function TermsTab() {
       return matchEn || matchHi || matchMr || matchAlias;
     });
   }, [selectedCategory, searchQuery]);
-
-  const toggleAccordion = (termId: string) => {
-    setExpandedTermId((prev) => (prev === termId ? null : termId));
-  };
 
   return (
     <div className="space-y-6 text-left">
@@ -222,26 +217,21 @@ export function TermsTab() {
             </div>
           ) : (
             filteredTerms.map((term) => {
-              const isExpanded = expandedTermId === term.id;
               const title = isEn ? term.titleEn : lang === 'hi' ? term.titleHi : term.titleMr;
-              const whatItMeans = isEn ? term.whatItMeansEn : lang === 'hi' ? term.whatItMeansHi : term.whatItMeansMr;
-              const thinkOfItLike = isEn ? term.thinkOfItLikeEn : lang === 'hi' ? term.thinkOfItLikeHi : term.thinkOfItLikeMr;
-              const whyItMatters = isEn ? term.whyItMattersEn : lang === 'hi' ? term.whyItMattersHi : term.whyItMattersMr;
-              const whatYouCanDo = isEn ? term.whatYouCanDoEn : lang === 'hi' ? term.whatYouCanDoHi : term.whatYouCanDoMr;
 
               return (
                 <SpotlightCard
                   key={term.id}
                   id={`term-${term.id}`}
                   spotlightColor="rgba(45, 212, 191, 0.1)"
-                  className="bg-card rounded-card border border-card-border shadow-soft overflow-hidden transition-all duration-200"
+                  className="bg-card rounded-card border border-card-border shadow-soft overflow-hidden transition-all duration-200 group cursor-pointer hover:border-teal-accent/40"
                 >
-                  {/* Accordion Header (Always Visible) */}
+                  {/* Card Header (Always Visible, Min 50px tap target) */}
                   <button
                     type="button"
-                    onClick={() => toggleAccordion(term.id)}
+                    onClick={() => setSelectedModalTerm(term)}
                     className="w-full min-h-[50px] p-4 text-left flex items-center justify-between gap-3 hover:bg-card-subtle/50 transition-colors cursor-pointer select-none"
-                    aria-expanded={isExpanded}
+                    aria-label={`View details for ${title}`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <span className="text-xs uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-card-subtle border border-card-border text-muted shrink-0">
@@ -256,81 +246,25 @@ export function TermsTab() {
                       <span className="text-xs sm:text-sm text-muted hidden md:inline-block max-w-[280px] truncate">
                         {isEn ? term.shortMeaningEn : lang === 'hi' ? term.shortMeaningHi : term.shortMeaningMr}
                       </span>
-                      <ChevronDown
-                        className={`w-4 h-4 text-muted transition-transform duration-200 ${
-                          isExpanded ? 'rotate-180 text-teal-accent' : ''
-                        }`}
+                      <ChevronRight
+                        className="w-4 h-4 text-muted/70 group-hover:text-foreground group-hover:translate-x-0.5 shrink-0 transition-all"
+                        strokeWidth={1.75}
                       />
                     </div>
                   </button>
-
-                  {/* Accordion Body (Four Parts) */}
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.25, ease: 'easeInOut' }}
-                        className="overflow-hidden"
-                      >
-                        <div className="p-4 sm:p-5 pt-1 space-y-3.5 border-t border-card-border bg-card/60 text-sm sm:text-base">
-                          {/* Part 1: What it means */}
-                          <div className="space-y-1">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-muted block">
-                              {isEn ? '1. What it means' : lang === 'hi' ? '१. इसका क्या मतलब है' : '१. याचा अर्थ काय आहे'}
-                            </span>
-                            <p className="text-foreground leading-relaxed font-normal">
-                              {whatItMeans}
-                            </p>
-                          </div>
-
-                          {/* Part 2: Think of it like (Everyday Indian comparison) */}
-                          {thinkOfItLike && (
-                            <div className="p-3.5 rounded-xl bg-teal-light/50 border border-teal-accent/20 space-y-1">
-                              <span className="text-xs font-bold text-teal-accent flex items-center gap-1.5 uppercase tracking-wide">
-                                <Lightbulb className="w-3.5 h-3.5" />
-                                <span>{isEn ? '2. Think of it like' : lang === 'hi' ? '२. ऐसे समझें (सरल तुलना)' : '२. असा विचार करा (सोपी तुलना)'}</span>
-                              </span>
-                              <p className="text-foreground/90 leading-relaxed text-sm sm:text-base">
-                                {thinkOfItLike}
-                              </p>
-                            </div>
-                          )}
-
-                          {/* Part 3: Why it matters */}
-                          <div className="space-y-1">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-muted flex items-center gap-1">
-                              <ShieldAlert className="w-3 h-3 text-amber-600" />
-                              <span>{isEn ? '3. Why it matters' : lang === 'hi' ? '३. यह क्यों जरूरी है' : '३. हे महत्त्वाचे का आहे'}</span>
-                            </span>
-                            <p className="text-muted leading-relaxed text-sm sm:text-base">
-                              {whyItMatters}
-                            </p>
-                          </div>
-
-                          {/* Part 4: What you can do (1 actionable line) */}
-                          {whatYouCanDo && (
-                            <div className="p-3 rounded-xl bg-card-subtle border border-card-border space-y-1">
-                              <span className="text-xs font-bold text-teal-accent flex items-center gap-1.5 uppercase tracking-wide">
-                                <ShieldCheck className="w-3.5 h-3.5" />
-                                <span>{isEn ? '4. What you can do' : lang === 'hi' ? '४. आप क्या कर सकते हैं' : '४. आपण काय करू शकता'}</span>
-                              </span>
-                              <p className="text-foreground leading-relaxed text-sm sm:text-base font-medium">
-                                {whatYouCanDo}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </SpotlightCard>
               );
             })
           )}
         </div>
       </section>
+
+      {/* Term Detail Pop-up Modal */}
+      <TermDetailModal
+        term={selectedModalTerm}
+        isOpen={Boolean(selectedModalTerm)}
+        onClose={() => setSelectedModalTerm(null)}
+      />
     </div>
   );
 }
