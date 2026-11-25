@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js Runtime
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.x'
           cache: 'npm'
 
       - name: Install Project Dependencies
@@ -27,11 +27,12 @@ jobs:
       - name: Strict TypeScript Compilation
         run: npx tsc --noEmit
 
-      - name: Run Automated Test Suite (96 Tests across 10 Suites)
+      - name: Run Automated Test Suite (108 Tests across 30 Suites)
         run: npm test
 
       - name: Production Bundle Compilation
         env:
+          NEXT_TELEMETRY_DISABLED: "1"
           GROQ_API_KEY: "dummy_groq_ci_key"
           GEMINI_API_KEY: "dummy_gemini_ci_key"
           OPENAQ_API_KEY: "dummy_openaq_ci_key"
