@@ -189,8 +189,14 @@ export function HomeScreen() {
       setIsDesktopDevice(isDesktop);
       const isFsApi = Boolean(document.fullscreenElement);
       const isDisplayModeFs = window.matchMedia('(display-mode: fullscreen)').matches;
-      // When in browser F11 fullscreen on Windows, innerHeight matches screen height within 12px
-      const isWindowFs = Boolean(window.screen && window.innerHeight >= window.screen.height - 12);
+      // When in browser F11 fullscreen on Windows, innerHeight matches screen height within 12px (exclude automated test runners)
+      const isWindowFs = Boolean(
+        typeof navigator !== 'undefined' &&
+        !navigator.webdriver &&
+        window.screen &&
+        window.screen.height > 0 &&
+        window.innerHeight >= window.screen.height - 12
+      );
 
       const isFs = isDesktop && (isFsApi || isDisplayModeFs || isWindowFs);
       setIsDesktopFullScreen(isFs);
@@ -1333,7 +1339,7 @@ export function HomeScreen() {
     <div className="w-full space-y-6 pb-24 md:pb-12 max-w-5xl mx-auto lg:space-y-0 lg:pb-0 lg:max-w-none lg:h-screen lg:h-[100dvh] lg:max-h-[100dvh] lg:grid lg:grid-rows-[auto_auto_minmax(0,1fr)] lg:overflow-hidden">
       {/* Row 1: Top Bar (fixed on desktop, never scrolls, with page background) */}
       <header className="w-full bg-background relative z-30 pt-2 lg:pt-6 lg:pb-3.5 px-0 lg:px-8 shrink-0">
-        <div className={`w-full ${isFullScreenLayout ? 'max-w-6xl' : 'max-w-5xl'} mx-auto flex items-center justify-between`}>
+        <div className="w-full max-w-5xl lg:max-w-6xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3 min-w-0">
           {/* Mobile Screen Logo (at left top corner, location to right) */}
           <div className="lg:hidden shrink-0">
@@ -1540,7 +1546,7 @@ export function HomeScreen() {
 
       {/* Row 2: Family Tabs (fixed on desktop, never scrolls, with page background) */}
       <div className="w-full bg-background relative z-10 py-0 lg:py-2.5 px-0 lg:px-8 shrink-0">
-        <div className={`w-full ${isFullScreenLayout ? 'max-w-6xl' : 'max-w-5xl'} mx-auto space-y-2`}>
+        <div className="w-full max-w-5xl lg:max-w-6xl mx-auto space-y-2">
           {/* One-time Severe Air Alerts Permission Prompt Toast */}
           <AnimatePresence>
             {showNotificationBanner && (
@@ -1704,7 +1710,7 @@ export function HomeScreen() {
 
       {/* Row 3: Two-Column Body (Left ring card fixed in view, Right column scrolls) */}
       <div className={`w-full min-h-0 h-full ${isFullScreenLayout ? 'overflow-y-auto lg:overflow-visible' : 'overflow-hidden'} px-0 lg:px-8 pt-0 lg:pt-3 pb-0`}>
-        <div className={`w-full ${isFullScreenLayout ? 'max-w-6xl' : 'max-w-5xl'} mx-auto h-full min-h-0 transition-all`}>
+        <div className="w-full max-w-5xl lg:max-w-6xl mx-auto h-full min-h-0 transition-all">
           <div className={`grid grid-cols-1 lg:grid-cols-12 ${isFullScreenLayout ? 'gap-4 lg:items-stretch' : 'gap-6 items-start'} h-full min-h-0 min-w-0 max-w-full`}>
             {/* Left Column: Center Breathing Ring & Air Severity Card */}
             <div
