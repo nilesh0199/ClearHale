@@ -67,8 +67,8 @@ export function AskByVoiceFab() {
       whileHover={shouldReduceMotion ? undefined : { scale: 1.05 }}
       whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
       transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-      className={`fixed bottom-28 right-4 sm:bottom-8 sm:right-8 z-30 min-h-[48px] rounded-full bg-teal-accent hover:bg-teal-hover text-white font-medium shadow-float flex items-center justify-center border border-white/20 select-none group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-teal-accent overflow-hidden transition-[width,padding] duration-300 ease-out ${
-        isShrunk ? 'w-12 h-12 p-0' : 'w-12 h-12 p-0 sm:w-auto sm:px-4 sm:py-2.5 sm:gap-2.5'
+      className={`fixed bottom-28 right-4 sm:bottom-3 sm:right-4 lg:bottom-2.5 lg:right-3.5 z-30 min-h-[44px] rounded-full bg-teal-accent hover:bg-teal-hover text-white font-medium shadow-float flex items-center justify-center border border-white/20 select-none group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-teal-accent overflow-hidden transition-[width,padding] duration-300 ease-out ${
+        isShrunk ? 'w-11 h-11 p-0' : 'w-11 h-11 p-0 sm:w-auto sm:px-3.5 sm:py-2 sm:gap-2'
       }`}
       aria-label="Ask by voice - opens Ask Clearhale and starts microphone"
       title={isShrunk ? 'Ask by voice' : undefined}

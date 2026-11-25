@@ -90,7 +90,7 @@ export function TermsTab() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-teal-accent" />
-            <h2 className="text-sm sm:text-base font-semibold text-foreground">
+            <h2 className="text-base sm:text-lg font-semibold text-foreground">
               {isEn
                 ? 'Read your air in 10 seconds'
                 : lang === 'hi'
@@ -98,12 +98,12 @@ export function TermsTab() {
                 : '१० सेकंदात समजून घ्या हवा'}
             </h2>
           </div>
-          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-teal-light text-teal-accent border border-teal-accent/25">
+          <span className="text-xs uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-teal-light text-teal-accent border border-teal-accent/25">
             CPCB Scale
           </span>
         </div>
 
-        <p className="text-xs text-muted leading-relaxed">
+        <p className="text-xs sm:text-sm text-muted leading-relaxed">
           {isEn
             ? 'The six official colour bands used in India, their PM2.5 range, and the single most important action to take.'
             : lang === 'hi'
@@ -119,14 +119,14 @@ export function TermsTab() {
               className={`p-3 rounded-xl border ${band.borderClass} ${band.bgClass} flex flex-col justify-between space-y-1.5 transition-all`}
             >
               <div className="flex items-center justify-between gap-1">
-                <span className={`text-xs font-bold ${band.textClass}`}>
+                <span className={`text-xs sm:text-sm font-bold ${band.textClass}`}>
                   {isEn ? band.nameEn : lang === 'hi' ? band.nameHi : band.nameMr}
                 </span>
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-white/80 dark:bg-black/40 text-foreground border border-card-border">
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-white/80 dark:bg-black/40 text-foreground border border-card-border">
                   {band.pm25Range}
                 </span>
               </div>
-              <p className="text-[11px] leading-snug text-foreground/85 font-medium">
+              <p className="text-xs sm:text-sm leading-snug text-foreground/85 font-medium">
                 {isEn ? band.actionEn : lang === 'hi' ? band.actionHi : band.actionMr}
               </p>
             </div>
@@ -151,7 +151,7 @@ export function TermsTab() {
                   ? 'शब्द खोजें (जैसे AQI, PM2.5, हेपा, N95)...'
                   : 'शब्दार्थ शोधा (उदा. AQI, PM2.5, HEPA, N95)...'
               }
-              className="w-full pl-9 pr-4 py-2 rounded-xl border border-card-border bg-card text-foreground text-xs sm:text-sm focus:border-teal-accent focus:ring-1 focus:ring-teal-accent shadow-xs"
+              className="w-full pl-9 pr-4 py-2 rounded-xl border border-card-border bg-card text-foreground text-sm sm:text-base focus:border-teal-accent focus:ring-1 focus:ring-teal-accent shadow-xs"
             />
           </div>
 
@@ -167,7 +167,7 @@ export function TermsTab() {
                 <button
                   key={chip.id}
                   onClick={() => setSelectedCategory(chip.id)}
-                  className={`relative px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border ${
+                  className={`relative px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-colors border ${
                     isSelected
                       ? 'text-white border-teal-accent shadow-xs font-semibold'
                       : 'bg-card text-muted hover:text-foreground border-card-border hover:bg-card-subtle'
@@ -190,7 +190,7 @@ export function TermsTab() {
         </div>
 
         {/* Results Counter */}
-        <div className="text-[11px] text-muted flex items-center justify-between px-1">
+        <div className="text-xs text-muted flex items-center justify-between px-1">
           <span>
             {isEn
               ? `Showing ${filteredTerms.length} terms`
@@ -244,16 +244,16 @@ export function TermsTab() {
                     aria-expanded={isExpanded}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-card-subtle border border-card-border text-muted shrink-0">
+                      <span className="text-xs uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-card-subtle border border-card-border text-muted shrink-0">
                         {term.category}
                       </span>
-                      <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">
+                      <h3 className="text-base sm:text-lg font-semibold text-foreground truncate">
                         {title}
                       </h3>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs text-muted hidden md:inline-block max-w-[280px] truncate">
+                      <span className="text-xs sm:text-sm text-muted hidden md:inline-block max-w-[280px] truncate">
                         {isEn ? term.shortMeaningEn : lang === 'hi' ? term.shortMeaningHi : term.shortMeaningMr}
                       </span>
                       <ChevronDown
@@ -274,10 +274,10 @@ export function TermsTab() {
                         transition={{ duration: 0.25, ease: 'easeInOut' }}
                         className="overflow-hidden"
                       >
-                        <div className="p-4 sm:p-5 pt-1 space-y-3.5 border-t border-card-border bg-card/60 text-xs sm:text-sm">
+                        <div className="p-4 sm:p-5 pt-1 space-y-3.5 border-t border-card-border bg-card/60 text-sm sm:text-base">
                           {/* Part 1: What it means */}
                           <div className="space-y-1">
-                            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted block">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-muted block">
                               {isEn ? '1. What it means' : lang === 'hi' ? '१. इसका क्या मतलब है' : '१. याचा अर्थ काय आहे'}
                             </span>
                             <p className="text-foreground leading-relaxed font-normal">
@@ -288,11 +288,11 @@ export function TermsTab() {
                           {/* Part 2: Think of it like (Everyday Indian comparison) */}
                           {thinkOfItLike && (
                             <div className="p-3.5 rounded-xl bg-teal-light/50 border border-teal-accent/20 space-y-1">
-                              <span className="text-[11px] font-bold text-teal-accent flex items-center gap-1.5 uppercase tracking-wide">
+                              <span className="text-xs font-bold text-teal-accent flex items-center gap-1.5 uppercase tracking-wide">
                                 <Lightbulb className="w-3.5 h-3.5" />
                                 <span>{isEn ? '2. Think of it like' : lang === 'hi' ? '२. ऐसे समझें (सरल तुलना)' : '२. असा विचार करा (सोपी तुलना)'}</span>
                               </span>
-                              <p className="text-foreground/90 leading-relaxed text-xs sm:text-sm">
+                              <p className="text-foreground/90 leading-relaxed text-sm sm:text-base">
                                 {thinkOfItLike}
                               </p>
                             </div>
@@ -300,11 +300,11 @@ export function TermsTab() {
 
                           {/* Part 3: Why it matters */}
                           <div className="space-y-1">
-                            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted flex items-center gap-1">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-muted flex items-center gap-1">
                               <ShieldAlert className="w-3 h-3 text-amber-600" />
                               <span>{isEn ? '3. Why it matters' : lang === 'hi' ? '३. यह क्यों जरूरी है' : '३. हे महत्त्वाचे का आहे'}</span>
                             </span>
-                            <p className="text-muted leading-relaxed text-xs sm:text-sm">
+                            <p className="text-muted leading-relaxed text-sm sm:text-base">
                               {whyItMatters}
                             </p>
                           </div>
@@ -312,11 +312,11 @@ export function TermsTab() {
                           {/* Part 4: What you can do (1 actionable line) */}
                           {whatYouCanDo && (
                             <div className="p-3 rounded-xl bg-card-subtle border border-card-border space-y-1">
-                              <span className="text-[11px] font-bold text-teal-accent flex items-center gap-1.5 uppercase tracking-wide">
+                              <span className="text-xs font-bold text-teal-accent flex items-center gap-1.5 uppercase tracking-wide">
                                 <ShieldCheck className="w-3.5 h-3.5" />
                                 <span>{isEn ? '4. What you can do' : lang === 'hi' ? '४. आप क्या कर सकते हैं' : '४. आपण काय करू शकता'}</span>
                               </span>
-                              <p className="text-foreground leading-relaxed text-xs sm:text-sm font-medium">
+                              <p className="text-foreground leading-relaxed text-sm sm:text-base font-medium">
                                 {whatYouCanDo}
                               </p>
                             </div>

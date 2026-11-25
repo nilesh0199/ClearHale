@@ -412,7 +412,7 @@ export function AppLayout() {
         {activeTab === 'home' && <HomeScreen />}
         {activeTab === 'plan' && <PlanScreen />}
         {activeTab === 'ask' && (
-          <div className="w-full max-w-3xl mx-auto flex-1 flex flex-col min-h-0 h-full">
+          <div className="w-full max-w-5xl lg:max-w-6xl mx-auto flex-1 flex flex-col min-h-0 h-full">
             <AskScreen />
           </div>
         )}

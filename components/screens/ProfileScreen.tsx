@@ -220,7 +220,7 @@ export function ProfileScreen() {
   };
 
   return (
-    <div className="space-y-6 pb-24 md:pb-12 max-w-4xl mx-auto">
+    <div className="w-full space-y-6 pb-24 md:pb-12 max-w-5xl lg:max-w-6xl mx-auto">
       {/* Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
@@ -344,7 +344,7 @@ export function ProfileScreen() {
           )}
         </div>
 
-        <p className="text-[11px] text-muted leading-relaxed pt-2 border-t border-card-border/60">
+        <p className="text-xs text-muted leading-relaxed pt-2 border-t border-card-border/60">
           <Bi k="profile.cloudConsent" layout="plain" />
         </p>
       </SpotlightCard>
@@ -355,7 +355,7 @@ export function ProfileScreen() {
         className="bg-card rounded-card border border-card-border p-5 sm:p-6 shadow-soft"
       >
         <div className="space-y-1.5 sm:space-y-2">
-          <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-muted">
+          <h2 className="text-sm sm:text-base font-semibold uppercase tracking-wider text-muted">
             <Bi k="profile.appearance" layout="plain" />
           </h2>
           <p className="text-xs sm:text-sm text-muted leading-relaxed">
@@ -503,7 +503,7 @@ export function ProfileScreen() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-teal-accent" />
-              <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-muted">
+              <h2 className="text-sm sm:text-base font-semibold uppercase tracking-wider text-muted">
                 <Bi k="profile.location" layout="plain" />
               </h2>
             </div>
@@ -524,11 +524,11 @@ export function ProfileScreen() {
             <div className="font-semibold text-foreground text-xs sm:text-sm leading-snug">
               {profile.city.name}
             </div>
-            <div className="text-[11px] sm:text-xs text-muted leading-relaxed">
+            <div className="text-xs sm:text-sm text-muted leading-relaxed">
               {[profile.city.admin, profile.city.country].filter(Boolean).join(', ')}
             </div>
           </div>
-          <span className="text-[10px] sm:text-[11px] text-teal-accent font-semibold px-2 py-0.5 rounded-full bg-teal-light border border-teal-accent/20 shrink-0">
+          <span className="text-xs text-teal-accent font-semibold px-2.5 py-0.5 rounded-full bg-teal-light border border-teal-accent/20 shrink-0">
             Active
           </span>
         </div>
@@ -593,7 +593,7 @@ export function ProfileScreen() {
               </div>
             ) : (
               <div className="pt-1">
-                <div className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-2">
+                <div className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                   Popular Indian Cities
                 </div>
                 <div className="flex flex-wrap gap-1.5">
@@ -629,7 +629,7 @@ export function ProfileScreen() {
         <div className="space-y-1.5 sm:space-y-2">
           <div className="flex items-center gap-2">
             <Globe className="w-4 h-4 text-teal-accent" />
-            <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-muted">
+            <h2 className="text-sm sm:text-base font-semibold uppercase tracking-wider text-muted">
               <Bi k="profile.language" layout="plain" />
             </h2>
           </div>
@@ -658,9 +658,9 @@ export function ProfileScreen() {
                   {isSelected && <Check className="w-3.5 h-3.5 text-teal-accent shrink-0" />}
                 </div>
                 <div className="flex items-center gap-1 mt-0.5">
-                  <span className="text-[10px] text-muted leading-tight">{lang.name}</span>
+                  <span className="text-xs text-muted leading-tight">{lang.name}</span>
                   {isRegional && (
-                    <span className="text-[9px] px-1.5 py-0.2 rounded-full font-semibold bg-teal-accent/15 text-teal-accent border border-teal-accent/30">
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full font-semibold bg-teal-accent/15 text-teal-accent border border-teal-accent/30">
                       Regional
                     </span>
                   )}
@@ -679,7 +679,7 @@ export function ProfileScreen() {
         <div className="space-y-2 sm:space-y-2.5">
           <div className="flex items-center gap-2">
             <Mic className="w-4 h-4 text-teal-accent" />
-            <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-muted">
+            <h2 className="text-sm sm:text-base font-semibold uppercase tracking-wider text-muted">
               <Bi k="voice.title" layout="plain" />
             </h2>
           </div>
@@ -883,7 +883,7 @@ export function ProfileScreen() {
                 ))}
             </select>
             {availableVoices.length === 0 && (
-              <p className="text-[11px] text-muted">
+              <p className="text-xs text-muted">
                 Detecting device voices...
               </p>
             )}
@@ -911,7 +911,7 @@ export function ProfileScreen() {
         <div className="space-y-1.5 sm:space-y-2">
           <div className="flex items-center gap-2">
             <Home className="w-4 h-4 text-teal-accent" />
-            <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-muted">
+            <h2 className="text-sm sm:text-base font-semibold uppercase tracking-wider text-muted">
               {t.profile.household}
             </h2>
           </div>
@@ -1280,7 +1280,7 @@ export function ProfileScreen() {
       >
         <div className="flex items-center gap-2">
           <Info className="w-4 h-4 text-teal-accent" />
-          <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-muted">
+          <h2 className="text-sm sm:text-base font-semibold uppercase tracking-wider text-muted">
             About Clearhale
           </h2>
         </div>

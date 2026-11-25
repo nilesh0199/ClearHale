@@ -60,10 +60,11 @@ export function ShareModal({
     Math.round((Date.now() - airData.updatedAt) / (60 * 1000))
   );
 
-  // Generate QR Code once for clearhale-vercel.vercel.app
+  // Generate QR Code once for clearhale-vercel.vercel.app with ultra-high resolution and Level H error correction
   useEffect(() => {
     QRCode.toDataURL('https://clearhale-vercel.vercel.app/', {
-      width: 140,
+      errorCorrectionLevel: 'H',
+      width: 1024,
       margin: 1,
       color: {
         dark: '#0D5C52',
@@ -175,7 +176,7 @@ export function ShareModal({
   const generateCardImage = useCallback(async () => {
     const width = 1080;
     const height = 1350;
-    const cacheKey = `v4_${airData.updatedAt}_${airData.current.pm2_5}_${profile.city.name}_${profile.language}_${audience}`;
+    const cacheKey = `v5_${airData.updatedAt}_${airData.current.pm2_5}_${profile.city.name}_${profile.language}_${audience}`;
 
     if (imageCache.current[cacheKey]) {
       setPreviewDataUrl(imageCache.current[cacheKey].dataUrl);
@@ -196,13 +197,12 @@ export function ShareModal({
 
       const node = cardRef.current;
 
-      // High-performance capture: skipFonts avoids cross-origin CSS rule security stalls,
-      // cacheBust: false avoids redundant network re-fetching of local assets
+      // High-performance 2x Retina capture: ensures crystal-clear zoom and QR code readability
       const dataUrl = await toPng(node, {
         width,
         height,
-        pixelRatio: 1,
-        quality: 0.95,
+        pixelRatio: 2,
+        quality: 1.0,
         cacheBust: false,
         skipFonts: true,
       });

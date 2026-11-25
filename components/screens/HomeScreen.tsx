@@ -53,6 +53,8 @@ import {
   HardHat,
   AlertTriangle,
   Share2,
+  Maximize2,
+  Minimize2,
   X,
   Settings,
   Check,
@@ -127,10 +129,61 @@ export function HomeScreen() {
   const [isCompact, setIsCompact] = useState(false);
   const [isGuidanceExpanded, setIsGuidanceExpanded] = useState(false);
 
+  // Full-screen desktop detection: activates when in true F11 / browser full screen on desktop (no tabs or taskbar)
+  const [isDesktopFullScreen, setIsDesktopFullScreen] = useState(false);
+  const [manualFullscreen, setManualFullscreen] = useState(false);
+  const [isDesktopDevice, setIsDesktopDevice] = useState(false);
+  const isFullScreenLayout =
+    (isDesktopFullScreen || manualFullscreen) && isDesktopDevice;
+
+  useEffect(() => {
+    const checkFullScreen = () => {
+      if (typeof window === 'undefined') return;
+      const isDesktop = window.innerWidth >= 1024;
+      setIsDesktopDevice(isDesktop);
+      const isFsApi = Boolean(document.fullscreenElement);
+      const isDisplayModeFs = window.matchMedia('(display-mode: fullscreen)').matches;
+      // When in browser F11 fullscreen on Windows, innerHeight matches screen height within 12px
+      const isWindowFs = Boolean(window.screen && window.innerHeight >= window.screen.height - 12);
+
+      const isFs = isDesktop && (isFsApi || isDisplayModeFs || isWindowFs);
+      setIsDesktopFullScreen(isFs);
+      if (!isFs && !document.fullscreenElement) {
+        setManualFullscreen(false);
+      }
+    };
+
+    checkFullScreen();
+    window.addEventListener('resize', checkFullScreen);
+    document.addEventListener('fullscreenchange', checkFullScreen);
+    const mq = window.matchMedia('(display-mode: fullscreen)');
+    mq.addEventListener?.('change', checkFullScreen);
+
+    return () => {
+      window.removeEventListener('resize', checkFullScreen);
+      document.removeEventListener('fullscreenchange', checkFullScreen);
+      mq.removeEventListener?.('change', checkFullScreen);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && manualFullscreen) {
+        setManualFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [manualFullscreen]);
+
   // Compact mode detection for small laptop screens or zoomed display on desktop
   useEffect(() => {
     const checkCompact = () => {
       if (typeof window === 'undefined') return;
+      if (isFullScreenLayout) {
+        setIsCompact(false);
+        return;
+      }
       const isDesktop = window.innerWidth >= 1024;
       const isConstrained = window.innerHeight < 640;
       setIsCompact(isDesktop && isConstrained);
@@ -139,7 +192,7 @@ export function HomeScreen() {
     checkCompact();
     window.addEventListener('resize', checkCompact);
     return () => window.removeEventListener('resize', checkCompact);
-  }, []);
+  }, [isFullScreenLayout]);
 
   // ResizeObserver on left column container to guarantee it never overflows without compacting
   useEffect(() => {
@@ -149,6 +202,10 @@ export function HomeScreen() {
 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
+        if (isFullScreenLayout) {
+          setIsCompact(false);
+          return;
+        }
         if (window.innerWidth >= 1024) {
           const height = entry.contentRect.height;
           if (height > 0 && height < 500) {
@@ -162,7 +219,7 @@ export function HomeScreen() {
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [isFullScreenLayout]);
 
   // Mouse wheel over left card forwards scroll to the right column container so it never feels dead
   const handleLeftCardWheel = (e: React.WheelEvent) => {
@@ -520,34 +577,32 @@ export function HomeScreen() {
   const tabListRef = useRef<HTMLDivElement>(null);
   const forecastScrollRef = useRef<HTMLDivElement>(null);
   const bestHourCardRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
-  // Auto-scroll the 24h forecast strip so the highlighted cleanest window is in the visible area (never cut off)
+  // When Home tab opens or hourly data updates, always position 24h scale at 'Now' (scrollLeft: 0)
   useEffect(() => {
     const container = forecastScrollRef.current;
-    const bestCard = bestHourCardRef.current;
-    if (!container || !bestCard) return;
+    if (!container) return;
 
-    const timer = setTimeout(() => {
-      if (!container || !bestCard) return;
-      const cRect = container.getBoundingClientRect();
-      const tRect = bestCard.getBoundingClientRect();
-
-      // Check if partially or fully out of view
-      const isCutOffRight = tRect.right > cRect.right - 10;
-      const isCutOffLeft = tRect.left < cRect.left + 10;
-
-      if (isCutOffRight || isCutOffLeft) {
-        const desiredLeft =
-          bestCard.offsetLeft - container.clientWidth / 2 + bestCard.clientWidth / 2;
-        container.scrollTo({
-          left: Math.max(0, desiredLeft),
-          behavior: 'smooth',
-        });
-      }
-    }, 180);
-
-    return () => clearTimeout(timer);
+    setForecastSliderIndex(0);
+    container.scrollTo({
+      left: 0,
+      behavior: 'instant',
+    });
+    setCanScrollLeft(false);
+    setCanScrollRight(container.scrollWidth > container.clientWidth + 5);
   }, [airData.hourly]);
+
+  const handleScrollForecast = (direction: 'left' | 'right') => {
+    const container = forecastScrollRef.current;
+    if (!container) return;
+    const scrollAmount = Math.max(180, Math.round(container.clientWidth * 0.6));
+    container.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    });
+  };
 
   const activeFamilyView = profile.activeFamilyFilter || 'whole_family';
 
@@ -616,10 +671,16 @@ export function HomeScreen() {
     }
   };
 
-  // Synchronize slider thumb when user scrolls or swipes cards directly
+  // Synchronize slider thumb and scroll arrows when user scrolls or swipes cards directly
   const handleForecastScroll = () => {
-    if (isDraggingSliderRef.current || !forecastScrollRef.current) return;
+    if (!forecastScrollRef.current) return;
     const container = forecastScrollRef.current;
+
+    // Update left/right scroll arrow enablement
+    setCanScrollLeft(container.scrollLeft > 6);
+    setCanScrollRight(container.scrollLeft < container.scrollWidth - container.clientWidth - 6);
+
+    if (isDraggingSliderRef.current) return;
     const total = airData.hourly.length;
     if (total <= 1) return;
 
@@ -629,6 +690,20 @@ export function HomeScreen() {
     const ratio = Math.min(1, Math.max(0, container.scrollLeft / maxScroll));
     const closestIdx = Math.round(ratio * (total - 1));
     setForecastSliderIndex(closestIdx);
+  };
+
+  const scrollToNow = () => {
+    if (!forecastScrollRef.current) return;
+    const container = forecastScrollRef.current;
+    container.scrollTo({
+      left: 0,
+      behavior: 'smooth',
+    });
+    setForecastSliderIndex(0);
+    setTimeout(() => {
+      setCanScrollLeft(false);
+      setCanScrollRight(container.scrollWidth > container.clientWidth - 6);
+    }, 320);
   };
 
   const scrollToBestHour = () => {
@@ -644,6 +719,10 @@ export function HomeScreen() {
     if (bestIdx !== -1) {
       setForecastSliderIndex(bestIdx);
     }
+    setTimeout(() => {
+      setCanScrollLeft(container.scrollLeft > 6);
+      setCanScrollRight(container.scrollLeft < container.scrollWidth - container.clientWidth - 6);
+    }, 320);
   };
 
   const topActions = getTop3Actions(profile, currentBand.key, activeFamilyView);
@@ -1062,11 +1141,153 @@ export function HomeScreen() {
     Math.round((Date.now() - airData.updatedAt) / (60 * 1000))
   );
 
+  const renderForecastCard = () => (
+    <SpotlightCard
+      id="forecast-section"
+      spotlightColor="rgba(45, 212, 191, 0.1)"
+      className={`scroll-mt-4 bg-card rounded-card border border-card-border shadow-soft ${
+        isFullScreenLayout ? 'p-4' : 'p-5'
+      } min-w-0 max-w-full overflow-hidden`}
+    >
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
+            {t.home.forecast24h}
+          </h2>
+        </div>
+        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+          {/* Current Time / Now Button */}
+          <button
+            type="button"
+            onClick={scrollToNow}
+            className="text-xs text-muted hover:text-teal-accent font-medium flex items-center gap-1.5 transition-colors cursor-pointer group"
+            title="Scroll to current hour (Now)"
+          >
+            <Clock className="w-3.5 h-3.5 text-teal-accent group-hover:scale-110 transition-transform" strokeWidth={2} />
+            <span>
+              Current: <span className="underline underline-offset-2">Now</span>
+            </span>
+          </button>
+
+          <span className="w-1 h-1 rounded-full bg-card-border" />
+
+          {/* Cleanest Window Button */}
+          <button
+            type="button"
+            onClick={scrollToBestHour}
+            className="text-xs text-teal-accent hover:text-teal-600 dark:hover:text-teal-400 font-medium flex items-center gap-1.5 transition-colors cursor-pointer group"
+            title="Scroll to highlighted cleanest window"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse group-hover:scale-125 transition-transform" />
+            <span>
+              Highlighted: <span className="underline underline-offset-2">{t.home.bestWindow}</span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Horizontal Scroll Strip with Left (<) and Right (>) Navigation Buttons */}
+      <div className="relative flex items-center gap-1.5 sm:gap-2">
+        {/* Left Arrow Button (<) */}
+        <button
+          type="button"
+          onClick={() => handleScrollForecast('left')}
+          disabled={!canScrollLeft}
+          className={`shrink-0 w-8 h-8 rounded-full border border-card-border flex items-center justify-center transition-all ${
+            canScrollLeft
+              ? 'bg-card text-foreground hover:bg-card-subtle hover:border-teal-accent/50 hover:text-teal-accent shadow-xs cursor-pointer active:scale-95'
+              : 'bg-card/40 text-muted/30 border-card-border/40 cursor-not-allowed opacity-40'
+          }`}
+          title="Scroll 24-hour scale left"
+          aria-label="Scroll 24-hour scale left"
+        >
+          <ChevronLeft className="w-4 h-4" strokeWidth={2.25} />
+        </button>
+
+        {/* Scrollable Cards Container (Touch-swipe enabled on mobile & trackpads) */}
+        <div
+          ref={forecastScrollRef}
+          onScroll={handleForecastScroll}
+          className="flex-1 min-w-0 flex gap-2.5 overflow-x-auto pt-1.5 pb-2.5 px-1 no-scrollbar touch-pan-x overscroll-x-contain select-none scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+        {airData.hourly.map((h, i) => {
+          const isSelected = i === forecastSliderIndex;
+          const displayPM = i === 0 ? airData.current.pm2_5 : h.pm2_5;
+          return (
+            <div
+              key={i}
+              ref={h.isBestHour ? bestHourCardRef : undefined}
+              onClick={() => {
+                setForecastSliderIndex(i);
+                scrollToHourIndex(i, false);
+              }}
+              className={`shrink-0 w-20 p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col justify-between min-h-[108px] ${
+                h.isBestHour
+                  ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 shadow-sm ring-2 ring-emerald-500'
+                  : isSelected
+                  ? 'border-teal-accent bg-teal-accent/10 shadow-sm ring-2 ring-teal-accent'
+                  : 'border-card-border bg-card-subtle/50 hover:bg-card-subtle'
+              }`}
+              title={`Hour ${h.hour}: ${displayPM} µg/m³`}
+            >
+              <div className="text-[11px] font-medium text-muted flex items-center justify-center gap-1">
+                <span>{h.hour}</span>
+                {i === 0 ? (
+                  <span className="text-[9px] font-semibold text-teal-accent bg-teal-accent/10 px-1 py-0.2 rounded">
+                    Now
+                  </span>
+                ) : h.hour === '00:00' ? (
+                  <span className="text-[9px] font-semibold text-muted bg-card-border/60 px-1 py-0.2 rounded">
+                    +1d
+                  </span>
+                ) : null}
+              </div>
+              <div className="text-base font-semibold text-foreground my-1">
+                {displayPM}
+              </div>
+              <div className="text-[10px] text-muted">µg/m³</div>
+              {h.isBestHour ? (
+                <div className="mt-1 text-[9px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-1 py-0.5 rounded">
+                  Best air
+                </div>
+              ) : isSelected && i !== 0 ? (
+                <div className="mt-1 text-[9px] font-semibold text-teal-accent bg-teal-accent/10 px-1 py-0.5 rounded">
+                  Selected
+                </div>
+              ) : (
+                <div className="mt-1 text-[9px] h-[18px] opacity-0 pointer-events-none select-none" aria-hidden="true">
+                  &nbsp;
+                </div>
+              )}
+            </div>
+          );
+        })}
+        </div>
+
+        {/* Right Arrow Button (>) */}
+        <button
+          type="button"
+          onClick={() => handleScrollForecast('right')}
+          disabled={!canScrollRight}
+          className={`shrink-0 w-8 h-8 rounded-full border border-card-border flex items-center justify-center transition-all ${
+            canScrollRight
+              ? 'bg-card text-foreground hover:bg-card-subtle hover:border-teal-accent/50 hover:text-teal-accent shadow-xs cursor-pointer active:scale-95'
+              : 'bg-card/40 text-muted/30 border-card-border/40 cursor-not-allowed opacity-40'
+          }`}
+          title="Scroll 24-hour scale right"
+          aria-label="Scroll 24-hour scale right"
+        >
+          <ChevronRight className="w-4 h-4" strokeWidth={2.25} />
+        </button>
+      </div>
+    </SpotlightCard>
+  );
+
   return (
     <div className="w-full space-y-6 pb-24 md:pb-12 max-w-5xl mx-auto lg:space-y-0 lg:pb-0 lg:max-w-none lg:h-screen lg:h-[100dvh] lg:max-h-[100dvh] lg:grid lg:grid-rows-[auto_auto_minmax(0,1fr)] lg:overflow-hidden">
-      {/* Row 1: Top Bar (fixed on desktop, never scrolls, with page background & hairline bottom border) */}
-      <header className="w-full bg-background lg:border-b lg:border-card-border/60 relative z-30 pt-1 lg:pt-3.5 lg:pb-3 px-0 lg:px-8 shrink-0">
-        <div className="w-full max-w-5xl mx-auto flex items-center justify-between">
+      {/* Row 1: Top Bar (fixed on desktop, never scrolls, with page background) */}
+      <header className="w-full bg-background relative z-30 pt-2 lg:pt-6 lg:pb-3.5 px-0 lg:px-8 shrink-0">
+        <div className={`w-full ${isFullScreenLayout ? 'max-w-6xl' : 'max-w-5xl'} mx-auto flex items-center justify-between`}>
         <div className="flex items-center gap-3 min-w-0">
           {/* Mobile Screen Logo (at left top corner, location to right) */}
           <div className="lg:hidden shrink-0">
@@ -1119,6 +1340,36 @@ export function HomeScreen() {
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Fullscreen Desktop Toggle Button (Strictly Desktop only: completely hidden on mobile) */}
+          {isDesktopDevice && (
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof document !== 'undefined') {
+                  if (!document.fullscreenElement && !manualFullscreen) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                    setManualFullscreen(true);
+                  } else {
+                    if (document.fullscreenElement) {
+                      document.exitFullscreen().catch(() => {});
+                    }
+                    setManualFullscreen(false);
+                  }
+                }
+              }}
+              className="hidden lg:flex min-h-[40px] px-2.5 sm:px-3 py-1.5 rounded-full border border-card-border bg-card text-xs font-semibold text-foreground hover:border-teal-accent/40 shadow-soft transition-colors items-center gap-1 sm:gap-1.5 cursor-pointer"
+              title={isFullScreenLayout ? 'Exit Fullscreen' : 'Fullscreen View (F11)'}
+              aria-label={isFullScreenLayout ? 'Exit Fullscreen' : 'Fullscreen View (F11)'}
+            >
+              {isFullScreenLayout ? (
+                <Minimize2 className="w-3.5 h-3.5 text-teal-accent" strokeWidth={1.75} />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5 text-teal-accent" strokeWidth={1.75} />
+              )}
+              <span>{isFullScreenLayout ? 'Window' : 'Fullscreen'}</span>
+            </button>
+          )}
+
           {/* Share Button (Icon + Label) */}
           <button
             onClick={() => handleOpenShare('whole_family')}
@@ -1241,9 +1492,9 @@ export function HomeScreen() {
         </div>
       </header>
 
-      {/* Row 2: Family Tabs (fixed on desktop, never scrolls, with page background & hairline bottom border) */}
-      <div className="w-full bg-background lg:border-b lg:border-card-border/60 relative z-10 py-0 lg:py-2.5 px-0 lg:px-8 shrink-0">
-        <div className="w-full max-w-5xl mx-auto space-y-2">
+      {/* Row 2: Family Tabs (fixed on desktop, never scrolls, with page background) */}
+      <div className="w-full bg-background relative z-10 py-0 lg:py-2.5 px-0 lg:px-8 shrink-0">
+        <div className={`w-full ${isFullScreenLayout ? 'max-w-6xl' : 'max-w-5xl'} mx-auto space-y-2`}>
           {/* Family View Segmented Switcher (Mobile: Dynamic pill switcher with smooth expansion & scrolling, Desktop: Full pills) */}
           <div
             ref={tabListRef}
@@ -1361,16 +1612,16 @@ export function HomeScreen() {
       </div>
 
       {/* Row 3: Two-Column Body (Left ring card fixed in view, Right column scrolls) */}
-      <div className="w-full min-h-0 h-full overflow-hidden px-0 lg:px-8 pt-0 lg:pt-4 pb-0">
-        <div className="w-full max-w-5xl mx-auto h-full min-h-0">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start lg:items-stretch h-full min-h-0 min-w-0 max-w-full">
+      <div className={`w-full min-h-0 h-full ${isFullScreenLayout ? 'overflow-y-auto lg:overflow-visible' : 'overflow-hidden'} px-0 lg:px-8 pt-0 lg:pt-3 pb-0`}>
+        <div className={`w-full ${isFullScreenLayout ? 'max-w-6xl' : 'max-w-5xl'} mx-auto h-full min-h-0 transition-all`}>
+          <div className={`grid grid-cols-1 lg:grid-cols-12 ${isFullScreenLayout ? 'gap-4 lg:items-stretch' : 'gap-6 items-start'} h-full min-h-0 min-w-0 max-w-full`}>
             {/* Left Column: Center Breathing Ring & Air Severity Card */}
             <div
               ref={leftColRef}
               onWheel={handleLeftCardWheel}
-              className="lg:col-span-5 h-full min-h-0 lg:overflow-y-auto lg:overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden flex flex-col"
+              className={`lg:col-span-5 ${isFullScreenLayout ? 'self-stretch flex flex-col' : 'h-full min-h-0 lg:overflow-y-auto lg:overscroll-contain flex flex-col'} [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}
             >
-              <section className={`relative overflow-hidden bg-card rounded-card border border-card-border shadow-soft flex flex-col items-center text-center transition-all ${isCompact ? 'p-4 sm:p-5' : 'p-6 sm:p-7'}`}>
+              <section className={`relative overflow-hidden bg-card rounded-card border border-card-border shadow-soft flex flex-col items-center text-center transition-all ${isFullScreenLayout ? 'flex-1 w-full justify-between p-5' : isCompact ? 'p-4 sm:p-5' : 'p-6 sm:p-7'}`}>
             {/* Flat subtle band tint behind the ring card (no gradient, no glow) */}
             <div
               className="absolute inset-0 pointer-events-none opacity-[0.05]"
@@ -1402,27 +1653,27 @@ export function HomeScreen() {
             <div className="flex flex-col items-center w-full">
               <BreathingRing
                 colorHex={currentBand.ringHex}
-                size={isCompact ? 204 : 240}
-                strokeWidth={3.5}
+                size={isFullScreenLayout ? 215 : isCompact ? 190 : 240}
+                strokeWidth={isFullScreenLayout ? 4 : 3.5}
                 mode="ambient"
               >
                 <div className="flex flex-col items-center relative z-10">
-                  <span className={`${isCompact ? 'text-[11px]' : 'text-xs'} uppercase tracking-wider text-muted font-medium`}>
+                  <span className={`${!isFullScreenLayout && isCompact ? 'text-[11px]' : 'text-xs'} uppercase tracking-wider text-muted font-medium`}>
                     <Term k="pm25">
                       <Bi k="home.pm25Level" en="PM2.5 Level" />
                     </Term>
                   </span>
-                  <div className={`${isCompact ? 'text-4xl my-0' : 'text-5xl my-0.5'} font-semibold tracking-tight text-foreground tabular-nums`}>
+                  <div className={`${!isFullScreenLayout && isCompact ? 'text-4xl my-0' : 'text-5xl my-0.5'} font-semibold tracking-tight text-foreground tabular-nums`}>
                     <CountUp to={airData.current.pm2_5} duration={1.2} />
                   </div>
-                  <span className={`${isCompact ? 'text-[11px]' : 'text-xs'} text-muted`}>
+                  <span className={`${!isFullScreenLayout && isCompact ? 'text-[11px]' : 'text-xs'} text-muted`}>
                     <Term k="ug_m3">µg/m³</Term>
                   </span>
 
                   {/* AQI Band Chip: strictly centered and enclosed inside the ring */}
-                  <Term k="bands" noUnderline className={`${isCompact ? 'mt-1.5' : 'mt-2'} inline-block`}>
+                  <Term k="bands" noUnderline className={`${!isFullScreenLayout && isCompact ? 'mt-1.5' : 'mt-2'} inline-block`}>
                     <div
-                      className={`px-3.5 py-1 rounded-full ${isCompact ? 'text-[11px]' : 'text-xs'} font-semibold border shadow-xs transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap ${currentBand.bgColor}`}
+                      className={`px-3.5 py-1 rounded-full ${!isFullScreenLayout && isCompact ? 'text-[11px]' : 'text-xs'} font-semibold border shadow-xs transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap ${currentBand.bgColor}`}
                     >
                       <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: currentBand.ringHex }} />
                       <span className="whitespace-nowrap">{circleBandLabel}</span>
@@ -1434,7 +1685,7 @@ export function HomeScreen() {
               {/* Data Label under the ring: Always visible source and timestamp with info button */}
               {loadingAir ? (
                 <div
-                  className={`${isCompact ? 'mt-1.5' : 'mt-3'} flex items-center justify-center gap-1.5`}
+                  className={`${!isFullScreenLayout && isCompact ? 'mt-1.5' : 'mt-2.5'} flex items-center justify-center gap-1.5`}
                   aria-busy="true"
                   aria-label="Loading air quality source"
                 >
@@ -1442,7 +1693,7 @@ export function HomeScreen() {
                   <div className="w-3.5 h-3.5 rounded-full bg-card-border/40 animate-pulse" />
                 </div>
               ) : (
-                <div className={`${isCompact ? 'mt-1.5 text-[11px]' : 'mt-3 text-xs'} flex items-center justify-center gap-1.5 text-muted max-w-sm sm:max-w-md mx-auto text-center px-2`}>
+                <div className={`${!isFullScreenLayout && isCompact ? 'mt-1.5 text-[11px]' : 'mt-2.5 text-xs'} flex items-center justify-center gap-1.5 text-muted max-w-sm sm:max-w-md mx-auto text-center px-2`}>
                   <span className="line-clamp-2 leading-snug sm:leading-normal">
                     {airData.dataType === 'measured' && airData.station
                       ? airData.station.isAverage && (airData.station.stationCount ?? 1) > 1
@@ -1489,12 +1740,14 @@ export function HomeScreen() {
             {/* Plain Language Status Line & Animated Persona-Specific Risk Note */}
             <div
               className={`${
-                isCompact
+                isFullScreenLayout
+                  ? 'mt-2 space-y-1.5'
+                  : isCompact
                   ? 'mt-2 space-y-1.5'
                   : 'mt-4 sm:mt-5 space-y-2'
               } max-w-lg text-center w-full`}
             >
-              <p className={`${isCompact ? 'text-xs sm:text-sm leading-snug' : 'text-sm sm:text-base leading-relaxed'} font-medium text-foreground`}>
+              <p className={`${!isFullScreenLayout && isCompact ? 'text-xs sm:text-sm leading-snug' : 'text-sm sm:text-base leading-relaxed'} font-medium text-foreground`}>
                 {currentBand.statusLine}
               </p>
 
@@ -1525,14 +1778,14 @@ export function HomeScreen() {
                       layout="inline"
                     />
                   </span>
-                  <span className={isCompact && !isGuidanceExpanded ? 'line-clamp-3 inline' : 'inline'}>
+                  <span className={!isFullScreenLayout && isCompact && !isGuidanceExpanded ? 'line-clamp-3 inline' : 'inline'}>
                     {getBandPersonaAdvice(
                       currentBand.key,
                       activeFamilyView,
                       profile.language
                     )}
                   </span>
-                  {isCompact && (
+                  {!isFullScreenLayout && isCompact && (
                     <button
                       type="button"
                       onClick={() => setIsGuidanceExpanded(!isGuidanceExpanded)}
@@ -1546,7 +1799,7 @@ export function HomeScreen() {
             </div>
 
             {/* Secondary metric chips (US AQI & PM10) */}
-            <div className={`${isCompact ? 'mt-2 pt-2 text-[11px]' : 'mt-4 pt-4 sm:mt-5 sm:pt-5 text-xs'} flex items-center justify-center gap-4 text-muted border-t border-card-border/60 w-full max-w-xs relative z-10 tabular-nums`}>
+            <div className={`${isFullScreenLayout ? 'mt-2.5 pt-2.5 text-xs' : isCompact ? 'mt-2 pt-2 text-[11px]' : 'mt-4 pt-4 sm:mt-5 sm:pt-5 text-xs'} flex items-center justify-center gap-4 text-muted border-t border-card-border/60 w-full max-w-xs relative z-10 tabular-nums`}>
               <div>
                 <Term k="aqi">
                   <span className="text-muted/70 hover:text-teal-accent transition-colors cursor-pointer">
@@ -1578,7 +1831,11 @@ export function HomeScreen() {
               role="region"
               id="recommendations-container" aria-label="Recommendations"
               onKeyDown={handleRightColKeyDown}
-              className="min-w-0 max-w-full lg:col-span-7 space-y-4 lg:space-y-4 h-full min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-2.5 pb-8 lg:pb-32 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-accent/70 focus-visible:ring-offset-2 rounded-2xl desktop-scroll-slim"
+              className={`min-w-0 max-w-full lg:col-span-7 ${
+                isFullScreenLayout
+                  ? 'space-y-3 lg:space-y-3 h-auto pb-0 self-stretch'
+                  : 'space-y-4 lg:space-y-4 h-full min-h-0 lg:overflow-y-auto lg:overscroll-contain pb-8 lg:pb-32'
+              } lg:pr-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-accent/70 focus-visible:ring-offset-2 rounded-2xl desktop-scroll-slim`}
             >
 
       {/* "Next 2 Hours" Clear Decision Card */}
@@ -1923,229 +2180,18 @@ export function HomeScreen() {
       </AnimatePresence>
     </section>
 
-      {/* 24-Hour Forecast Strip */}
-      <SpotlightCard
-        id="forecast-section"
-        spotlightColor="rgba(45, 212, 191, 0.1)"
-        className="scroll-mt-4 bg-card rounded-card border border-card-border shadow-soft p-5 min-w-0 max-w-full overflow-hidden"
-      >
-        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
-              {t.home.forecast24h}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={scrollToBestHour}
-            className="text-xs text-teal-accent hover:text-teal-600 dark:hover:text-teal-400 font-medium flex items-center gap-1.5 transition-colors cursor-pointer group"
-            title="Scroll to highlighted cleanest window"
-          >
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse group-hover:scale-125 transition-transform" />
-            <span>
-              Highlighted: <span className="underline underline-offset-2">{t.home.bestWindow}</span>
-            </span>
-          </button>
-        </div>
+      {/* 24-Hour Forecast Strip (Renders in Right Column in normal desktop / mobile mode) */}
+      {!isFullScreenLayout && renderForecastCard()}
+    </div>
 
-        {/* Horizontal Scroll Strip */}
-        <div
-          ref={forecastScrollRef}
-          onScroll={handleForecastScroll}
-          className={`flex gap-2.5 overflow-x-auto pt-1.5 pb-2.5 px-1.5 no-scrollbar ${
-            isDraggingSlider ? 'scroll-auto' : 'scroll-smooth'
-          }`}
-        >
-          {airData.hourly.map((h, i) => {
-            const isSelected = i === forecastSliderIndex;
-            const displayPM = i === 0 ? airData.current.pm2_5 : h.pm2_5;
-            return (
-              <div
-                key={i}
-                ref={h.isBestHour ? bestHourCardRef : undefined}
-                onClick={() => {
-                  setForecastSliderIndex(i);
-                  scrollToHourIndex(i, false);
-                }}
-                className={`shrink-0 w-20 p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col justify-between min-h-[108px] ${
-                  h.isBestHour
-                    ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 shadow-sm ring-2 ring-emerald-500'
-                    : isSelected
-                    ? 'border-teal-accent bg-teal-accent/10 shadow-sm ring-2 ring-teal-accent'
-                    : 'border-card-border bg-card-subtle/50 hover:bg-card-subtle'
-                }`}
-                title={`Hour ${h.hour}: ${displayPM} µg/m³`}
-              >
-                <div className="text-[11px] font-medium text-muted flex items-center justify-center gap-1">
-                  <span>{h.hour}</span>
-                  {i === 0 ? (
-                    <span className="text-[9px] font-semibold text-teal-accent bg-teal-accent/10 px-1 py-0.2 rounded">
-                      Now
-                    </span>
-                  ) : h.hour === '00:00' ? (
-                    <span className="text-[9px] font-semibold text-muted bg-card-border/60 px-1 py-0.2 rounded">
-                      +1d
-                    </span>
-                  ) : null}
-                </div>
-                <div className="text-base font-semibold text-foreground my-1">
-                  {displayPM}
-                </div>
-                <div className="text-[10px] text-muted">µg/m³</div>
-                {h.isBestHour ? (
-                  <div className="mt-1 text-[9px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-1 py-0.5 rounded">
-                    Best air
-                  </div>
-                ) : isSelected && i !== 0 ? (
-                  <div className="mt-1 text-[9px] font-semibold text-teal-accent bg-teal-accent/10 px-1 py-0.5 rounded">
-                    Selected
-                  </div>
-                ) : (
-                  <div className="mt-1 text-[9px] h-[18px] opacity-0 pointer-events-none select-none" aria-hidden="true">
-                    &nbsp;
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Interactive Horizontal Hour Slider */}
-        <div className="mt-4 pt-3.5 border-t border-card-border/60">
-          <div className="flex items-center justify-between text-xs text-muted mb-2.5 px-0.5">
-            <button
-              type="button"
-              onClick={() => {
-                setForecastSliderIndex(0);
-                scrollToHourIndex(0, false);
-              }}
-              className={`font-medium transition-colors cursor-pointer flex items-center gap-1.5 py-1 px-2 rounded-lg hover:bg-card-subtle ${
-                forecastSliderIndex === 0
-                  ? 'text-teal-accent font-semibold bg-teal-accent/10 border border-teal-accent/20'
-                  : 'hover:text-foreground text-muted border border-transparent'
-              }`}
-              title="Jump to current hour"
-            >
-              <Clock className="w-3.5 h-3.5" strokeWidth={1.75} />
-              <span>{airData.hourly[0]?.hour ? `${airData.hourly[0].hour} (Now)` : 'Current Hour'}</span>
-            </button>
-
-            <div className="text-xs font-semibold text-foreground bg-card-subtle px-3 py-1 rounded-full border border-card-border flex items-center gap-1.5 shadow-2xs">
-              <span className="w-2 h-2 rounded-full bg-teal-accent animate-pulse" />
-              <span>
-                {forecastSliderIndex === 0
-                  ? 'Current Hour'
-                  : `Hour: ${airData.hourly[forecastSliderIndex]?.hour || ''}`}
-              </span>
-              {airData.hourly[forecastSliderIndex] && (
-                <span className="text-muted font-normal">
-                  · {forecastSliderIndex === 0 ? airData.current.pm2_5 : airData.hourly[forecastSliderIndex].pm2_5} µg/m³
-                </span>
-              )}
-              {airData.hourly[forecastSliderIndex]?.isBestHour && (
-                <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded-full ml-0.5">
-                  Cleanest
-                </span>
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                const lastIdx = Math.max(0, airData.hourly.length - 1);
-                setForecastSliderIndex(lastIdx);
-                scrollToHourIndex(lastIdx, false);
-              }}
-              className={`text-xs font-medium transition-colors cursor-pointer py-1 px-2 rounded-lg hover:bg-card-subtle ${
-                forecastSliderIndex === airData.hourly.length - 1
-                  ? 'text-teal-accent font-semibold bg-teal-accent/10 border border-teal-accent/20'
-                  : 'text-muted hover:text-foreground border border-transparent'
-              }`}
-              title="Jump to +24h forecast"
-            >
-              <span>
-                {airData.hourly[airData.hourly.length - 1]?.hour
-                  ? `${airData.hourly[airData.hourly.length - 1].hour} (+24h)`
-                  : '+24h'}
-              </span>
-            </button>
-          </div>
-
-          {/* Slider Bar & Timeline Scrubber */}
-          <div className="relative py-1 flex flex-col gap-2">
-            <input
-              type="range"
-              min={0}
-              max={Math.max(0, airData.hourly.length - 1)}
-              value={forecastSliderIndex}
-              onPointerDown={() => {
-                isDraggingSliderRef.current = true;
-                setIsDraggingSlider(true);
-              }}
-              onPointerUp={() => {
-                setTimeout(() => {
-                  isDraggingSliderRef.current = false;
-                  setIsDraggingSlider(false);
-                }, 50);
-              }}
-              onKeyDown={() => {
-                isDraggingSliderRef.current = false;
-                setIsDraggingSlider(false);
-              }}
-              onInput={(e) => {
-                const idx = Number((e.target as HTMLInputElement).value);
-                setForecastSliderIndex(idx);
-                scrollToHourIndex(idx, true);
-              }}
-              onChange={(e) => {
-                const idx = Number(e.target.value);
-                setForecastSliderIndex(idx);
-                scrollToHourIndex(idx, isDraggingSliderRef.current);
-              }}
-              aria-label="24-hour forecast timeline slider"
-              className="w-full h-2.5 rounded-full appearance-none cursor-grab active:cursor-grabbing bg-card-subtle border border-card-border dark:border-card-border/80 outline-none focus:outline-none focus-visible:outline-none focus:ring-0 transition-all [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-8 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-teal-accent [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white dark:[&::-webkit-slider-thumb]:border-stone-900 [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-105 [&::-webkit-slider-thumb]:active:scale-110 [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:active:cursor-grabbing [&::-moz-range-thumb]:w-8 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-teal-accent [&::-moz-range-thumb]:shadow-md [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white dark:[&::-moz-range-thumb]:border-stone-900 [&::-moz-range-thumb]:cursor-grab [&::-moz-range-track]:bg-transparent"
-            />
-
-            {/* Timeline Tick Markers (0h, 6h, 12h, 18h, 24h) */}
-            <div className="flex justify-between items-center px-1 text-[10px] text-muted font-medium select-none">
-              {[0, 6, 12, 18, Math.max(0, airData.hourly.length - 1)].map((targetIdx, mIdx) => {
-                const hourItem = airData.hourly[targetIdx];
-                const isCurrentActive = Math.abs(forecastSliderIndex - targetIdx) <= 2;
-                return (
-                  <button
-                    key={mIdx}
-                    type="button"
-                    onClick={() => {
-                      setForecastSliderIndex(targetIdx);
-                      scrollToHourIndex(targetIdx, false);
-                    }}
-                    className={`flex flex-col items-center gap-0.5 cursor-pointer transition-colors group ${
-                      isCurrentActive ? 'text-teal-accent font-semibold' : 'hover:text-foreground text-muted'
-                    }`}
-                    title={hourItem ? `Jump to ${hourItem.hour}` : undefined}
-                  >
-                    <span
-                      className={`w-1 h-1.5 rounded-full transition-all ${
-                        isCurrentActive
-                          ? 'bg-teal-accent scale-125'
-                          : 'bg-card-border group-hover:bg-muted'
-                      }`}
-                    />
-                    <span>
-                      {targetIdx === 0
-                        ? 'Now'
-                        : hourItem?.hour || `+${targetIdx}h`}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </SpotlightCard>
-            </div>
-          </div>
-        </div>
+    {/* In Full-Screen Desktop Mode, 24-Hour Forecast sits at the bottom spanning across BOTH cards */}
+    {isFullScreenLayout && (
+      <div className="hidden lg:block lg:col-span-12 w-full pt-1">
+        {renderForecastCard()}
+      </div>
+    )}
+  </div>
+</div>
       </div>
 
       {/* Floating Ask by Voice Button */}

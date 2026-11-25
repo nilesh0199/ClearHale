@@ -175,7 +175,7 @@ export function PlanScreen() {
               </div>
 
               {/* Muted personalized whyForYou line */}
-              <p className="text-xs text-muted mt-1 leading-relaxed">
+              <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
                 {whyForYou(action, profile, airData)}
               </p>
             </div>
@@ -195,7 +195,7 @@ export function PlanScreen() {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="px-4 sm:px-5 pb-5 pt-1 border-t border-card-border/60 bg-card-subtle/50 text-xs text-muted space-y-3"
+                className="px-4 sm:px-5 pb-5 pt-1 border-t border-card-border/60 bg-card-subtle/50 text-xs sm:text-sm text-muted space-y-3"
               >
                 <div>
                   <span className="font-semibold text-foreground block mb-0.5">
@@ -215,7 +215,7 @@ export function PlanScreen() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-4 text-xs text-muted flex-wrap">
+                <div className="flex items-center gap-4 text-xs sm:text-sm text-muted flex-wrap">
                   <div>
                     <span className="font-semibold text-foreground">Cost and time: </span>
                     <span>{action.cost_tier} • {action.timeNeeded}</span>
@@ -232,7 +232,7 @@ export function PlanScreen() {
                       href={action.source}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-teal-accent hover:underline inline-flex items-center gap-1 text-[11px]"
+                      className="text-teal-accent hover:underline inline-flex items-center gap-1 text-xs"
                     >
                       Official Source <span aria-hidden="true">↗</span>
                     </a>
@@ -257,13 +257,13 @@ export function PlanScreen() {
   };
 
   return (
-    <div className="space-y-6 pb-24 md:pb-12 max-w-4xl mx-auto">
+    <div className="w-full space-y-6 pb-24 md:pb-12 max-w-5xl lg:max-w-6xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
           <Bi k="plan.title" layout="plain" />
         </h1>
-        <p className="text-sm text-muted mt-1 leading-relaxed">
+        <p className="text-sm sm:text-base text-muted mt-1 leading-relaxed">
           <Bi k="plan.subtitle" layout="plain" />
         </p>
       </div>
@@ -286,10 +286,10 @@ export function PlanScreen() {
             <SlidersHorizontal className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-foreground">
+            <h2 className="text-base sm:text-lg font-semibold text-foreground">
               <Bi k="plan.whatIfTitle" layout="plain" />
             </h2>
-            <p className="text-xs text-muted">
+            <p className="text-xs sm:text-sm text-muted">
               <Bi k="plan.whatIfNote" layout="plain" />
             </p>
           </div>
@@ -299,13 +299,13 @@ export function PlanScreen() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 pb-4 border-b border-card-border">
           {/* Windows State */}
           <div>
-            <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-2">
+            <label className="text-xs sm:text-sm font-semibold text-muted uppercase tracking-wider block mb-2">
               <Bi k="plan.windowsDoors" layout="plain" />
             </label>
             <div className="flex rounded-lg bg-card-subtle p-1">
               <button
                 onClick={() => setWindowsClosed(true)}
-                className={`flex-1 min-h-[40px] px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                className={`flex-1 min-h-[40px] px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
                   windowsClosed
                     ? profile.accentMode === 'mono'
                       ? 'bg-neutral-900 text-neutral-50 font-semibold shadow-sm'
@@ -317,7 +317,7 @@ export function PlanScreen() {
               </button>
               <button
                 onClick={() => setWindowsClosed(false)}
-                className={`flex-1 min-h-[40px] px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                className={`flex-1 min-h-[40px] px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
                   !windowsClosed
                     ? profile.accentMode === 'mono'
                       ? 'bg-neutral-900 text-neutral-50 font-semibold shadow-sm'
@@ -332,16 +332,16 @@ export function PlanScreen() {
 
           {/* Active Filter State */}
           <div>
-            <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-2 flex items-center justify-between">
+            <label className="text-xs sm:text-sm font-semibold text-muted uppercase tracking-wider block mb-2 flex items-center justify-between">
               <span><Bi k="plan.filterType" layout="plain" /></span>
-              <span className="text-[11px] normal-case text-muted">
+              <span className="text-xs normal-case text-muted">
                 <Term k="hepa">HEPA</Term> • <Term k="diy_box_fan">DIY Box</Term>
               </span>
             </label>
             <div className="flex rounded-lg bg-card-subtle p-1">
               <button
                 onClick={() => setActiveFilter('none')}
-                className={`flex-1 min-h-[40px] px-2 py-1.5 rounded-md text-xs font-medium transition-all ${
+                className={`flex-1 min-h-[40px] px-2 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
                   activeFilter === 'none'
                     ? profile.accentMode === 'mono'
                       ? 'bg-neutral-900 text-neutral-50 font-semibold shadow-sm'
@@ -353,7 +353,7 @@ export function PlanScreen() {
               </button>
               <button
                 onClick={() => setActiveFilter('diy_box')}
-                className={`flex-1 min-h-[40px] px-2 py-1.5 rounded-md text-xs font-medium transition-all ${
+                className={`flex-1 min-h-[40px] px-2 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
                   activeFilter === 'diy_box'
                     ? profile.accentMode === 'mono'
                       ? 'bg-neutral-900 text-neutral-50 font-semibold shadow-sm'
@@ -365,7 +365,7 @@ export function PlanScreen() {
               </button>
               <button
                 onClick={() => setActiveFilter('hepa')}
-                className={`flex-1 min-h-[40px] px-2 py-1.5 rounded-md text-xs font-medium transition-all ${
+                className={`flex-1 min-h-[40px] px-2 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
                   activeFilter === 'hepa'
                     ? profile.accentMode === 'mono'
                       ? 'bg-neutral-900 text-neutral-50 font-semibold shadow-sm'
@@ -382,33 +382,33 @@ export function PlanScreen() {
         {/* Results Comparison Display */}
         <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-4 text-center relative z-10">
           <div className="p-3 rounded-xl bg-card-subtle border border-card-border flex flex-col justify-between">
-            <span className="text-[11px] text-muted font-medium leading-tight">
+            <span className="text-xs sm:text-sm text-muted font-medium leading-tight">
               <Bi k="plan.outdoorBaseline" en="Outdoor PM2.5" layout="plain" />
             </span>
             <div className="text-xl sm:text-2xl font-semibold text-foreground my-1">
               <CountUp to={outdoorPM2_5} duration={1.0} />
             </div>
-            <span className="text-[10px] text-muted">µg/m³</span>
+            <span className="text-xs text-muted">µg/m³</span>
           </div>
 
           <div className="p-3 rounded-xl bg-teal-light text-teal-accent border border-teal-accent/20 flex flex-col justify-between">
-            <span className="text-[11px] font-semibold leading-tight">
+            <span className="text-xs sm:text-sm font-semibold leading-tight">
               <Bi k="plan.estimatedIndoor" en="Est. Indoor PM2.5" layout="plain" />
             </span>
             <div className="text-xl sm:text-2xl font-semibold my-1">
               <CountUp to={whatIf.indoorPM2_5} duration={1.0} />
             </div>
-            <span className="text-[10px] opacity-80">µg/m³</span>
+            <span className="text-xs opacity-80">µg/m³</span>
           </div>
 
           <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 flex flex-col justify-between">
-            <span className="text-[11px] text-emerald-800 dark:text-emerald-300 font-semibold leading-tight">
+            <span className="text-xs sm:text-sm text-emerald-800 dark:text-emerald-300 font-semibold leading-tight">
               <Bi k="plan.reduction" en="Exposure Drop" layout="plain" />
             </span>
             <div className="text-xl sm:text-2xl font-semibold text-emerald-700 dark:text-emerald-400 my-1">
               -<CountUp to={whatIf.reductionPercentage} duration={1.0} />%
             </div>
-            <span className="text-[10px] text-emerald-600 dark:text-emerald-400/80">
+            <span className="text-xs text-emerald-600 dark:text-emerald-400/80">
               <Bi k="plan.reduction" en="reduction" layout="plain" />
             </span>
           </div>
@@ -416,7 +416,7 @@ export function PlanScreen() {
 
         {/* Mathematical & Scientific Assumptions Accordion */}
         <div className="mt-4 pt-3 border-t border-card-border/60">
-          <details className="text-xs text-muted">
+          <details className="text-xs sm:text-sm text-muted">
             <summary className="cursor-pointer font-medium hover:text-foreground flex items-center gap-1.5">
               <Info className="w-3.5 h-3.5 text-teal-accent" />
               <span>View Scientific Modeling Assumptions</span>
@@ -438,11 +438,11 @@ export function PlanScreen() {
         <div className="space-y-1 sm:space-y-1.5">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-teal-accent" />
-            <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-muted">
+            <h2 className="text-sm sm:text-base font-semibold uppercase tracking-wider text-muted">
               Household Vulnerable Members
             </h2>
           </div>
-          <p className="text-xs text-muted leading-relaxed">
+          <p className="text-xs sm:text-sm text-muted leading-relaxed">
             Tap to toggle members • Re-ranks your action plan live
           </p>
         </div>
@@ -461,7 +461,7 @@ export function PlanScreen() {
                 key={m.id}
                 type="button"
                 onClick={() => toggleHouseholdMember(m.id)}
-                className={`min-h-[38px] sm:min-h-[40px] px-3 py-1.5 rounded-xl border text-xs font-medium transition-all flex items-center justify-between gap-1.5 cursor-pointer ${
+                className={`min-h-[38px] sm:min-h-[40px] px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-medium transition-all flex items-center justify-between gap-1.5 cursor-pointer ${
                   isSelected
                     ? profile.accentMode === 'mono'
                       ? 'border-neutral-800 bg-neutral-900 text-neutral-50 font-semibold shadow-xs'
@@ -489,7 +489,7 @@ export function PlanScreen() {
 
         {/* Active Persona Focus Filter */}
         <div className="pt-3 flex items-center justify-between flex-wrap gap-2.5">
-          <span className="text-xs font-medium text-muted flex items-center gap-1.5">
+          <span className="text-xs sm:text-sm font-medium text-muted flex items-center gap-1.5">
             <Shield className="w-3.5 h-3.5 text-teal-accent" />
             <span>Prioritize focus for:</span>
           </span>
@@ -508,7 +508,7 @@ export function PlanScreen() {
                   key={p.id}
                   type="button"
                   onClick={() => updateProfile({ activeFamilyFilter: p.id })}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium transition-all cursor-pointer ${
                     isFocused
                       ? profile.accentMode === 'mono'
                         ? 'bg-neutral-900 text-neutral-50 font-semibold shadow-xs'
@@ -527,11 +527,11 @@ export function PlanScreen() {
       {/* 2. Household Tailored Guidance & Tips based on Settings */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
-          <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-muted flex items-center gap-2">
+          <h2 className="text-sm sm:text-base font-semibold uppercase tracking-wider text-muted flex items-center gap-2">
             <Shield className="w-4 h-4 text-teal-accent" strokeWidth={1.75} />
             <span>Household Tailored Guidance</span>
           </h2>
-          <span className="text-[11px] text-teal-accent font-medium">
+          <span className="text-xs text-teal-accent font-medium">
             Personalized to your Settings setup
           </span>
         </div>
@@ -541,11 +541,11 @@ export function PlanScreen() {
           <div className="p-4 rounded-xl bg-card border border-card-border shadow-soft flex flex-col justify-between space-y-2">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <span className="text-sm font-semibold text-foreground flex items-center gap-1.5">
                   <Flame className="w-3.5 h-3.5 text-amber-500" />
                   <span>Kitchen & Cooking</span>
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">
                   {profile.household.cookingFuel === 'wood_biomass'
                     ? 'Biomass Fuel'
                     : profile.household.cookingFuel === 'induction_electric'
@@ -553,7 +553,7 @@ export function PlanScreen() {
                     : 'LPG Gas'}
                 </span>
               </div>
-              <p className="text-xs text-muted leading-relaxed">
+              <p className="text-xs sm:text-sm text-muted leading-relaxed">
                 {isCleanAir
                   ? 'Outdoor air is pure! Open kitchen windows wide for fresh air during and after cooking to quickly flush heat, moisture, and cooking smoke.'
                   : profile.household.cookingFuel === 'wood_biomass'
@@ -569,11 +569,11 @@ export function PlanScreen() {
           <div className="p-4 rounded-xl bg-card border border-card-border shadow-soft flex flex-col justify-between space-y-2">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <span className="text-sm font-semibold text-foreground flex items-center gap-1.5">
                   <Heart className="w-3.5 h-3.5 text-rose-500" />
                   <span>Vulnerability Guard</span>
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40">
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40">
                   {profile.household.members?.includes('pregnant')
                     ? 'Pregnant Person'
                     : profile.household.members?.includes('child')
@@ -585,7 +585,7 @@ export function PlanScreen() {
                     : 'General'}
                 </span>
               </div>
-              <p className="text-xs text-muted leading-relaxed">
+              <p className="text-xs sm:text-sm text-muted leading-relaxed">
                 {(() => {
                   const persona: FamilyView = profile.household.members?.includes('pregnant')
                     ? 'pregnant'
@@ -609,11 +609,11 @@ export function PlanScreen() {
           <div className="p-4 rounded-xl bg-card border border-card-border shadow-soft flex flex-col justify-between space-y-2">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <span className="text-sm font-semibold text-foreground flex items-center gap-1.5">
                   <IndianRupee className="w-3.5 h-3.5 text-teal-accent" />
                   <span>Budget Strategy</span>
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-teal-light text-teal-accent border border-teal-accent/30">
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-teal-light text-teal-accent border border-teal-accent/30">
                   {profile.household.budget === 'free_only'
                     ? 'Free Only'
                     : profile.household.budget === 'low_cost'
@@ -621,7 +621,7 @@ export function PlanScreen() {
                     : 'Flexible HEPA'}
                 </span>
               </div>
-              <p className="text-xs text-muted leading-relaxed">
+              <p className="text-xs sm:text-sm text-muted leading-relaxed">
                 {isCleanAir
                   ? 'Zero-cost strategy: Open windows during clean midday hours to refresh indoor air, and enjoy free walks in green spaces without needing purifiers.'
                   : profile.household.budget === 'free_only'
@@ -647,10 +647,10 @@ export function PlanScreen() {
               <CheckCircle2 className="w-5 h-5" strokeWidth={1.75} />
             </div>
             <div>
-              <div className="text-sm font-semibold text-foreground">
+              <div className="text-sm sm:text-base font-semibold text-foreground">
                 Nice work. Share what you did today?
               </div>
-              <div className="text-xs text-muted">
+              <div className="text-xs sm:text-sm text-muted">
                 You&apos;ve completed {profile.checkedActions.length} clean-air actions for your home.
               </div>
             </div>
@@ -658,7 +658,7 @@ export function PlanScreen() {
           <button
             type="button"
             onClick={() => setIsShareOpen(true)}
-            className="min-h-[42px] px-4 py-2 rounded-xl bg-teal-accent hover:bg-teal-hover text-white text-xs font-semibold shadow-soft transition-colors flex items-center gap-2 cursor-pointer"
+            className="min-h-[42px] px-4 py-2 rounded-xl bg-teal-accent hover:bg-teal-hover text-white text-xs sm:text-sm font-semibold shadow-soft transition-colors flex items-center gap-2 cursor-pointer"
           >
             <Share2 className="w-4 h-4" />
             <span>Share Your Actions</span>
@@ -690,10 +690,10 @@ export function PlanScreen() {
           return (
             <section key={group} className="space-y-3">
               <div className="flex items-center justify-between px-1">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
+                <h2 className="text-sm sm:text-base font-semibold uppercase tracking-wider text-muted">
                   {group}
                 </h2>
-                <span className="text-[11px] text-muted">
+                <span className="text-xs text-muted">
                   {items.length} {items.length === 1 ? 'action' : 'actions'}
                 </span>
               </div>
@@ -708,7 +708,7 @@ export function PlanScreen() {
                         key={opt.id}
                         type="button"
                         onClick={() => setSelectedRoom(opt.id)}
-                        className={`relative px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors shrink-0 cursor-pointer min-h-[36px] flex items-center justify-center ${
+                        className={`relative px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors shrink-0 cursor-pointer min-h-[36px] flex items-center justify-center ${
                           isSelected
                             ? 'text-white font-semibold'
                             : 'text-muted hover:text-foreground bg-card border border-card-border'
@@ -744,8 +744,8 @@ export function PlanScreen() {
                   {/* Collapsed More Options for actions beyond budget tier */}
                   {beyondBudgetItems.length > 0 && (
                     <details className="mt-3 group/budget">
-                      <summary className="cursor-pointer py-2.5 px-3.5 rounded-xl bg-card-subtle/80 hover:bg-card-subtle border border-card-border/80 text-xs text-muted flex items-center justify-between transition-colors list-none">
-                        <span className="font-medium text-foreground/80 flex items-center gap-1.5">
+                      <summary className="cursor-pointer py-2.5 px-3.5 rounded-xl bg-card-subtle/80 hover:bg-card-subtle border border-card-border/80 text-xs sm:text-sm text-muted flex items-center justify-between transition-colors list-none">
+                        <span className="font-medium text-foreground/80 flex items-center gap-1.5 text-xs sm:text-sm">
                           <SlidersHorizontal className="w-3.5 h-3.5 text-teal-accent" strokeWidth={1.75} />
                           More options ({beyondBudgetItems.length} beyond your current budget)
                         </span>

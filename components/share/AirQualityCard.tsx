@@ -2052,13 +2052,13 @@ export function AirQualityCard({
         {qrCodeDataUrl ? (
           <div
             style={{
-              width: '116px',
-              height: '116px',
+              width: '144px',
+              height: '144px',
               backgroundColor: '#FFFFFF',
-              borderRadius: '18px',
+              borderRadius: '20px',
               border: '1.5px solid #E2E8F0',
-              padding: '6px',
-              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)',
+              padding: '8px',
+              boxShadow: '0 4px 14px rgba(15, 23, 42, 0.05)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -2067,22 +2067,27 @@ export function AirQualityCard({
             <img
               src={qrCodeDataUrl}
               alt="QR Code clearhale-vercel.vercel.app"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                imageRendering: 'pixelated',
+              }}
             />
           </div>
         ) : (
           <div
             style={{
-              width: '116px',
-              height: '116px',
+              width: '144px',
+              height: '144px',
               backgroundColor: '#FFFFFF',
-              borderRadius: '18px',
+              borderRadius: '20px',
               border: '1.5px solid #E2E8F0',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#94A3B8',
-              fontSize: '22px',
+              fontSize: '26px',
               fontWeight: 700,
             }}
           >

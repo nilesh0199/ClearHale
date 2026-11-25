@@ -195,7 +195,7 @@ export function MythsTab() {
           ].map((sign, i) => (
             <div
               key={i}
-              className="p-2 sm:p-2.5 rounded-lg bg-white/90 dark:bg-rose-900/40 border border-rose-200 dark:border-rose-800/50 text-[11px] font-medium text-rose-950 dark:text-rose-100 flex items-center gap-2"
+              className="p-2 sm:p-2.5 rounded-lg bg-white/90 dark:bg-rose-900/40 border border-rose-200 dark:border-rose-800/50 text-xs sm:text-sm font-medium text-rose-950 dark:text-rose-100 flex items-center gap-2"
             >
               <div className="w-1.5 h-1.5 rounded-full bg-rose-600 dark:bg-rose-400 shrink-0" />
               <span className="leading-tight">{sign}</span>
@@ -203,7 +203,7 @@ export function MythsTab() {
           ))}
         </div>
 
-        <div className="text-[10px] sm:text-[11px] text-rose-800/80 dark:text-rose-300/80 font-medium pt-1">
+        <div className="text-xs text-rose-800/80 dark:text-rose-300/80 font-medium pt-1">
           <Bi k="learn.emergency.helplineNote" layout="plain" />
         </div>
       </section>
@@ -215,7 +215,7 @@ export function MythsTab() {
             <h2 id="myths-heading" className="text-base sm:text-lg font-semibold text-foreground">
               <Bi k="learn.mythBusters" layout="plain" />
             </h2>
-            <p className="text-xs text-muted">
+            <p className="text-xs sm:text-sm text-muted">
               Peer-reviewed evidence on common winter smog claims.
             </p>
           </div>
@@ -277,15 +277,15 @@ export function MythsTab() {
                 >
                   <div className="flex flex-col min-w-0 pr-2">
                     {profile.language === 'en' ? (
-                      <span className="text-xs sm:text-sm font-semibold text-foreground truncate">
+                      <span className="text-sm sm:text-base font-semibold text-foreground truncate">
                         {myth.titleEn}
                       </span>
                     ) : (
                       <>
-                        <span className="text-xs sm:text-sm font-semibold text-foreground truncate">
+                        <span className="text-sm sm:text-base font-semibold text-foreground truncate">
                           {profile.language === 'mr' ? myth.titleMr : myth.titleHi}
                         </span>
-                        <span className="text-[10px] text-muted truncate">
+                        <span className="text-xs text-muted truncate">
                           {myth.titleEn}
                         </span>
                       </>
@@ -293,7 +293,7 @@ export function MythsTab() {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40">
+                    <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40">
                       Myth
                     </span>
                     <motion.div
@@ -316,25 +316,25 @@ export function MythsTab() {
                       transition={{ duration: 0.2, ease: 'easeInOut' }}
                       className="overflow-hidden"
                     >
-                      <div className="p-3.5 pt-0 border-t border-card-border/60 space-y-2.5 text-xs">
+                      <div className="p-3.5 pt-0 border-t border-card-border/60 space-y-2.5 text-xs sm:text-sm">
                         {/* Myth Statement */}
-                        <div className="text-muted/80 italic text-[11px] bg-card-subtle/50 p-2 rounded-lg">
+                        <div className="text-muted/80 italic text-xs bg-card-subtle/50 p-2.5 rounded-lg">
                           &ldquo;{myth.mythText}&rdquo;
                         </div>
 
                         {/* Plain Language Explanation (2-3 lines) */}
-                        <p className="text-foreground leading-relaxed font-normal">
+                        <p className="text-foreground leading-relaxed font-normal text-sm sm:text-base">
                           {myth.explanation}
                         </p>
 
                         {/* What To Do Instead */}
-                        <div className="p-2.5 rounded-lg bg-teal-50 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-800/50 text-teal-950 dark:text-teal-100 flex items-start gap-2">
+                        <div className="p-3 rounded-lg bg-teal-50 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-800/50 text-teal-950 dark:text-teal-100 flex items-start gap-2.5">
                           <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
                           <div className="space-y-0.5">
-                            <span className="font-semibold text-[11px] text-teal-800 dark:text-teal-300 block">
+                            <span className="font-semibold text-xs sm:text-sm text-teal-800 dark:text-teal-300 block">
                               <Bi k="learn.myths.whatToDo" en="What to do instead:" layout="plain" />
                             </span>
-                            <span className="text-xs text-teal-950 dark:text-teal-100 leading-snug">
+                            <span className="text-xs sm:text-sm text-teal-950 dark:text-teal-100 leading-snug">
                               {myth.whatToDo}
                             </span>
                           </div>

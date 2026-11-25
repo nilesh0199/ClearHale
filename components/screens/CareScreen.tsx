@@ -97,13 +97,13 @@ export function CareScreen() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto pb-24 md:pb-12 text-left">
+    <div className="w-full max-w-5xl lg:max-w-6xl mx-auto pb-24 md:pb-12 text-left">
       {/* Page Header (Compact) */}
       <div className="mb-3">
-        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
           <Bi k="care.title" en="Care & Air Knowledge" layout="plain" />
         </h1>
-        <p className="text-xs text-muted mt-0.5 leading-relaxed">
+        <p className="text-sm sm:text-base text-muted mt-1 leading-relaxed">
           <Bi k="care.subtitle" en="Guided breathing sessions, smog myth busters, and plain-language air quality terms." layout="plain" />
         </p>
       </div>

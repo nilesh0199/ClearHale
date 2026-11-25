@@ -5,9 +5,15 @@
 [Live Application Demo](https://clearhale-vercel.vercel.app/) • [Walkthrough Video](https://clearhale-vercel.vercel.app/) • [LinkedIn Project Post](https://clearhale-vercel.vercel.app/)
 
 <p align="center">
-  <img src="docs/screenshots/01-home-dark-teal.png" width="280" alt="Home Dashboard (Dark Teal)" />
-  <img src="docs/screenshots/01-home-dark-mono.png" width="280" alt="Home Dashboard (Dark Monochrome)" />
-  <img src="docs/screenshots/desktop-dashboard-view.png" width="380" alt="Desktop Dashboard View" />
+  <img src="docs/screenshots/01-home-desktop.png" width="820" alt="Clearhale Desktop Dashboard with 24-Hour Forecast & Clean Air Guidance" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/05-home-mobile.png" width="240" alt="Mobile Home Screen" />
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/06-plan-mobile.png" width="240" alt="Mobile Action Plan Simulator" />
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/07-care-mobile.png" width="240" alt="Mobile Guided Breathing Care" />
 </p>
 
 ---

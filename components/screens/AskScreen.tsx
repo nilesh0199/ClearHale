@@ -563,10 +563,10 @@ export function AskScreen() {
       {/* Header */}
       <div className="pb-3 border-b border-card-border shrink-0 flex items-center justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
             <Bi k="ask.title" layout="inline" />
           </h1>
-          <p className="text-xs text-muted mt-0.5">
+          <p className="text-sm sm:text-base text-muted mt-1">
             <Bi k="ask.subtitle" layout="plain" />
           </p>
         </div>
@@ -574,10 +574,10 @@ export function AskScreen() {
           <button
             type="button"
             onClick={clearChatHistory}
-            className="text-xs px-2.5 py-1 rounded-lg border border-card-border hover:border-rose-400 hover:text-rose-600 bg-card hover:bg-card-subtle text-muted transition-colors flex items-center gap-1 cursor-pointer"
+            className="text-xs sm:text-sm px-3 py-1.5 rounded-lg border border-card-border hover:border-rose-400 hover:text-rose-600 bg-card hover:bg-card-subtle text-muted transition-colors flex items-center gap-1.5 cursor-pointer"
             title="Clear conversation"
           >
-            <Trash2 className="w-3 h-3 text-muted" strokeWidth={1.75} />
+            <Trash2 className="w-3.5 h-3.5 text-muted" strokeWidth={1.75} />
             <span>Clear</span>
           </button>
         )}
@@ -593,7 +593,7 @@ export function AskScreen() {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => handleSendMessage(chip)}
-              className="shrink-0 text-xs px-3 py-1.5 rounded-full bg-card border border-card-border text-foreground hover:border-teal-accent/40 shadow-soft transition-colors cursor-pointer"
+              className="shrink-0 text-xs sm:text-sm px-3.5 py-1.5 rounded-full bg-card border border-card-border text-foreground hover:border-teal-accent/40 shadow-soft transition-colors cursor-pointer"
             >
               {chip}
             </motion.button>
@@ -656,7 +656,7 @@ export function AskScreen() {
               {/* Bubble & Read Aloud Controls */}
               <div className="flex flex-col items-start gap-1 max-w-[85%] sm:max-w-[75%]">
                 <div
-                  className={`p-3.5 sm:p-4 rounded-card text-sm leading-relaxed whitespace-pre-wrap w-full ${
+                  className={`p-3.5 sm:p-4 rounded-card text-sm sm:text-base leading-relaxed whitespace-pre-wrap w-full ${
                     isUser
                       ? 'bg-teal-accent text-white rounded-tr-none'
                       : 'bg-card border border-card-border text-foreground rounded-tl-none shadow-soft'
@@ -693,7 +693,7 @@ export function AskScreen() {
                                 0
                               )}
                             </div>
-                            <div className="border-t border-card-border/80 pt-2 text-xs text-muted leading-relaxed font-normal whitespace-pre-wrap">
+                            <div className="border-t border-card-border/80 pt-2 text-xs sm:text-sm text-muted leading-relaxed font-normal whitespace-pre-wrap">
                               {renderSentenceHighlightedText(
                                 enText,
                                 isCurrentSpeakingMsg,
@@ -850,7 +850,7 @@ export function AskScreen() {
               ) : (
                 <>
                   <Mic className="w-5 h-5 sm:w-4 sm:h-4 text-teal-accent shrink-0" strokeWidth={1.75} />
-                  <span className="hidden sm:inline text-[12px] text-foreground font-medium ml-1.5">
+                  <span className="hidden sm:inline text-xs sm:text-sm text-foreground font-medium ml-1.5">
                     {profile.language === 'en'
                       ? 'Tap mic to speak'
                       : profile.language === 'hi'
@@ -967,7 +967,7 @@ export function AskScreen() {
 
         {/* Small hint if SpeechRecognition is unsupported in this browser */}
         {!isSpeechRecognitionSupported && (
-          <p className="text-[11px] text-muted/80 text-center leading-tight px-2">
+          <p className="text-xs text-muted/80 text-center leading-tight px-2">
             <Bi
               k="voice.unsupportedSTT"
               en="Voice typing is not supported in this browser. You can use your phone's keyboard microphone."
@@ -976,7 +976,7 @@ export function AskScreen() {
           </p>
         )}
 
-        <p className="text-[11px] text-muted/80 text-center leading-tight px-2">
+        <p className="text-xs text-muted/80 text-center leading-tight px-2">
           <Bi k="ask.medicalDisclaimer" layout="plain" />
         </p>
       </div>
