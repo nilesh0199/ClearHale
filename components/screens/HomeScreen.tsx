@@ -1578,7 +1578,7 @@ export function HomeScreen() {
               role="region"
               id="recommendations-container" aria-label="Recommendations"
               onKeyDown={handleRightColKeyDown}
-              className="min-w-0 max-w-full lg:col-span-7 space-y-6 h-full min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-2.5 pb-0 lg:pb-32 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-accent/70 focus-visible:ring-offset-2 rounded-2xl desktop-scroll-slim"
+              className="min-w-0 max-w-full lg:col-span-7 space-y-4 lg:space-y-4 h-full min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-2.5 pb-8 lg:pb-32 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-accent/70 focus-visible:ring-offset-2 rounded-2xl desktop-scroll-slim"
             >
 
       {/* "Next 2 Hours" Clear Decision Card */}
@@ -1977,7 +1977,7 @@ export function HomeScreen() {
         <div
           ref={forecastScrollRef}
           onScroll={handleForecastScroll}
-          className={`flex gap-2.5 overflow-x-auto pb-2 no-scrollbar ${
+          className={`flex gap-2.5 overflow-x-auto pt-1.5 pb-2.5 px-1.5 no-scrollbar ${
             isDraggingSlider ? 'scroll-auto' : 'scroll-smooth'
           }`}
         >
@@ -1992,7 +1992,7 @@ export function HomeScreen() {
                   setForecastSliderIndex(i);
                   scrollToHourIndex(i, false);
                 }}
-                className={`shrink-0 w-20 p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
+                className={`shrink-0 w-20 p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col justify-between min-h-[108px] ${
                   h.isBestHour
                     ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 shadow-sm ring-2 ring-emerald-500'
                     : isSelected
@@ -2025,7 +2025,11 @@ export function HomeScreen() {
                   <div className="mt-1 text-[9px] font-semibold text-teal-accent bg-teal-accent/10 px-1 py-0.5 rounded">
                     Selected
                   </div>
-                ) : null}
+                ) : (
+                  <div className="mt-1 text-[9px] h-[18px] opacity-0 pointer-events-none select-none" aria-hidden="true">
+                    &nbsp;
+                  </div>
+                )}
               </div>
             );
           })}
