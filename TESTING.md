@@ -64,7 +64,9 @@ $ npm test
 | `language-capabilities.test.mjs` | Tier 5: Multilingual Voice | 3 | Validates voice enablement matrix (STT & TTS active for Hindi, Marathi, Bengali, Tamil, Telugu, English; text-only fallback for other regional languages). | ✅ 3 / 3 Passed |
 | `openaq-integration.test.mjs` | Tier 5: Live Ground Data | 7 | Nearest fresh physical station selection within 25 km, stale reading discard (>3h), negative/impossible value dropping, 429 rate limit fallback, and wrong-city protection (Pune vs Mumbai). | ✅ 7 / 7 Passed |
 | `provider-routing.test.mjs` | Tier 5: AI Resilience | 6 | Dual-provider language routing (Groq for EN/HI, Gemini for regional), 60-second rate-limit cooldown on 429/5xx, and graceful fallback to offline scientific template. | ✅ 6 / 6 Passed |
-| **TOTAL** | **Full Verification Suite** | **96** | **End-to-End System Reliability & Public Health Safety** | **✅ 100% Passing** |
+| `security-and-voice.test.mjs` | Tier 6: Security & Voice Guardrails | 11 | OWASP global headers, 2,000-character input clamping, medical emergency symptom triage, and 6-language STT resolution. | ✅ 11 / 11 Passed |
+| `home-sticky-layout.test.mjs` | Tier 6: Layout & Responsive UX | 1 | Responsive sticky navigation bar, desktop vs mobile layout transitions, and scrollbar containment. | ✅ 1 / 1 Passed |
+| **TOTAL** | **Full Verification Suite** | **108** | **End-to-End System Reliability & Public Health Safety** | **✅ 100% Passing** |
 
 ---
 
@@ -72,5 +74,5 @@ $ npm test
 
 Every code change pushed to GitHub triggers `.github/workflows/ci.yml`:
 1. `npx tsc --noEmit` validates zero TypeScript compilation errors.
-2. `npm test` executes the entire 96-test automated suite.
+2. `npm test` executes the entire 108-test automated suite.
 3. `npm run build` compiles production Next.js assets, verifying bundle boundaries and zero broken dynamic routes.

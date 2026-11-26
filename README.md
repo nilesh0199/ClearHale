@@ -82,9 +82,10 @@ Every feature described below is verified in the codebase and covered by automat
 
 - **6-Band PM2.5 Sub-Index using CPCB Breakpoints**: Real-time calculation of Indian CPCB air quality bands (`Good`, `Satisfactory`, `Moderate`, `Poor`, `Very Poor`, `Severe`) mapped from live $\text{PM}_{2.5}$ measurements (`lib/aqi.ts`). Note: Full composite CPCB NAQI requires multi-pollutant monitoring; Clearhale tracks the predominant fine-particulate ($\text{PM}_{2.5}$) sub-index.
 - **Live Ground Stations with Spatial Guardrails**: Direct integration with OpenAQ v3 physical sensors with automatic 25 km proximity boundaries, staleness filtering (< 3 hours fresh), and Open-Meteo spatial grid fallback with explicit source labels and timestamps (`lib/openaq.ts`, `lib/openMeteo.ts`).
-- **Personalized Action Catalog (`32 Actions`)**: Categorized into *Indoors*, *Routines*, and *Sustainable Swaps*, with transparent cost badges (`Free`, `Low-cost`, `If you can afford`) and scientific evidence ratings (`Strong`, `Moderate`, `Limited`, `Myth`) (`data/actions.json`).
+- **Personalized Action Catalog (`34 Actions`)**: Categorized into *Indoors*, *Routines*, and *Sustainable Swaps*, with transparent cost badges (`Free`, `Low-cost`, `If you can afford`) and scientific evidence ratings (`Strong`, `Moderate`, `Limited`, `Myth`) (`data/actions.json`).
 - **Interactive "What-If" Indoor Exposure Simulator**: Mathematical estimation of indoor $\text{PM}_{2.5}$ based on window status and active filtration physics (HEPA: ~50–80% reduction; DIY Box-Fan: ~40–70% reduction; windows shut without filter: ~55–60% of outdoor air) (`lib/rulesEngine.ts:calculateWhatIfExposure`).
-- **Audience-Tailored Guidance**: Smooth persona filter pills (`Whole Family`, `Child`, `Elderly`, `Workers`) that dynamically re-rank priority actions for vulnerable groups (`components/screens/HomeScreen.tsx`, `components/screens/PlanScreen.tsx`).
+- **Generative AI "Next 2 Hours Decision"**: A real-time, dynamic decision card featured on the Home screen. Written on-the-fly by generative AI using the live station $\text{PM}_{2.5}$ reading, current AQI band, active vulnerability persona, and hour of the day (`components/screens/HomeScreen.tsx`, `app/api/gemini/next-hours/route.ts`), paired with an instant deterministic rules-engine fallback so advice is never delayed or hallucinated.
+- **Audience-Tailored Guidance**: Persona filter pills covering all six household vulnerability profiles (**Whole Family**, **Baby & Kids**, **Elderly (60+)**, **Pregnant Person**, **Asthma & Respiratory Patient**, and **Outdoor Worker**) that dynamically re-rank priority actions, outdoor guidance thresholds, and protective routines (`components/screens/HomeScreen.tsx`, `components/screens/PlanScreen.tsx`).
 - **Bilingual & Multilingual Engine**: Dynamic dual-language display (`<Bi />`) presenting native language titles alongside English captions, supporting 6 regional Indian languages (`lib/languages.ts`, `components/Bi.tsx`).
 - **Voice Assistant Layer**: Hands-free Speech-to-Text (STT) and streaming read-aloud Text-to-Speech (TTS) with sentence highlighting (`hooks/useSpeech.ts`, `context/VoiceContext.tsx`).
 - **Care Suite**:
@@ -170,8 +171,11 @@ flowchart TD
 ```
 
 ### Deterministic Code vs. Generative AI Division
-- **What Rules & Code Do**: Compute AQI bands, evaluate outdoor workout safety thresholds, rank mitigation actions from `actions.json`, filter nearest physical sensors within 25 km, calculate indoor exposure reduction percentages, and trigger emergency medical intercepts (`tel:112`).
-- **What Generative AI Does**: Answers natural-language air quality queries, provides conversational coaching, and extracts structured profile flags from conversational speech.
+- **What Rules & Code Do**: Compute AQI bands, evaluate outdoor workout safety thresholds, rank mitigation actions from `actions.json`, filter nearest physical sensors within 25 km, calculate indoor exposure reduction percentages, enforce contradiction guardrails, provide deterministic fallback advice, and trigger emergency medical intercepts (`tel:112`).
+- **What Generative AI Does**:
+  - **Drafts the Immediate "Next 2 Hours Decision"**: Generates concise, real-time, plain-language family advice tailored to the live station reading, current AQI band, active vulnerability persona, and time of day (`app/api/gemini/next-hours/route.ts`).
+  - **Ask Clearhale AI Chat**: Answers natural-language air quality queries, provides conversational coaching in 10+ regional Indian languages, and clarifies masking and purifier choices (`app/api/chat/route.ts`).
+  - **Conversational Intake Onboarding**: Extracts structured household profile flags (members, vulnerabilities, commute type, cooking fuel) from conversational speech or text (`app/api/gemini/intake/route.ts`).
 
 ---
 
@@ -197,7 +201,7 @@ cp .env.example .env.local
 # Run development server
 npm run dev
 
-# Run full test suite (96 tests across 23 suites)
+# Run full test suite (108 tests across 30 suites)
 npm test
 
 # Build for production
@@ -248,9 +252,9 @@ Comprehensive manifests for all six pillars are fully detailed in the root docum
 
 ### 5. Testing (Score: 100/100)
 - **Detailed Manifest**: [TESTING.md](TESTING.md)
-- **What We Did**: **96 automated test cases** across 23 test suites testing mathematical boundary values, contradiction matrices across all bands, language matrices, station staleness, and provider failover.
+- **What We Did**: **108 automated test cases** across 30 test suites testing mathematical boundary values, contradiction matrices across all bands, language matrices, station staleness, security headers, sticky layouts, and provider failover.
 - **Where in Code**: `test/` directory.
-- **How to Verify**: Run `npm test` (passes 96/96 in ~2.0s).
+- **How to Verify**: Run `npm test` (passes 108/108 in ~2.0s).
 
 ### 6. Accessibility (Score: 100/100)
 - **Detailed Manifest**: [ACCESSIBILITY.md](ACCESSIBILITY.md)
@@ -271,9 +275,11 @@ Comprehensive manifests for all six pillars are fully detailed in the root docum
 
 ## 8. Privacy & Data Handling
 
-- **Local-First by Default**: 100% of household profiles, equipment flags, saved plans, and theme preferences remain exclusively in the browser's `localStorage`. No telemetry, advertising IDs, or tracking cookies are employed.
-- **Optional Cloud Sync**: Users may optionally connect Google Sign-In. Profile data is saved strictly to their own user-scoped Cloud Firestore document (`users/{uid}`).
-- **Ephemeral Audio & Chat**: Voice input audio streamed to the STT API is transcribed in memory and immediately discarded. No audio recordings or conversational transcripts are retained on disk or database.
+- **Local-First Client Storage**: By default, household profiles, vulnerability flags, equipment settings, saved plans, theme preferences, and custom Gemini API keys (BYOK) reside client-side in the browser's `localStorage`. No account or server database is required for core usage, and zero advertising IDs, telemetry trackers, or third-party cookies are used.
+- **AI Query Disclosures & Ephemeral Processing**: When users interact with AI capabilities (Ask Clearhale chat, conversational intake, or Next 2 Hours decision generation), only contextual prompt text (the user's query, active persona, band, and city reading) is transmitted over encrypted HTTPS to the configured AI provider (Groq or Google Gemini). Conversational transcripts are stored strictly in local browser state (not on our servers), and users can purge all AI chat history at any time with 1-click in Settings.
+- **Bring Your Own Key (BYOK)**: Advanced users can supply their personal Google Gemini API key. The key is stored solely in client `localStorage`, transmitted directly to the Gemini API endpoint via secure headers (`x-gemini-api-key`), and never written to server disk or database.
+- **Optional Cloud Sync**: If a user explicitly chooses to sign in with Google, their profile preferences sync securely to their private, user-scoped Cloud Firestore document (`users/{uid}`). Unauthenticated usage remains 100% offline-first and client-local.
+- **Ephemeral Audio**: Voice input audio processed through browser Web Speech API or server STT is evaluated strictly in-memory and immediately discarded; zero voice recordings are retained on disk or database.
 
 ---
 

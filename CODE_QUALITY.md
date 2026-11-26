@@ -84,5 +84,5 @@ Domain knowledge is never fragmented or repeated across files:
 
 Every pull request and commit is validated against `.github/workflows/ci.yml`:
 1. **Type Check**: `npx tsc --noEmit` ensures complete type soundness.
-2. **Unit & Integration Tests**: 96 tests across 23 suites run via Node native test runner (`node --test`).
+2. **Unit & Integration Tests**: 108 tests across 30 suites run via Node native test runner (`node --test`).
 3. **Production Build**: `npm run build` compiles static assets, verifies route bundle sizes, and checks SSG/SSR integrity.
