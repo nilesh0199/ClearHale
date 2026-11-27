@@ -82,7 +82,7 @@ export function ClearhaleMarkFull({
         }
       >
         <img
-          src="/brand/logo.png"
+          src="/brand/favicon.svg"
           alt="Clearhale"
           width={size}
           height={size}

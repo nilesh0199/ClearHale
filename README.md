@@ -4,19 +4,48 @@
 
 [Live Application Demo](https://clearhale-vercel.vercel.app/) • [Walkthrough Video](https://youtu.be/lGcJ2hVKRLY) • [LinkedIn Project Post](https://lnkd.in/p/d4GAECYe)
 
-<p align="center">
-  <img src="docs/screenshots/01-home-desktop.png" width="820" alt="Clearhale Desktop Dashboard with 24-Hour Forecast & Clean Air Guidance" />
-</p>
-
-<p align="center">
-  <img src="docs/screenshots/05-home-mobile.png" width="195" alt="Mobile Home Screen" />
-  &nbsp;&nbsp;
-  <img src="docs/screenshots/06-plan-mobile.png" width="195" alt="Mobile Action Plan Simulator" />
-  &nbsp;&nbsp;
-  <img src="docs/screenshots/07-care-mobile.png" width="195" alt="Mobile Guided Breathing Care" />
-  &nbsp;&nbsp;
-  <img src="docs/screenshots/08-share-poster.png" width="195" alt="Family Action Plan Sharing Poster" />
-</p>
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│                        CLIENT LAYER (Next.js 15)                       │
+│                                                                        │
+│   ┌────────────────────────────────────────────────────────────────┐   │
+│   │                 AppShell (React 19 + TypeScript)               │   │
+│   │      AppContext (Language, Theme, Household Profile, Tab)      │   │
+│   └────────────────────────────────────────────────────────────────┘   │
+│                 │                                  │                   │
+│                 ▼                                  ▼                   │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐     │
+│   │    Domain Feature Hooks   │      │   Pure Compute Engine     │     │
+│   │   (useAirQuality,         │ ────►│   (lib/outdoorGuidance.ts)│     │
+│   │    useVoiceInput)         │      │  • CPCB Linear Breakpoint │     │
+│   └───────────────────────────┘      │  • CADR & 4 ACH Decay     │     │
+│                 │                    │  • Inhaled Particulate    │     │
+│                 ▼                    │  • Exposure What-If Model │     │
+│   ┌───────────────────────────┐      └───────────────────────────┘     │
+│   │   Presentation Layer      │                    ▲                   │
+│   │  • Pure Vector SVG Dial   │ ───────────────────┘                   │
+│   │  • Dual-Lang Bilingual    │                                        │
+│   │  • .sr-only Text Twins    │                                        │
+│   └───────────────────────────┘                                        │
+└────────────────────────────────────────────────────────────────────────┘
+                    │                                    │
+           (REST API via proxy)                 (Local Persistence)
+                    │                                    │
+                    ▼                                    ▼
+┌───────────────────────────────────────┐    ┌───────────────────────────┐
+│        BACKEND LAYER (Serverless)     │    │    CLOUD LAYER (Firebase) │
+│                                       │    │                           │
+│   ┌───────────────────────────────┐   │    │  • Firebase Auth          │
+│   │  Next.js 15 Route Handlers    │   │    │  • Firestore Database     │
+│   │  • Strict CSP Security Headers│   │    │  • Per-User Ruleset       │
+│   │  • OWASP IP Rate Limiting     │   │    │    (/users/{uid}/**)      │
+│   │  • 15 KB Body Cap             │   │    └───────────────────────────┘
+│   │  • Dual AI Engine Router      │   │
+│   │    (Groq Llama / Gemini Flash)│   │
+│   │  • OpenAQ v3 Live Sensor Ingest│  │
+│   └───────────────────────────────┘   │
+└───────────────────────────────────────┘
+```
 
 ---
 

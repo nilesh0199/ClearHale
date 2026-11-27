@@ -1358,7 +1358,7 @@ export function HomeScreen() {
           <div className="lg:hidden shrink-0">
             <div className="relative w-11 h-11 rounded-xl bg-card border border-card-border p-1.5 shadow-soft flex items-center justify-center">
               <img
-                src="/brand/logo.png"
+                src="/brand/favicon.svg"
                 alt="Clearhale"
                 className="w-full h-full object-contain drop-shadow-xs"
               />

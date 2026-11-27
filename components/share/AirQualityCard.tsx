@@ -1424,7 +1424,7 @@ export function AirQualityCard({
             }}
           >
             <img
-              src="/brand/logo.png"
+              src="/brand/favicon.svg"
               alt="Clearhale"
               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />
