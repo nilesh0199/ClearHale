@@ -7,7 +7,7 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
-    "lint": "tsc --noEmit",
+    "lint": "oxlint -c .oxlintrc.json --deny-warnings && tsc --noEmit",
     "test": "node --import ./test/register-ts.mjs test/content-consistency.test.mjs && node --import ./test/register-ts.mjs --test test/contrast.test.mjs test/token-enforcement.test.mjs test/cities-coverage.test.mjs test/action-catalog.test.mjs test/input-validation.test.mjs test/intake-and-auth.test.mjs test/language-capabilities.test.mjs test/openaq-integration.test.mjs test/provider-routing.test.mjs test/security-and-voice.test.mjs test/myths-regional.test.mjs test/home-sticky-layout.test.mjs"
   },
   "dependencies": {
@@ -32,8 +32,13 @@
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "autoprefixer": "^10.4.20",
-    "postcss": "^8.5.1",
+    "oxlint": "^1.95.0",
+    "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3"
+  },
+  "overrides": {
+    "postcss": "^8.5.3",
+    "@grpc/grpc-js": "^1.13.6"
   }
 }

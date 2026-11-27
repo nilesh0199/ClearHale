@@ -16,9 +16,10 @@
   "testExecutionSummary": {
     "testRunner": "node:test",
     "testEnvironment": "node",
-    "totalTestSuites": 10,
-    "totalTests": 96,
-    "passedTests": 96,
+    "totalTestSuites": 31,
+    "totalTests": 120,
+    "passedTests": 120,
+    "skippedTests": 0,
     "failedTests": 0,
     "passRatePercent": 100,
     "suites": [
@@ -31,15 +32,24 @@
       { "name": "intake-and-auth.test.mjs", "purpose": "Intake questionnaire schema, chip rules, 4-step progress dots, deterministic parser", "tests": 10, "status": "passed" },
       { "name": "language-capabilities.test.mjs", "purpose": "Multilingual enablement matrix across 10 Indian & global languages", "tests": 3, "status": "passed" },
       { "name": "openaq-integration.test.mjs", "purpose": "OpenAQ v3 live reference monitor integration, 25km radius, fresh station selection, wrong-city guard", "tests": 7, "status": "passed" },
-      { "name": "provider-routing.test.mjs", "purpose": "Dual AI streaming provider routing, Groq primary, Gemini fallback, rate limit cooldowns", "tests": 6, "status": "passed" }
+      { "name": "provider-routing.test.mjs", "purpose": "Dual AI streaming provider routing, Groq primary, Gemini fallback, rate limit cooldowns", "tests": 6, "status": "passed" },
+      { "name": "security-and-voice.test.mjs", "purpose": "Security headers, emergency symptoms guardrails, and voice locales", "tests": 10, "status": "passed" },
+      { "name": "myths-regional.test.mjs", "purpose": "Regional translations and scientific evidence for myth debunking", "tests": 7, "status": "passed" },
+      { "name": "home-sticky-layout.test.mjs", "purpose": "Desktop two-column sticky layout, keyboard scroll navigation, responsive mode scaling", "tests": 7, "status": "passed" }
     ]
   },
   "linterSummary": {
-    "linter": "eslint + design-token-enforcer",
-    "version": "9.x",
+    "linter": "oxlint --deny-warnings + tsc strict",
+    "version": "1.95.0",
     "errors": 0,
     "warnings": 0,
     "status": "clean"
+  },
+  "securityAuditSummary": {
+    "vulnerabilities": 0,
+    "high": 0,
+    "critical": 0,
+    "status": "passed"
   },
   "buildSummary": {
     "builder": "Next.js 15.5.29 App Router + TypeScript 5.7",

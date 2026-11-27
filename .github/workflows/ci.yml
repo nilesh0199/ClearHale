@@ -24,10 +24,13 @@ jobs:
       - name: Install Project Dependencies
         run: npm ci || npm install
 
-      - name: Strict TypeScript Compilation
-        run: npx tsc --noEmit
+      - name: Static Linting & Type Safety Check
+        run: npm run lint
 
-      - name: Run Automated Test Suite (108 Tests across 30 Suites)
+      - name: Dependency Security Audit
+        run: npm audit --audit-level=high
+
+      - name: Run Automated Test Suite (120 Tests across 31 Suites)
         run: npm test
 
       - name: Production Bundle Compilation

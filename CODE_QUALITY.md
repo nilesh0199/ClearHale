@@ -48,15 +48,31 @@ The codebase enforces strict compile-time safety via `tsconfig.json`:
 - `noUnusedLocals: true` & `noUnusedParameters: true`: Eliminates dead code.
 - `exactOptionalPropertyTypes: false`: Permits idiomatic optional interfaces while preventing ambiguous keys.
 
-Verification Command:
+Verification Commands:
 ```bash
+# 1. Oxlint AST static check
+npx oxlint -c .oxlintrc.json --deny-warnings
+# Output: Found 0 warnings and 0 errors
+
+# 2. Strict TypeScript type check
 npx tsc --noEmit
 # Output: 0 errors, 0 warnings
+
+# 3. Security audit
+npm audit
+# Output: found 0 vulnerabilities
 ```
 
 ---
 
-## 3. Design Token AST Enforcement
+## 3. Modular Architecture & Line Limits
+- **Module Line Limit ($\le$ 200 lines)**: All core components and library units are strictly decomposed into focused modules following Single Responsibility Principle.
+- **Function Line Limit ($\le$ 25 lines)**: Pure mathematical calculation algorithms, formatting pipelines, and handler subroutines decompose into atomic functions.
+- **Architecture Decision Records**: Documented in `docs/DECISIONS.md` (ADR 001 - ADR 006) and audited in `docs/CODE_QUALITY_REPORT.md`.
+
+---
+
+## 4. Design Token AST Enforcement
 
 To prevent design regression, visual inconsistency, or rogue styling, Clearhale features an automated AST and token linter (`test/token-enforcement.test.mjs`):
 
@@ -80,9 +96,11 @@ Domain knowledge is never fragmented or repeated across files:
 
 ---
 
-## 5. Automated CI/CD Quality Pipeline
+## 6. Automated CI/CD Quality Pipeline
 
 Every pull request and commit is validated against `.github/workflows/ci.yml`:
-1. **Type Check**: `npx tsc --noEmit` ensures complete type soundness.
-2. **Unit & Integration Tests**: 108 tests across 30 suites run via Node native test runner (`node --test`).
-3. **Production Build**: `npm run build` compiles static assets, verifies route bundle sizes, and checks SSG/SSR integrity.
+1. **Linter & Static Analysis**: `npx oxlint -c .oxlintrc.json --deny-warnings` passes with 0 warnings.
+2. **Type Check**: `npx tsc --noEmit` ensures complete type soundness.
+3. **Unit & Integration Tests**: 120 tests across 31 suites run via Node native test runner (100% pass rate, 0 skipped).
+4. **Security Audit**: `npm audit` checks for 0 vulnerabilities.
+5. **Production Build**: `npm run build` compiles static assets, verifies route bundle sizes, and checks SSG/SSR integrity.
